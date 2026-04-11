@@ -1,12 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Index</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acil Restoran İş & Eleman Bul</title>
+  <meta name="description" content="Restoranlar için acil eleman bulma ve iş arayanlar için hızlı iş fırsatları.">
+
+  <!-- SEO / Social -->
+  <meta property="og:title" content="Acil İş & Eleman Platformu">
+  <meta property="og:description" content="Restoranlar ve çalışanları hızlıca buluşturur">
+  <meta property="og:type" content="website">
+
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Welcome to the Home Page</h1>
-    <p>This page is served as the index.</p>
+
+  <div id="headerContainer"></div>
+
+<main class="container">
+  
+
+<section class="hero">
+  <div class="hero-content fade-in">
+    <h1>Restoranlar için en hızlı eleman çözümü</h1>
+    <p>Bugün çalışacak personeli dakikalar içinde bul</p>
+
+   
+
+    <p class="social-proof">🔥 Son 24 saatte 120+ eşleşme</p>
+
+
+       <div id="mainButtons" class="card">
+    <button class="btn primary" onclick="showRestaurant()">🍽 Restoranım</button>
+    <button class="btn secondary" onclick="goToWorkerForm()">👤 İş Arıyorum</button>
+  </div>
+
+  
+
+  <div id="restaurantOptions" class="card hidden">
+    <button class="btn primary" onclick="window.location.href='restoran.html'">📋 Restoran Kayıt</button>
+    <button class="btn secondary" onclick="goToJobRequest()">⚡ Eleman Talep Et</button>
+    <button class="btn ghost" onclick="goBack()">⬅ Geri</button>
+  </div>
+  </div>
+
+
+</section>
+
+ <!-- <div id="mainButtons" class="card">
+    <button class="btn primary" onclick="showRestaurant()">🍽 Restoranım</button>
+    <button class="btn secondary" onclick="goToWorkerForm()">👤 İş Arıyorum</button>
+  </div>
+
+  
+
+  <div id="restaurantOptions" class="card hidden">
+    <button class="btn primary" onclick="goToRestaurantRegister()">📋 Restoran Kayıt</button>
+    <button class="btn secondary" onclick="goToJobRequest()">⚡ Eleman Talep Et</button>
+    <button class="btn ghost" onclick="goBack()">⬅ Geri</button>
+  </div>-->
+
+</main>
+
+
+
+
+<section class="trust">
+  <h2>Bizi Kullanan Restoranlar</h2>
+
+  <div class="trust-logos">
+    <div class="logo-box">🍔 Burger House</div>
+    <div class="logo-box">☕ Coffee Spot</div>
+    <div class="logo-box">🍕 Pizza Local</div>
+    <div class="logo-box">🥗 Healthy Kitchen</div>
+  </div>
+</section>
+  <div id="footerContainer"></div>
+
+<script src="script.js"></script>
 </body>
 </html>
