@@ -18,15 +18,15 @@ function goBack() {
 }
 
 function goToWorkerForm() {
-  window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSeus00-7yCTm2ptxPLZWcgkq6gJmvN_WZN15jlU6vOaVaEMyw/closedform";
+  window.location.href = "https://forms.gle/gk4PvbsmrCYwwMb66";
 }
 
 function goToRestaurantRegister() {
-  window.location.href = "https://forms.gle/RESTAURANT_REGISTER_LINK";
+  window.location.href = "https://forms.gle/ZUJz5sMSSaPopxYZ7";
 }
 
 function goToJobRequest() {
-  window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLScSgKKgA5POOWRAHoIasXoLR9ZxISrn2DRGvDqB7PMm-8lV0Q/viewform?usp=publish-editor";
+  window.location.href = "https://forms.gle/hXi5a64EM3V49gXN8";
 }
 
 function toggleMenu() {
