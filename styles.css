@@ -194,42 +194,34 @@ nav a:hover {
 .hero p {
   color: #666;
 }
-/* 
-.moving-text {
-  display: inline-block;
-  
-  animation: scrollLeft 4s linear infinite;
-}
 
-.moving-text:hover {
-  animation-play-state: paused;
-}
-
-*/
 
 .hero-content.fade-in {
   overflow: hidden;
   position: relative;
-  width: 600px; /* or whatever your container width is */
+  width: 100%; /* or whatever your container width is */
 }
 
-.hero-content.fade-in .moving-text {
-  display: inline-block;
+.marquee-container {
+  width: 430px;       /* alan genişliği */
+  height: 50px;
+  overflow: hidden;   /* dışarı taşanı gizle */
+  border: 0px solid #ccc;
+  position: relative;
+}
+
+.marquee-text {
+  position: absolute;
   white-space: nowrap;
-  animation: slideLeft 3s linear infinite;
+  animation: scrollText 10s linear infinite;
 }
 
-/* Pause on hover */
-.hero-content.fade-in:hover .moving-text {
-  animation-play-state: paused;
-}
-
-@keyframes scrollLeft {
-  from {
-    transform: translateX(0%);
+@keyframes scrollText {
+  0% {
+    left: 100%;
   }
-  to {
-    transform: translateX(-100%);
+  100% {
+    left: -100%;
   }
 }
 
