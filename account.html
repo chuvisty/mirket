@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirket | Hesabım</title>
+  <meta name="description" content="Mirket hesabım sayfası">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="headerContainer"></div>
+
+  <main class="container">
+    <section class="account-card card">
+      <h1 id="accountTitle">Hesabım</h1>
+      <p id="accountDescription">Hesabınızın özetini ve kayıt bilgilerinizi buradan görüntüleyebilirsiniz.</p>
+
+      <div id="accountMessage" class="auth-message hidden" role="alert"></div>
+      <div id="accountDetails" class="account-details"></div>
+      <button class="btn secondary" type="button" id="accountLogoutButton">Çıkış Yap</button>
+    </section>
+  </main>
+
+  <div id="footerContainer"></div>
+
+  <script src="firebase.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

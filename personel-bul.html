@@ -11,17 +11,68 @@
 <div id="headerContainer"></div>
 
 <main class="container">
+  <section class="card" id="jobRequestSection">
+    <h1 id="jobRequestTitle">Yeni İlan Oluştur</h1>
+    <p id="jobRequestDesc">İhtiyacınız olan personeli bulmak için aşağıdaki formu doldurun.</p>
 
- 
+    <div id="jobRequestMessage" class="auth-message hidden" role="alert"></div>
 
-  <div id="restaurantOptions" class="card">
-    <button class="btn primary" onclick="goToRestaurantRegister()">📋 Restoran Kayıt</button>
-    <button class="btn secondary" onclick="goToJobRequest()">⚡ Eleman Talep Et</button>
+    <div id="jobRequestForm" class="hidden">
+      <label class="input-group">
+        <span>İhtiyaç Duyulan Rol</span>
+        <select id="jobRole">
+          <option value="Garson">Garson</option>
+          <option value="Komi">Komi</option>
+          <option value="Şef Garson">Şef Garson</option>
+          <option value="Aşçı">Aşçı</option>
+          <option value="Bulaşıkçı">Bulaşıkçı</option>
+          <option value="Host/Hostes">Host / Hostes</option>
+          <option value="Barista">Barista</option>
+          <option value="Diğer">Diğer</option>
+        </select>
+      </label>
+
+      <label class="input-group">
+        <span>Çalışma Tarihi</span>
+        <input type="date" id="jobDate" />
+      </label>
+
+      <div style="display: flex; gap: 10px;">
+        <label class="input-group" style="flex: 1;">
+          <span>Başlangıç Saati</span>
+          <input type="time" id="jobStartTime" />
+        </label>
+        <label class="input-group" style="flex: 1;">
+          <span>Bitiş Saati</span>
+          <input type="time" id="jobEndTime" />
+        </label>
       </div>
 
+      <label class="input-group">
+        <span>Kişi Sayısı</span>
+        <input type="number" id="jobPeopleCount" min="1" value="1" />
+      </label>
+
+      <label class="input-group">
+        <span>Ücret ve Detaylar</span>
+        <textarea id="jobDetails" rows="4" placeholder="Örn: Günlük 1000 TL, yemek ve yol dahil."></textarea>
+      </label>
+
+      <button class="btn primary" onclick="submitJobRequest()" id="submitJobBtn">İlanı Gönder</button>
+    </div>
+  </section>
+
+  <section class="card" id="myJobsSection" style="margin-top: 20px;">
+    <h2>Mevcut İlanlarım</h2>
+    <div id="myJobsMessage" class="auth-message hidden" role="alert"></div>
+    <div id="myJobsList" class="jobs-list hidden">
+      <p>Yükleniyor...</p>
+    </div>
+  </section>
 </main>
 <div id="footerContainer"></div>
 
+<script src="firebase.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

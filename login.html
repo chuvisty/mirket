@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirket | Giriş Yap veya Kayıt Ol</title>
+  <meta name="description" content="Mirket oturum açma ve kayıt sayfası">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="headerContainer"></div>
+
+  <main class="container">
+    <section class="auth-card card">
+      <h1 id="authTitle">Giriş Yap</h1>
+      <p id="authDescription">E-posta ve şifre ile giriş yapın ya da yeni hesap oluşturun.</p>
+
+      <div id="authMessage" class="auth-message hidden" role="alert"></div>
+
+      <label class="input-group">
+        <span>E-posta</span>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" />
+      </label>
+
+      <label class="input-group">
+        <span>Şifre</span>
+        <input type="password" id="password" placeholder="En az 6 karakter" autocomplete="current-password" />
+      </label>
+
+      <label class="input-group hidden" id="confirmPasswordWrapper" style="display:none">
+        <span>Şifreyi Onayla</span>
+        <input type="password" id="confirmPassword" placeholder="Şifrenizi tekrar girin" autocomplete="new-password" />
+      </label>
+
+      <label class="input-group hidden" id="userTypeWrapper" hidden style="display:none">
+        <span>Kayıt Türü</span>
+        <select id="userType">
+          <option value="worker">Çalışan</option>
+          <option value="restaurant">Restoran</option>
+        </select>
+      </label>
+
+      <div id="restaurantFields" class="hidden" hidden style="display:none">
+        <label class="input-group">
+          <span>İŞLETME ADI</span>
+          <input type="text" id="businessName" placeholder="İşletmenizin adı" />
+        </label>
+        <label class="input-group">
+          <span>İŞLETME ADRESİ - İL</span>
+          <input type="text" id="businessCity" placeholder="İstanbul" />
+        </label>
+        <label class="input-group">
+          <span>İlçe</span>
+          <input type="text" id="businessDistrict" placeholder="Kadıköy" />
+        </label>
+        <label class="input-group">
+          <span>Mahalle</span>
+          <input type="text" id="businessNeighborhood" placeholder="Moda" />
+        </label>
+        <label class="input-group">
+          <span>YETKİLİ AD - SOYADI / UNVAN</span>
+          <input type="text" id="authorizedName" placeholder="Ad Soyad / Ünvan" />
+        </label>
+        <label class="input-group">
+          <span>YETKİLİ TELEFON</span>
+          <input type="tel" id="authorizedPhone" placeholder="+90 5xx xxx xx xx" />
+        </label>
+        <p style="font-size: 14px; color: #666; margin: 10px 0;">(Kayıt sonrası yetkililerimiz sizinle WhatsApp üzerinden iletişime geçecektir.)</p>
+      </div>
+
+      <div id="employeeFields" class="hidden" hidden style="display:none">
+        <label class="input-group">
+          <span>AD SOYAD</span>
+          <input type="text" id="employeeName" placeholder="Adınız ve Soyadınız" />
+        </label>
+        <label class="input-group">
+          <span>DOĞUM TARİHİ</span>
+          <input type="date" id="employeeBirthDate" />
+        </label>
+        <label class="input-group">
+          <span>TELEFON NUMARASI</span>
+          <input type="tel" id="employeePhone" placeholder="+90 5xx xxx xx xx" />
+        </label>
+        <label class="input-group">
+          <span>YAŞADIĞINIZ İL</span>
+          <input type="text" id="employeeCity" placeholder="İstanbul" />
+        </label>
+        <label class="input-group">
+          <span>İlçe</span>
+          <input type="text" id="employeeDistrict" placeholder="Kadıköy" />
+        </label>
+        <label class="input-group">
+          <span>Mahalle</span>
+          <input type="text" id="employeeNeighborhood" placeholder="Moda" />
+        </label>
+        <div class="input-group">
+          <span>EĞİTİM DURUMU</span>
+          <label><input type="radio" name="education" value="lise-ogrencisi" /> Lise öğrencisi</label>
+          <label><input type="radio" name="education" value="lise-mezunu" /> Lise mezunu</label>
+          <label><input type="radio" name="education" value="universite-ogrencisi" /> Üniversite öğrencisi</label>
+          <label><input type="radio" name="education" value="universite-mezunu" /> Üniversite mezunu</label>
+          <label><input type="radio" name="education" value="diger" /> Diğer:</label>
+          <input type="text" id="educationOther" placeholder="Belirtin" style="display:none" />
+        </div>
+        <div class="input-group">
+          <span>HANGİ İŞLERİ YAPABİLİRSİN?</span>
+          <label><input type="checkbox" name="jobs" value="garson" /> Garson</label>
+          <label><input type="checkbox" name="jobs" value="sef-garson" /> Şef Garson</label>
+          <label><input type="checkbox" name="jobs" value="komi" /> Komi</label>
+          <label><input type="checkbox" name="jobs" value="barista" /> Barista</label>
+          <label><input type="checkbox" name="jobs" value="bulasikci" /> Bulaşıkçı</label>
+          <label><input type="checkbox" name="jobs" value="host" /> Host - Hostes</label>
+          <label><input type="checkbox" name="jobs" value="asci" /> Aşçı</label>
+          <label><input type="checkbox" name="jobs" value="diger" /> Diğer:</label>
+          <input type="text" id="jobsOther" placeholder="Belirtin" style="display:none" />
+        </div>
+        <div class="input-group">
+          <span>HANGİ GÜNLER MÜSAİTSİN?</span>
+          <label><input type="checkbox" name="days" value="pazartesi" /> Pazartesi</label>
+          <label><input type="checkbox" name="days" value="sali" /> Salı</label>
+          <label><input type="checkbox" name="days" value="carsamba" /> Çarşamba</label>
+          <label><input type="checkbox" name="days" value="persembe" /> Perşembe</label>
+          <label><input type="checkbox" name="days" value="cuma" /> Cuma</label>
+          <label><input type="checkbox" name="days" value="cumartesi" /> Cumartesi</label>
+          <label><input type="checkbox" name="days" value="pazar" /> Pazar</label>
+        </div>
+        <div class="input-group">
+          <span>HANGİ ÇALIŞMA ŞEKLİ İÇİN UYGUNSUN?</span>
+          <label><input type="checkbox" name="workTypes" value="tam-zamanli" /> Tam zamanlı</label>
+          <label><input type="checkbox" name="workTypes" value="yari-zamanli" /> Yarı Zamanlı</label>
+          <label><input type="checkbox" name="workTypes" value="tek-seferlik" /> Tek seferlik</label>
+          <label><input type="checkbox" name="workTypes" value="aksam-vardiyasi" /> Akşam Vardiyası</label>
+        </div>
+        <div class="input-group">
+          <span>SİZE UYGUN İŞLER WHATSAPP ÜZERİNDEN GÖNDERİLSİN Mİ?</span>
+          <p>(Başvurunuz onaylandığında yetkililerimiz sizinle WhatsApp üzerinden iletişime geçecektir.)</p>
+          <label><input type="radio" name="whatsapp" value="yes" /> Evet</label>
+          <label><input type="radio" name="whatsapp" value="no" /> Hayır</label>
+        </div>
+      </div>
+
+      <button class="btn primary" id="authSubmit">Giriş Yap</button>
+      <button class="btn ghost hidden" type="button" id="signupBackButton" style="display:none">Geri</button>
+      <button class="btn ghost" type="button" id="toggleAuthMode">Hesabın yok mu? Kayıt Ol</button>
+      <button class="btn secondary hidden" type="button" id="logoutButton">Çıkış Yap</button>
+
+      </section>
+  </main>
+
+  <div id="footerContainer"></div>
+
+  <script src="firebase.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

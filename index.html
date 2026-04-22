@@ -30,17 +30,10 @@
 
 
        <div id="mainButtons" class="card">
-    <button class="btn primary" onclick="showRestaurant()">🍽 Personel Bul</button>
-    <button class="btn secondary" onclick="goToWorkerForm()">👤 Günlük İş Bul</button>
+    <button class="btn primary" onclick="window.location.href='personel-bul.html'">🍽 İlan Oluştur / Personel Bul</button>
+    <button class="btn secondary" onclick="window.location.href='gunluk-is-bul.html'">👤 Günlük İş Bul</button>
   </div>
 
-  
-
-  <div id="restaurantOptions" class="card hidden">
-    <button class="btn primary" onclick="goToRestaurantRegister()">📋 İş Veren Kayıt</button>
-    <button class="btn secondary" onclick="goToJobRequest()">⚡ Personel Talep Et</button>
-    <button class="btn ghost" onclick="goBack()">⬅ Geri</button>
-  </div>
   </div>
 
 
@@ -74,6 +67,7 @@
 </section>
   <div id="footerContainer"></div>
 
+<script src="firebase.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

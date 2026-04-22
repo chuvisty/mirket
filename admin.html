@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirket | Admin Paneli</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .application-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background-color: #f9f9f9;
+    }
+    .application-card h3 { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+<div id="headerContainer"></div>
+
+<main class="container">
+  <section class="card" id="adminSection">
+    <h1>Yönetici Paneli</h1>
+    <p>Tüm işçi başvurularını buradan görüntüleyebilirsiniz. İşletmelerle iletişime geçip onay/ödeme aldıktan sonra işçi bilgilerini iletebilirsiniz.</p>
+
+    <div id="adminMessage" class="auth-message hidden" role="alert"></div>
+
+    <div id="adminApplicationsList" class="jobs-list hidden">
+      <p>Yükleniyor...</p>
+    </div>
+  </section>
+</main>
+<div id="footerContainer"></div>
+
+<script src="firebase.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

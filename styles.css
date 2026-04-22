@@ -288,6 +288,90 @@ nav a:hover {
   animation: fadeIn 1s ease-in;
 }
 
+.auth-card {
+  max-width: 420px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group span {
+  font-weight: 600;
+  color: #444;
+}
+
+.input-group input {
+  padding: 14px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.input-group select {
+  padding: 14px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s ease;
+  background: white;
+  cursor: pointer;
+}
+
+.input-group input:focus, .input-group select:focus {
+  border-color: #1064ac;
+}
+
+#employeeFields .input-group,
+#restaurantFields .input-group {
+  margin-bottom: 24px;
+}
+
+.auth-message {
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.auth-message.hidden {
+  display: none;
+}
+
+.auth-message.info {
+  background: #edf2ff;
+  color: #1e3a8a;
+}
+
+.auth-message.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.auth-message.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.auth-message.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.small-text {
+  color: #555;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 10px;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

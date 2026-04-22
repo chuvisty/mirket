@@ -12,16 +12,22 @@
 
 
 <main class="container">
+  <section class="card" id="workerFeedSection">
+    <h1 id="workerFeedTitle">Aktif İlanlar</h1>
+    <p id="workerFeedDesc">Bölgendeki açık pozisyonları incele ve hemen başvur.</p>
 
-  <div id="mainButtons" class="card">
-     <button class="btn secondary" onclick="goToWorkerForm()">👤 İş Arıyorum</button>
-  </div>
+    <div id="workerFeedMessage" class="auth-message hidden" role="alert"></div>
 
-
+    <div id="jobsFeedList" class="jobs-list hidden">
+      <!-- Jobs will be rendered here dynamically -->
+      <p>Yükleniyor...</p>
+    </div>
+  </section>
 </main>
 
 <div id="footerContainer"></div>
 
+<script src="firebase.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
