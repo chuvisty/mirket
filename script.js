@@ -398,7 +398,7 @@ async function loadWorkerJobs(user) {
       let html = '';
       jobsArray.forEach(job => {
         html += `
-          <div class="card" style="border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; text-align: left;">
+          <div class="job-card">
             <h3 style="margin-top:0;">${job.jobRole} Aranıyor</h3>
             <p><strong>İşletme:</strong> ${job.restaurantName} (${job.restaurantDistrict}/${job.restaurantCity})</p>
             <p><strong>Tarih/Saat:</strong> ${job.jobDate} | ${job.jobStartTime} - ${job.jobEndTime}</p>
@@ -421,6 +421,38 @@ async function applyForJob(jobId, restaurantId, restaurantName, jobRole) {
   if (!user) {
     alert("Başvuru yapmak için giriş yapmalısınız.");
     return;
+  }
+
+  // Mükerrer başvuru kontrolü
+  try {
+    const appsRef = window.firebaseFirestore.collection(window.db, 'jobApplications');
+    const q = window.firebaseFirestore.query(
+      appsRef, 
+      window.firebaseFirestore.where('jobId', '==', jobId),
+      window.firebaseFirestore.where('workerId', '==', user.uid)
+    );
+    const snap = await window.firebaseFirestore.getDocs(q);
+    if (!snap.empty) {
+      alert("Bu ilana zaten başvurdunuz.");
+      return;
+    }
+  } catch (e) {
+    console.error("Mükerrer başvuru kontrolü hatası:", e);
+    // Continue even if index fails for now, or alert error.
+    // For MVP, we alert and stop if we can't verify to be safe, but a missing index might crash it.
+    // Let's fallback: fetch all user's applications and filter in JS if index is missing.
+    try {
+        const qUserApps = window.firebaseFirestore.query(appsRef, window.firebaseFirestore.where('workerId', '==', user.uid));
+        const userAppsSnap = await window.firebaseFirestore.getDocs(qUserApps);
+        let alreadyApplied = false;
+        userAppsSnap.forEach(d => { if (d.data().jobId === jobId) alreadyApplied = true; });
+        if (alreadyApplied) {
+            alert("Bu ilana zaten başvurdunuz.");
+            return;
+        }
+    } catch(err2) {
+         console.warn("Could not verify duplicate application", err2);
+    }
   }
 
   const confirmMsg = `"${restaurantName}" işletmesinin "${jobRole}" ilanına başvurmak istediğinize emin misiniz?`;
@@ -453,6 +485,74 @@ async function applyForJob(jobId, restaurantId, restaurantName, jobRole) {
     alert("Başvuru sırasında bir hata oluştu.");
   }
 }
+
+// ==========================================
+// WORKER MY APPLICATIONS
+// ==========================================
+
+function showWorkerFeed() {
+  document.getElementById('workerFeedSection').classList.remove('hidden');
+  const myApps = document.getElementById('myApplicationsSection');
+  if (myApps) myApps.classList.add('hidden');
+}
+
+function showMyApplications() {
+  document.getElementById('workerFeedSection').classList.add('hidden');
+  const myApps = document.getElementById('myApplicationsSection');
+  if (myApps) {
+    myApps.classList.remove('hidden');
+    loadMyApplications();
+  }
+}
+
+async function loadMyApplications() {
+  const list = document.getElementById('myApplicationsList');
+  if (!list) return;
+
+  const user = window.auth?.currentUser;
+  if (!user) return;
+
+  list.innerHTML = '<p>Başvurularınız yükleniyor...</p>';
+
+  try {
+    const appsRef = window.firebaseFirestore.collection(window.db, 'jobApplications');
+    const q = window.firebaseFirestore.query(appsRef, window.firebaseFirestore.where('workerId', '==', user.uid));
+    const snapshot = await window.firebaseFirestore.getDocs(q);
+
+    let appsArray = [];
+    snapshot.forEach(doc => appsArray.push({ id: doc.id, ...doc.data() }));
+    appsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+    if (appsArray.length === 0) {
+      list.innerHTML = '<p>Henüz bir ilana başvurmadınız.</p>';
+      return;
+    }
+
+    let html = '';
+    appsArray.forEach(app => {
+      const dateStr = app.createdAt && typeof app.createdAt.toDate === 'function' ? app.createdAt.toDate().toLocaleString('tr-TR') : '';
+      let statusBadge = '';
+      if (app.status === 'pending') statusBadge = '<span style="color:orange; font-weight:bold;">İnceleniyor</span>';
+      else if (app.status === 'approved') statusBadge = '<span style="color:green; font-weight:bold;">Onaylandı (Size ulaşılacak)</span>';
+      else if (app.status === 'rejected') statusBadge = '<span style="color:red; font-weight:bold;">Olumsuz</span>';
+      else statusBadge = `<span style="color:blue; font-weight:bold;">${app.status}</span>`;
+
+      html += `
+        <div class="job-card">
+          <h3 style="margin-top:0;">${app.jobRole}</h3>
+          <p><strong>İşletme:</strong> ${app.restaurantName}</p>
+          <p><strong>Durum:</strong> ${statusBadge}</p>
+          <p><small>Başvuru Tarihi: ${dateStr}</small></p>
+        </div>
+      `;
+    });
+    list.innerHTML = html;
+  } catch (e) {
+    console.error(e);
+    list.innerHTML = '<p>Başvurular yüklenirken hata oluştu.</p>';
+  }
+}
+
 
 // ==========================================
 // RESTAURANT MY JOBS LOGIC
@@ -503,7 +603,7 @@ async function loadRestaurantJobs(restaurantId) {
       const isActive = job.status === 'active';
       const statusText = isActive ? '<span style="color:green;font-weight:bold;">Aktif</span>' : '<span style="color:gray;">Pasif</span>';
       html += `
-        <div class="card" style="border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; text-align: left;">
+        <div class="job-card">
           <h3 style="margin-top:0;">${job.jobRole} (${job.jobDate})</h3>
           <p><strong>Durum:</strong> ${statusText}</p>
           <p><strong>Saat:</strong> ${job.jobStartTime} - ${job.jobEndTime} | <strong>Kişi:</strong> ${job.jobPeopleCount}</p>
@@ -616,25 +716,81 @@ async function loadAllApplications() {
       return;
     }
 
-    let html = '';
+    // Group by jobId
+    const grouped = {};
     appsArray.forEach(app => {
-      const dateStr = app.createdAt && typeof app.createdAt.toDate === 'function' ? app.createdAt.toDate().toLocaleString('tr-TR') : '';
-      html += `
-        <div class="application-card">
-          <h3>${app.jobRole} Başvurusu</h3>
-          <p><strong>İşletme:</strong> ${app.restaurantName}</p>
-          <hr style="border: 0; border-top: 1px solid #ccc; margin: 10px 0;">
-          <p><strong>İşçi Adı:</strong> ${app.workerName}</p>
-          <p><strong>Telefon:</strong> ${app.workerPhone}</p>
-          <p><strong>E-posta:</strong> ${app.workerEmail}</p>
-          <p><small>Tarih: ${dateStr}</small></p>
-        </div>
-      `;
+      const jId = app.jobId || 'unknown';
+      if (!grouped[jId]) {
+        grouped[jId] = {
+          jobRole: app.jobRole,
+          restaurantName: app.restaurantName,
+          applications: []
+        };
+      }
+      grouped[jId].applications.push(app);
     });
+
+    let html = '';
+    for (const jId in grouped) {
+      const group = grouped[jId];
+      html += `
+        <div class="card" style="border: 2px solid #1064ac; margin-bottom: 20px; padding: 15px; text-align: left; width: 100%; box-sizing: border-box;">
+          <h2 style="margin-top:0; color: #1064ac;">İlan: ${group.jobRole}</h2>
+          <p><strong>İşletme:</strong> ${group.restaurantName}</p>
+          <h3 style="margin-top:15px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Gelen Başvurular</h3>
+      `;
+      group.applications.forEach(app => {
+        const dateStr = app.createdAt && typeof app.createdAt.toDate === 'function' ? app.createdAt.toDate().toLocaleString('tr-TR') : '';
+        const phone = app.workerPhone ? app.workerPhone.replace(/[^0-9+]/g, '') : '';
+        const waLink = phone ? `https://wa.me/${phone}` : '#';
+        const telLink = phone ? `tel:${phone}` : '#';
+        
+        let statusBadge = '';
+        if (app.status === 'pending') statusBadge = '<span style="color:orange; font-weight:bold;">Bekliyor</span>';
+        else if (app.status === 'approved') statusBadge = '<span style="color:green; font-weight:bold;">Onaylandı</span>';
+        else if (app.status === 'rejected') statusBadge = '<span style="color:red; font-weight:bold;">Reddedildi</span>';
+        else statusBadge = `<span style="color:blue; font-weight:bold;">${app.status}</span>`;
+
+        html += `
+          <div class="application-card" style="margin-top: 15px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
+            <p style="margin: 0 0 8px 0;"><strong>İşçi:</strong> ${app.workerName} - ${statusBadge}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Telefon:</strong> ${app.workerPhone} 
+              <a href="${waLink}" target="_blank" class="btn secondary" style="padding: 4px 8px; font-size:12px; text-decoration:none; background-color:#25D366; color:white;">WhatsApp</a>
+              <a href="${telLink}" class="btn secondary" style="padding: 4px 8px; font-size:12px; text-decoration:none; background-color:#34b7f1; color:white;">Ara</a>
+            </p>
+            <p style="margin: 0 0 8px 0;"><small>Tarih: ${dateStr}</small></p>
+            <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+              <select id="status_${app.id}" style="padding: 6px; border-radius: 5px; border: 1px solid #ccc;">
+                <option value="pending" ${app.status === 'pending' ? 'selected' : ''}>Bekliyor</option>
+                <option value="approved" ${app.status === 'approved' ? 'selected' : ''}>Onayla</option>
+                <option value="rejected" ${app.status === 'rejected' ? 'selected' : ''}>Reddet</option>
+              </select>
+              <button class="btn secondary" style="padding: 6px 12px; width: auto;" onclick="updateAppStatus('${app.id}')">Durumu Güncelle</button>
+            </div>
+          </div>
+        `;
+      });
+      html += `</div>`;
+    }
     list.innerHTML = html;
   } catch (e) {
     console.error(e);
     list.innerHTML = '<p>Başvurular yüklenirken hata oluştu.</p>';
+  }
+}
+
+async function updateAppStatus(appId) {
+  const select = document.getElementById('status_' + appId);
+  if (!select) return;
+  const newStatus = select.value;
+  try {
+    const appRef = window.firebaseFirestore.doc(window.db, 'jobApplications', appId);
+    await window.firebaseFirestore.updateDoc(appRef, { status: newStatus });
+    alert('Başvuru durumu başarıyla güncellendi!');
+    loadAllApplications(); // Yenile
+  } catch(e) {
+    console.error(e);
+    alert('Durum güncellenirken hata oluştu.');
   }
 }
 

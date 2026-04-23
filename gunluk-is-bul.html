@@ -12,6 +12,11 @@
 
 
 <main class="container">
+  <div style="width: 100%; max-width: 600px; display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
+    <button class="btn primary" style="flex: 1;" onclick="showWorkerFeed()">Aktif İlanlar</button>
+    <button class="btn secondary" style="flex: 1;" onclick="showMyApplications()">Başvurularım</button>
+  </div>
+
   <section class="card" id="workerFeedSection">
     <h1 id="workerFeedTitle">Aktif İlanlar</h1>
     <p id="workerFeedDesc">Bölgendeki açık pozisyonları incele ve hemen başvur.</p>
@@ -20,6 +25,15 @@
 
     <div id="jobsFeedList" class="jobs-list hidden">
       <!-- Jobs will be rendered here dynamically -->
+      <p>Yükleniyor...</p>
+    </div>
+  </section>
+
+  <section class="card hidden" id="myApplicationsSection">
+    <h1>Başvurularım</h1>
+    <p>Daha önce başvuru yaptığınız ilanlar ve güncel durumları.</p>
+    
+    <div id="myApplicationsList" class="jobs-list">
       <p>Yükleniyor...</p>
     </div>
   </section>
