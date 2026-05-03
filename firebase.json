@@ -19,6 +19,7 @@
       "googleSignIn": {
         "oAuthBrandDisplayName": "Mirket.",
         "supportEmail": "support@undefined.firebaseapp.com"
+      }
     }
   },
   "functions": {
