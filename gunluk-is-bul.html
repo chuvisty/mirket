@@ -23,6 +23,12 @@
 
     <div id="workerFeedMessage" class="auth-message hidden" role="alert"></div>
 
+    <div class="filter-section" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+      <input type="text" id="filterCity" placeholder="İl (örn. İstanbul)" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+      <input type="text" id="filterDistrict" placeholder="İlçe (opsiyonel)" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+      <button class="btn secondary" style="width: auto; padding: 10px 20px;" onclick="applyFilters()">Filtrele</button>
+    </div>
+
     <div id="jobsFeedList" class="jobs-list hidden">
       <!-- Jobs will be rendered here dynamically -->
       <p>Yükleniyor...</p>
@@ -42,6 +48,11 @@
 <div id="footerContainer"></div>
 
 <script src="firebase.js"></script>
-<script src="script.js"></script>
+<script src="js/core.js"></script>
+<script src="js/auth-ui.js"></script>
+<script src="js/account.js"></script>
+<script src="js/restaurant.js"></script>
+<script src="js/worker.js"></script>
+<script src="js/admin.js"></script>
 </body>
 </html>

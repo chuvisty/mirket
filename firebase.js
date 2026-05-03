@@ -12,10 +12,18 @@ async function initFirebase() {
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js");
   const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js");
   const { getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, orderBy } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
+  const { getFunctions, httpsCallable, connectFunctionsEmulator } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-functions.js");
 
   const app = initializeApp(firebaseConfig);
   window.auth = getAuth(app);
   window.db = getFirestore(app);
+  window.functions = getFunctions(app, "europe-west3");
+
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    connectFunctionsEmulator(window.functions, "127.0.0.1", 5001);
+    console.log("Firebase Functions Emulator connected.");
+  }
+
   window.firebaseAuth = {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
@@ -35,6 +43,9 @@ async function initFirebase() {
     updateDoc,
     deleteDoc,
     orderBy
+  };
+  window.firebaseFunctions = {
+    httpsCallable
   };
 }
 
