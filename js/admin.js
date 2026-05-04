@@ -216,8 +216,8 @@ async function triggerWhatsAppNotification(jobId, workerId) {
   if (statusSpan) statusSpan.textContent = "İşlem yapılıyor...";
 
   try {
-    const sendmanualwhatsapppush = window.firebaseFunctions.httpsCallable(window.functions, 'sendmanualwhatsapppush');
-    const result = await sendmanualwhatsapppush({ jobId, workerId });
+    const sendWhatsAppPush = window.firebaseFunctions.httpsCallable(window.functions, 'sendWhatsAppPush');
+    const result = await sendWhatsAppPush({ jobId, workerId });
     
     if (statusSpan) {
       statusSpan.textContent = "✅ Başarıyla Gönderildi!";

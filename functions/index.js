@@ -8,7 +8,7 @@ admin.initializeApp();
  * Callable function to manually trigger a WhatsApp push notification to a specific worker.
  * Must be called by an authenticated Admin.
  */
-exports.sendmanualwhatsapppush = functions.region('europe-west3').https.onCall(async (data, context) => {
+exports.sendWhatsAppPush = functions.region('europe-west3').https.onCall(async (data, context) => {
     // 1. Verify Authentication & Authorization
     if (!context.auth) {
         throw new functions.https.HttpsError("unauthenticated", "You must be logged in to call this function.");
