@@ -81,7 +81,26 @@ exports.sendmanualwhatsapppush = onCall({ cors: true }, async (request) => {
                     name: TEMPLATE_NAME,
                     language: {
                         code: "tr"
-                    }
+                    },
+                    components: [
+                        {
+                            type: "body",
+                            parameters: [
+                                {
+                                    type: "text",
+                                    text: jobData.restaurantName || "Bir restoran"
+                                },
+                                {
+                                    type: "text",
+                                    text: jobData.jobRole || "yeni bir pozisyon"
+                                },
+                                {
+                                    type: "text",
+                                    text: "https://mirket-team.web.app"
+                                }
+                            ]
+                        }
+                    ]
                 }
             },
             {
