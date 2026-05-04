@@ -12,7 +12,7 @@ setGlobalOptions({ region: "europe-west3" });
  * Callable function to manually trigger a WhatsApp push notification to a specific worker.
  * Must be called by an authenticated Admin.
  */
-exports.sendManualWhatsAppPush = onCall(async (request) => {
+exports.sendmanualwhatsapppush = onCall({ cors: true }, async (request) => {
     // 1. Verify Authentication & Authorization
     if (!request.auth) {
         throw new HttpsError("unauthenticated", "You must be logged in to call this function.");
