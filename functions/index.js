@@ -1,33 +1,29 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { setGlobalOptions } = require("firebase-functions/v2");
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const axios = require("axios");
 
 admin.initializeApp();
 
-// Set global options, e.g., max instances, region
-setGlobalOptions({ region: "europe-west3" });
-
 /**
  * Callable function to manually trigger a WhatsApp push notification to a specific worker.
  * Must be called by an authenticated Admin.
  */
-exports.sendmanualwhatsapppush = onCall({ cors: true }, async (request) => {
+exports.sendmanualwhatsapppush = functions.region('europe-west3').https.onCall(async (data, context) => {
     // 1. Verify Authentication & Authorization
-    if (!request.auth) {
-        throw new HttpsError("unauthenticated", "You must be logged in to call this function.");
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "You must be logged in to call this function.");
     }
 
-    const callerId = request.auth.uid;
+    const callerId = context.auth.uid;
     const callerRef = admin.firestore().collection("users").doc(callerId);
     const callerSnap = await callerRef.get();
 
     if (!callerSnap.exists || callerSnap.data().userType !== "admin") {
-        throw new HttpsError("permission-denied", "Only administrators can send manual WhatsApp messages.");
+        throw new functions.https.HttpsError("permission-denied", "Only administrators can send manual WhatsApp messages.");
     }
 
     // 2. Extract Data from Request
-    const { jobId, workerId } = request.data;
+    const { jobId, workerId } = data;
     if (!jobId || !workerId) {
         throw new HttpsError("invalid-argument", "Missing jobId or workerId in the request.");
     }
@@ -36,12 +32,12 @@ exports.sendmanualwhatsapppush = onCall({ cors: true }, async (request) => {
         // 3. Fetch Worker & Job details
         const workerSnap = await admin.firestore().collection("users").doc(workerId).get();
         if (!workerSnap.exists) {
-            throw new HttpsError("not-found", "Worker not found.");
+            throw new functions.https.HttpsError("not-found", "Worker not found.");
         }
         
         const jobSnap = await admin.firestore().collection("jobRequests").doc(jobId).get();
         if (!jobSnap.exists) {
-            throw new HttpsError("not-found", "Job request not found.");
+            throw new functions.https.HttpsError("not-found", "Job request not found.");
         }
 
         const workerData = workerSnap.data();
@@ -49,12 +45,12 @@ exports.sendmanualwhatsapppush = onCall({ cors: true }, async (request) => {
 
         // 4. Validate Worker constraints
         if (workerData.whatsapp !== "yes") {
-            throw new HttpsError("failed-precondition", "Worker has not opted in to WhatsApp notifications.");
+            throw new functions.https.HttpsError("failed-precondition", "Worker has not opted in to WhatsApp notifications.");
         }
 
         const rawPhone = workerData.employeePhone;
         if (!rawPhone) {
-            throw new HttpsError("failed-precondition", "Worker does not have a valid phone number.");
+            throw new functions.https.HttpsError("failed-precondition", "Worker does not have a valid phone number.");
         }
 
         // Format phone to E.164 without '+'
@@ -117,10 +113,10 @@ exports.sendmanualwhatsapppush = onCall({ cors: true }, async (request) => {
     } catch (error) {
         console.error("Error processing manual WhatsApp push:", error.response?.data || error.message);
         
-        if (error instanceof HttpsError) {
+        if (error instanceof functions.https.HttpsError) {
             throw error;
         }
 
-        throw new HttpsError("internal", "An error occurred while sending the message. Check logs for details.");
+        throw new functions.https.HttpsError("internal", "An error occurred while sending the message. Check logs for details.");
     }
 });
