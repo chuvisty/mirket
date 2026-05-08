@@ -25,7 +25,7 @@ exports.sendWhatsAppPush = functions.region('europe-west3').https.onCall(async (
     // 2. Extract Data from Request
     const { jobId, workerId } = data;
     if (!jobId || !workerId) {
-        throw new HttpsError("invalid-argument", "Missing jobId or workerId in the request.");
+        throw new functions.https.HttpsError("invalid-argument", "Missing jobId or workerId in the request.");
     }
 
     try {
