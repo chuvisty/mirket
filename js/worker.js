@@ -74,8 +74,34 @@ async function loadWorkerJobs(user, workerData) {
 
     const snapshot = await window.firebaseFirestore.getDocs(q);
 
+    // Başvurulan ilanları getir
+    let appliedJobIds = new Set();
+    try {
+      const appsRef = window.firebaseFirestore.collection(window.db, 'jobApplications');
+      const appsQ = window.firebaseFirestore.query(appsRef, window.firebaseFirestore.where('workerId', '==', user.uid));
+      const appsSnap = await window.firebaseFirestore.getDocs(appsQ);
+      appsSnap.forEach(appDoc => appliedJobIds.add(appDoc.data().jobId));
+    } catch (err) {
+      console.warn("Could not fetch user applications for marker", err);
+    }
+
+    const threeWeeksAgo = new Date();
+    threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21);
+
     let jobsArray = [];
-    snapshot.forEach(doc => jobsArray.push({ id: doc.id, ...doc.data() }));
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const createdAtDate = data.createdAt ? data.createdAt.toDate() : new Date();
+      
+      // 3 haftadan eski aktif ilanları otomatik olarak 'expired' (süresi doldu) yap
+      if (createdAtDate < threeWeeksAgo) {
+        try {
+           window.firebaseFirestore.updateDoc(doc.ref, { status: 'expired' });
+        } catch(e) { console.warn("Failed to auto-expire job", e); }
+      } else {
+        jobsArray.push({ id: doc.id, ...data });
+      }
+    });
     
     // Sort in memory to avoid needing composite indexes in Firestore
     jobsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
@@ -87,6 +113,11 @@ async function loadWorkerJobs(user, workerData) {
 
     let html = '';
     jobsArray.forEach(job => {
+      const alreadyApplied = appliedJobIds.has(job.id);
+      const buttonHtml = alreadyApplied 
+        ? `<button class="btn secondary" style="width:auto; padding: 8px 16px; opacity: 0.6; cursor: not-allowed;" disabled>Zaten Başvuruldu</button>`
+        : `<button class="btn secondary" style="width:auto; padding: 8px 16px;" onclick="applyForJob('${job.id}', '${job.restaurantId}', '${job.restaurantName}', '${job.jobRole}')">Başvur</button>`;
+
       html += `
         <div class="job-card" style="border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; text-align: left;">
           <h3 style="margin-top:0;">${job.jobRole} Aranıyor</h3>
@@ -94,7 +125,7 @@ async function loadWorkerJobs(user, workerData) {
           <p><strong>Tarih/Saat:</strong> ${job.jobDate} | ${job.jobStartTime} - ${job.jobEndTime}</p>
           <p><strong>Kişi Sayısı:</strong> ${job.jobPeopleCount}</p>
           <p><strong>Detaylar:</strong> ${job.jobDetails}</p>
-          <button class="btn secondary" style="width:auto; padding: 8px 16px;" onclick="applyForJob('${job.id}', '${job.restaurantId}', '${job.restaurantName}', '${job.jobRole}')">Başvur</button>
+          ${buttonHtml}
         </div>
       `;
     });

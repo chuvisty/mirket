@@ -173,15 +173,21 @@ async function loadRestaurantJobs(restaurantId) {
 
     let html = '';
     jobsArray.forEach(job => {
+      let statusText = '';
+      if (job.status === 'active') statusText = '<span style="color:green;font-weight:bold;">Aktif</span>';
+      else if (job.status === 'expired') statusText = '<span style="color:red;font-weight:bold;">Süresi Doldu</span>';
+      else statusText = '<span style="color:gray;">Pasif</span>';
+      
       const isActive = job.status === 'active';
-      const statusText = isActive ? '<span style="color:green;font-weight:bold;">Aktif</span>' : '<span style="color:gray;">Pasif</span>';
+      const toggleBtnText = isActive ? 'Pasif Yap' : 'Yeniden Yayınla (Aktif Yap)';
+
       html += `
         <div class="job-card">
           <h3 style="margin-top:0;">${job.jobRole} (${job.jobDate})</h3>
           <p><strong>Durum:</strong> ${statusText}</p>
           <p><strong>Saat:</strong> ${job.jobStartTime} - ${job.jobEndTime} | <strong>Kişi:</strong> ${job.jobPeopleCount}</p>
           <div style="margin-top: 10px; display: flex; gap: 10px;">
-            <button class="btn secondary" style="width:auto; padding: 5px 10px;" onclick="toggleJobStatus('${job.id}', '${job.status}')">${isActive ? 'Pasif Yap' : 'Aktif Yap'}</button>
+            <button class="btn secondary" style="width:auto; padding: 5px 10px;" onclick="toggleJobStatus('${job.id}', '${job.status}')">${toggleBtnText}</button>
             <button class="btn ghost" style="width:auto; padding: 5px 10px; color: red;" onclick="deleteJob('${job.id}')">Sil</button>
           </div>
         </div>

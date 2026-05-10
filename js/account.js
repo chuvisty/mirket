@@ -67,7 +67,7 @@ async function renderAccountPage(user) {
       ? userData.createdAt.toDate().toLocaleString('tr-TR')
       : '';
 
-    const userTypeLabel = userData.userType === 'restaurant' ? 'Restoran' : 'Çalışan';
+    const userTypeLabel = userData.userType === 'restaurant' ? 'Restoran' : userData.userType === 'admin' ? 'Yönetici (Admin)' : 'Çalışan';
     const details = [];
 
     details.push(`<p><strong>E-posta:</strong> ${user.email || ''}</p>`);
@@ -95,6 +95,19 @@ async function renderAccountPage(user) {
 
     accountDetails.innerHTML = details.join('');
     setAccountMessage('', 'info');
+
+    // Show Admin Panel button if admin
+    const adminBtn = document.getElementById('adminPanelButton');
+    if (adminBtn) {
+      if (userData.userType === 'admin') {
+        adminBtn.classList.remove('hidden');
+        adminBtn.style.display = '';
+      } else {
+        adminBtn.classList.add('hidden');
+        adminBtn.style.display = 'none';
+      }
+    }
+
   } catch (error) {
     console.error('Hesap bilgileri yükleme hatası:', error);
     setAccountMessage('Hesap bilgileri yüklenirken bir hata oluştu.', 'error');
