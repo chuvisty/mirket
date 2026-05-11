@@ -118,8 +118,12 @@ async function loadWorkerJobs(user, workerData) {
         ? `<button class="btn secondary" style="width:auto; padding: 8px 16px; opacity: 0.6; cursor: not-allowed;" disabled>Zaten Başvuruldu</button>`
         : `<button class="btn secondary" style="width:auto; padding: 8px 16px;" onclick="applyForJob('${job.id}', '${job.restaurantId}', '${job.restaurantName}', '${job.jobRole}')">Başvur</button>`;
 
+      const cardStyle = alreadyApplied 
+        ? "background-color: #f8fafc; border: 1px solid #e2e8f0; opacity: 0.8;" 
+        : "background-color: #ffffff; border: 1px solid #ddd;";
+
       html += `
-        <div class="job-card" style="border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; text-align: left;">
+        <div class="job-card" style="${cardStyle} margin-bottom: 15px; padding: 15px; text-align: left;">
           <h3 style="margin-top:0;">${job.jobRole} Aranıyor</h3>
           <p><strong>İşletme:</strong> ${job.restaurantName} (${job.restaurantDistrict}/${job.restaurantCity})</p>
           <p><strong>Tarih/Saat:</strong> ${job.jobDate} | ${job.jobStartTime} - ${job.jobEndTime}</p>

@@ -366,7 +366,11 @@ async function handleAuthSubmit() {
         const userRef = window.firebaseFirestore.doc(window.db, 'users', window.currentUserId);
         await window.firebaseFirestore.setDoc(userRef, userData);
         showAuthMessage('Kayıt tamamlandı! Yönlendiriliyorsunuz...', 'success');
-        setTimeout(function() { window.location.href = 'index.html'; }, 1400);
+        let redirectUrl = 'index.html';
+        if (finalUserType === 'worker') redirectUrl = 'gunluk-is-bul.html';
+        else if (finalUserType === 'restaurant') redirectUrl = 'personel-bul.html';
+        else if (finalUserType === 'admin') redirectUrl = 'admin.html';
+        setTimeout(function() { window.location.href = redirectUrl; }, 1400);
       } catch (error) {
         console.error('Firestore error:', error);
         showAuthMessage('Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.', 'error');
@@ -378,7 +382,21 @@ async function handleAuthSubmit() {
   try {
     await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
     showAuthMessage('Başarıyla giriş yapıldı! Yönlendiriliyorsunuz...', 'success');
-    setTimeout(function() { window.location.href = 'index.html'; }, 1200);
+    let redirectUrl = 'index.html';
+    try {
+      if (window.firebaseAuth.currentUser) {
+        const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', window.firebaseAuth.currentUser.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.userType === 'worker') redirectUrl = 'gunluk-is-bul.html';
+          else if (userData.userType === 'restaurant') redirectUrl = 'personel-bul.html';
+          else if (userData.userType === 'admin') redirectUrl = 'admin.html';
+        }
+      }
+    } catch(err) {
+      console.error('Failed to fetch user type', err);
+    }
+    setTimeout(function() { window.location.href = redirectUrl; }, 1200);
   } catch (error) {
     const message = getAuthErrorMessage(error.code);
     showAuthMessage(message, error.code === 'auth/user-not-found' ? 'warning' : 'error');
