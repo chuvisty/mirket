@@ -29,8 +29,10 @@ realistic MVP scope
 minimal unnecessary complexity
 explicit edge cases only when they affect delivery
 outputs that can be used immediately
+optimize api , BE ,DB calls so that dont use much traffic on firebase or on other smilar services
 
 - 💻 **FE DEV (Frontend Developer):** Plan onaylandıktan sonra görevi devralır. Gerekli HTML/CSS/JS kodlamalarını modern, mobil uyumlu ve temiz bir şekilde yapar.
+optimize api , BE ,DB calls so that dont use much traffic on firebase or on other smilar services
 - 🕵️‍♂️ **QA (Quality Assurance):** Kod yazıldıktan sonra test adımlarını çalıştırır, tasarımsal kaymaları veya mantık hatalarını kontrol eder. Geliştirme özetini (Walkthrough) sunar.
 
 ## 2. İş Modeli (Broker / Ajans Modeli)

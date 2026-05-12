@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="158e607a-0804-4181-b1d8-c2982f3c8310" type="text/javascript"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mirket | Giriş Yap veya Kayıt Ol</title>
@@ -158,6 +159,15 @@
           <label><input type="radio" name="whatsapp" value="no" /> Hayır</label>
         </div>
       </div>
+      <div id="termsWrapper" class="input-group hidden" style="display:none; margin-bottom: 1rem;">
+        <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 0.9rem; cursor: pointer; text-align: left; line-height: 1.4;">
+          <input type="checkbox" id="termsCheckbox" style="margin-top: 3px;" />
+          <span>
+            <a href="#" onclick="openTermsModal('kullanim-kosullari.html', 'Kullanım Koşulları'); return false;" style="color: var(--primary-color, #2563eb); text-decoration: underline;">Kullanım Koşulları</a>'nı ve 
+            <a href="#" onclick="openTermsModal('kvkk.html', 'KVKK Aydınlatma Metni'); return false;" style="color: var(--primary-color, #2563eb); text-decoration: underline;">KVKK</a> metnini okudum, onaylıyorum.
+          </span>
+        </label>
+      </div>
 
       <button class="btn primary" id="authSubmit">Giriş Yap</button>
       <button class="btn ghost hidden" type="button" id="signupBackButton" style="display:none">Geri</button>
@@ -166,6 +176,13 @@
 
       </section>
   </main>
+
+  <div id="termsModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeTermsModal()">&times;</span>
+      <div id="termsModalBody">Yükleniyor...</div>
+    </div>
+  </div>
 
   <div id="footerContainer"></div>
 

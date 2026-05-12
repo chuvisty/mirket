@@ -230,6 +230,8 @@ function getAuthErrorMessage(code) {
 }
 
 async function handleAuthSubmit() {
+  document.querySelectorAll('.error-highlight').forEach(el => el.classList.remove('error-highlight'));
+
   const emailInput = document.getElementById('email');
   const passwordInput = document.getElementById('password');
   const confirmPasswordInput = document.getElementById('confirmPassword');
@@ -238,26 +240,53 @@ async function handleAuthSubmit() {
   const confirmPassword = confirmPasswordInput?.value;
 
   if (!email || !password) {
+    if (!email && emailInput) emailInput.classList.add('error-highlight');
+    if (!password && passwordInput) passwordInput.classList.add('error-highlight');
     showAuthMessage('Lütfen e-posta ve şifrenizi girin.', 'warning');
+    (email ? passwordInput : emailInput)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
 
   if (window.authMode === 'signup') {
-    const userType = document.getElementById('userType')?.value || 'worker';
+    const userTypeSelect = document.getElementById('userType');
+    const userType = userTypeSelect?.value || 'worker';
+    
     if (window.signupStep === 1) {
       if (window.currentUserId) {
-        // Account already created, proceed to step 2
         window.signupStep = 2;
         updateAuthUI();
         return;
       }
 
+      let hasStep1Error = false;
+      let firstEl = null;
+
       if (password !== confirmPassword) {
+        if (confirmPasswordInput) confirmPasswordInput.classList.add('error-highlight');
         showAuthMessage('Şifre ve onay şifresi eşleşmiyor.', 'warning');
+        if (confirmPasswordInput) confirmPasswordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
       if (!userType) {
-        showAuthMessage('Lütfen kayıt türünü seçin.', 'warning');
+        if (userTypeSelect) {
+          userTypeSelect.classList.add('error-highlight');
+          hasStep1Error = true;
+          firstEl = userTypeSelect;
+        }
+      }
+      const termsCheckbox = document.getElementById('termsCheckbox');
+      if (termsCheckbox && !termsCheckbox.checked) {
+        const termsWrapper = termsCheckbox.closest('.input-group') || termsCheckbox.parentElement;
+        if (termsWrapper) {
+          termsWrapper.classList.add('error-highlight');
+          hasStep1Error = true;
+          if (!firstEl) firstEl = termsWrapper;
+        }
+      }
+
+      if (hasStep1Error) {
+        showAuthMessage('Lütfen kırmızı ile işaretlenmiş alanları doldurun.', 'warning');
+        if (firstEl) firstEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
 
@@ -282,6 +311,18 @@ async function handleAuthSubmit() {
         createdAt: window.firebaseFirestore.serverTimestamp()
       };
 
+      let hasStep2Error = false;
+      let firstStep2El = null;
+
+      const markError = (idOrName, isName = false) => {
+        hasStep2Error = true;
+        let el = isName ? document.querySelector(`input[name="${idOrName}"]`)?.closest('.input-group') : document.getElementById(idOrName);
+        if (el) {
+          el.classList.add('error-highlight');
+          if (!firstStep2El) firstStep2El = el;
+        }
+      };
+
       if (finalUserType === 'restaurant' || finalUserType === 'admin') {
         const businessName = document.getElementById('businessName')?.value?.trim();
         const businessCity = document.getElementById('businessCity')?.value?.trim();
@@ -290,8 +331,16 @@ async function handleAuthSubmit() {
         const authorizedName = document.getElementById('authorizedName')?.value?.trim();
         const authorizedPhone = document.getElementById('authorizedPhone')?.value?.trim();
 
-        if (!businessName || !businessCity || !businessDistrict || !businessNeighborhood || !authorizedName || !authorizedPhone) {
-          showAuthMessage('Lütfen işletme bilgilerini eksiksiz doldurun.', 'warning');
+        if (!businessName) markError('businessName');
+        if (!businessCity) markError('businessCity');
+        if (!businessDistrict) markError('businessDistrict');
+        if (!businessNeighborhood) markError('businessNeighborhood');
+        if (!authorizedName) markError('authorizedName');
+        if (!authorizedPhone) markError('authorizedPhone');
+
+        if (hasStep2Error) {
+          showAuthMessage('Lütfen kırmızı ile işaretli işletme bilgilerini eksiksiz doldurun.', 'warning');
+          if (firstStep2El) firstStep2El.scrollIntoView({ behavior: 'smooth', block: 'center' });
           return;
         }
 
@@ -311,39 +360,61 @@ async function handleAuthSubmit() {
         const employeeDistrict = document.getElementById('employeeDistrict')?.value?.trim();
         const employeeNeighborhood = document.getElementById('employeeNeighborhood')?.value?.trim();
 
+        if (!employeeName) markError('employeeName');
+        if (!employeeBirthDate) markError('employeeBirthDate');
+        if (!employeePhone) markError('employeePhone');
+        if (!employeeCity) markError('employeeCity');
+        if (!employeeDistrict) markError('employeeDistrict');
+        if (!employeeNeighborhood) markError('employeeNeighborhood');
+
         // Education
         const educationRadios = document.querySelectorAll('input[name="education"]:checked');
         let education = '';
         if (educationRadios.length > 0) {
           education = educationRadios[0].value;
           if (education === 'diger') {
-            education = document.getElementById('educationOther')?.value?.trim() || 'Diğer';
+            const other = document.getElementById('educationOther');
+            education = other?.value?.trim();
+            if (!education) markError('educationOther');
           }
+        } else {
+          markError('education', true);
         }
 
         // Jobs
         const jobCheckboxes = document.querySelectorAll('input[name="jobs"]:checked');
         const jobs = Array.from(jobCheckboxes).map(cb => cb.value);
-        if (jobs.includes('diger')) {
+        if (jobs.length === 0) {
+          markError('jobs', true);
+        } else if (jobs.includes('diger')) {
           const otherJob = document.getElementById('jobsOther')?.value?.trim();
           if (otherJob) jobs.push(otherJob);
+          else markError('jobsOther');
           jobs.splice(jobs.indexOf('diger'), 1);
         }
 
         // Available Days
         const dayCheckboxes = document.querySelectorAll('input[name="days"]:checked');
         const availableDays = Array.from(dayCheckboxes).map(cb => cb.value);
+        if (availableDays.length === 0) markError('days', true);
 
         // Work Types
         const workTypeCheckboxes = document.querySelectorAll('input[name="workTypes"]:checked');
         const workTypes = Array.from(workTypeCheckboxes).map(cb => cb.value);
+        if (workTypes.length === 0) markError('workTypes', true);
 
         // WhatsApp
         const whatsappRadios = document.querySelectorAll('input[name="whatsapp"]:checked');
-        const whatsapp = whatsappRadios.length > 0 ? whatsappRadios[0].value : '';
+        let whatsapp = '';
+        if (whatsappRadios.length > 0) {
+          whatsapp = whatsappRadios[0].value;
+        } else {
+          markError('whatsapp', true);
+        }
 
-        if (!employeeName || !employeeBirthDate || !employeePhone || !employeeCity || !employeeDistrict || !employeeNeighborhood || !education || jobs.length === 0 || availableDays.length === 0 || workTypes.length === 0 || !whatsapp) {
-          showAuthMessage('Lütfen tüm çalışan bilgilerini eksiksiz doldurun.', 'warning');
+        if (hasStep2Error) {
+          showAuthMessage('Lütfen kırmızı ile işaretli çalışan bilgilerini eksiksiz doldurun.', 'warning');
+          if (firstStep2El) firstStep2El.scrollIntoView({ behavior: 'smooth', block: 'center' });
           return;
         }
 
@@ -426,9 +497,15 @@ function updateAuthUI() {
     userTypeWrapper.removeAttribute('hidden');
     userTypeWrapper.style.display = '';
 
+    const termsWrapper = document.getElementById('termsWrapper');
+
     if (signupStep === 1) {
       confirmWrapper.classList.remove('hidden');
       confirmWrapper.style.display = '';
+      if (termsWrapper) {
+        termsWrapper.classList.remove('hidden');
+        termsWrapper.style.display = '';
+      }
       if (signupBackButton) {
         signupBackButton.classList.add('hidden');
         signupBackButton.style.display = 'none';
@@ -436,6 +513,10 @@ function updateAuthUI() {
     } else {
       confirmWrapper.classList.add('hidden');
       confirmWrapper.style.display = 'none';
+      if (termsWrapper) {
+        termsWrapper.classList.add('hidden');
+        termsWrapper.style.display = 'none';
+      }
       if (signupBackButton) {
         signupBackButton.classList.remove('hidden');
         signupBackButton.style.display = '';
@@ -453,6 +534,11 @@ function updateAuthUI() {
     userTypeWrapper.classList.add('hidden');
     userTypeWrapper.setAttribute('hidden', '');
     userTypeWrapper.style.display = 'none';
+    const termsWrapper = document.getElementById('termsWrapper');
+    if (termsWrapper) {
+      termsWrapper.classList.add('hidden');
+      termsWrapper.style.display = 'none';
+    }
     document.getElementById('restaurantFields')?.classList.add('hidden');
     document.getElementById('employeeFields')?.classList.add('hidden');
     document.getElementById('restaurantFields')?.setAttribute('hidden', '');
@@ -464,3 +550,45 @@ function updateAuthUI() {
     toggleButton.textContent = 'Hesabın yok mu? Kayıt Ol';
   }
 }
+
+// MODAL LOGIC FOR TERMS & KVKK
+function openTermsModal(url, title) {
+  const modal = document.getElementById('termsModal');
+  const modalBody = document.getElementById('termsModalBody');
+  if (!modal || !modalBody) return;
+  
+  modalBody.innerHTML = '<p style="text-align:center;">Yükleniyor...</p>';
+  modal.classList.remove('hidden');
+  
+  fetch(url)
+    .then(response => response.text())
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const content = doc.querySelector('.terms-container .content');
+      if (content) {
+        modalBody.innerHTML = '<h2>' + title + '</h2><hr style="margin-bottom: 1rem; border:none; border-bottom: 1px solid #eee;" />' + content.innerHTML;
+      } else {
+        modalBody.innerHTML = '<p>İçerik yüklenemedi.</p>';
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      modalBody.innerHTML = '<p>Bir hata oluştu.</p>';
+    });
+}
+
+function closeTermsModal() {
+  const modal = document.getElementById('termsModal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
+// Close modal when clicking outside
+window.addEventListener('click', function(event) {
+  const modal = document.getElementById('termsModal');
+  if (event.target === modal) {
+    closeTermsModal();
+  }
+});
