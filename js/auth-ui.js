@@ -128,6 +128,7 @@ function initAuthPage() {
       }
   }
 
+  if (typeof initHourRangeSelection === 'function') initHourRangeSelection();
   if (typeof updateAuthUI === 'function') updateAuthUI();
 }
 function initAuthStateListener() {
@@ -398,6 +399,11 @@ async function handleAuthSubmit() {
         const availableDays = Array.from(dayCheckboxes).map(cb => cb.value);
         if (availableDays.length === 0) markError('days', true);
 
+        // Available Hours
+        const hourCheckboxes = document.querySelectorAll('input[name="hours"]:checked');
+        const availableHours = Array.from(hourCheckboxes).map(cb => cb.value);
+        if (availableHours.length === 0) markError('hours', true);
+
         // Work Types
         const workTypeCheckboxes = document.querySelectorAll('input[name="workTypes"]:checked');
         const workTypes = Array.from(workTypeCheckboxes).map(cb => cb.value);
@@ -428,6 +434,7 @@ async function handleAuthSubmit() {
           education,
           jobs,
           availableDays,
+          availableHours,
           workTypes,
           whatsapp
         });
@@ -592,3 +599,49 @@ window.addEventListener('click', function(event) {
     closeTermsModal();
   }
 });
+
+// Helper for Hour Pre-Selections
+function toggleHours(type) {
+  const hourCheckboxes = document.querySelectorAll('#individualHoursGroup input[name="hours"]');
+  let range = [];
+  if (type === 'tum-gun') {
+    range = Array.from(hourCheckboxes).map(cb => cb.value);
+  } else if (type === 'sabah') {
+    range = ['06-07', '07-08', '08-09', '09-10', '10-11', '11-12'];
+  } else if (type === 'oglen') {
+    range = ['10-11', '11-12', '12-13', '13-14', '14-15', '15-16'];
+  } else if (type === 'aksam') {
+    range = ['16-17', '17-18', '18-19', '19-20', '20-21', '21-22', '22-23', '23-00'];
+  }
+  
+  hourCheckboxes.forEach(cb => {
+    cb.checked = range.includes(cb.value);
+  });
+}
+
+function initHourRangeSelection() {
+  const hourCheckboxes = Array.from(document.querySelectorAll('#individualHoursGroup input[name="hours"]'));
+  if (!hourCheckboxes.length) return;
+
+  hourCheckboxes.forEach((cb) => {
+    cb.addEventListener('change', () => {
+      // Uncheck pre-selections if manual selection is made
+      const preSelections = document.querySelectorAll('input[name="hourPre"]');
+      preSelections.forEach(p => p.checked = false);
+
+      const checkedIndexes = [];
+      hourCheckboxes.forEach((box, i) => {
+        if (box.checked) checkedIndexes.push(i);
+      });
+
+      if (checkedIndexes.length >= 2) {
+        const min = Math.min(...checkedIndexes);
+        const max = Math.max(...checkedIndexes);
+        for (let i = min; i <= max; i++) {
+          hourCheckboxes[i].checked = true;
+        }
+      }
+    });
+  });
+}
+

@@ -370,7 +370,7 @@ nav a:hover {
 }
 
 .auth-card {
-  max-width: 420px;
+  max-width: 550px;
   width: 100%;
   margin: 0 auto;
 }
@@ -630,4 +630,111 @@ nav a:hover {
 }
 .input-group.error-highlight {
   padding: 10px;
+}
+
+/* PILL SELECTORS */
+.pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.pill-group.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.pill-group.grid-6 {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.pill-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 16px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  user-select: none;
+  min-width: 60px;
+}
+
+.pill-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.pill-checkbox:checked + .pill-label {
+  background: linear-gradient(135deg, #f68709, #ea580c);
+  color: white;
+  border-color: #ea580c;
+  box-shadow: 0 4px 10px rgba(234, 88, 12, 0.2);
+}
+
+.pill-checkbox:focus-visible + .pill-label {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+/* Specific modifiers for hour blocks to match image layout */
+.hour-block {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.hour-block span {
+  display: block;
+  line-height: 1.2;
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 20px 10px;
+  }
+  
+  .card, .auth-card {
+    padding: 20px 12px;
+  }
+  
+  .pill-label {
+    padding: 8px 2px;
+    font-size: 11px;
+    min-width: 0;
+    word-break: break-word;
+    white-space: normal;
+  }
+  
+  .hour-block {
+    padding: 4px 2px;
+    font-size: 10px;
+  }
+  
+  .pill-group {
+    gap: 4px;
+  }
+  
+  /* Change the 4-column pre-selection to 2-column on very small screens to ensure fit */
+  .pill-group.grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  
+  .pill-group.grid-6 {
+    gap: 4px;
+  }
 }

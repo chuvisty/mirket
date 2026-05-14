@@ -137,13 +137,50 @@
         </div>
         <div class="input-group">
           <span>HANGİ GÜNLER MÜSAİTSİN?</span>
-          <label><input type="checkbox" name="days" value="pazartesi" /> Pazartesi</label>
-          <label><input type="checkbox" name="days" value="sali" /> Salı</label>
-          <label><input type="checkbox" name="days" value="carsamba" /> Çarşamba</label>
-          <label><input type="checkbox" name="days" value="persembe" /> Perşembe</label>
-          <label><input type="checkbox" name="days" value="cuma" /> Cuma</label>
-          <label><input type="checkbox" name="days" value="cumartesi" /> Cumartesi</label>
-          <label><input type="checkbox" name="days" value="pazar" /> Pazar</label>
+          <div class="pill-group">
+            <label><input type="checkbox" name="days" value="pazartesi" class="pill-checkbox" /> <span class="pill-label">Pzt</span></label>
+            <label><input type="checkbox" name="days" value="sali" class="pill-checkbox" /> <span class="pill-label">Sal</span></label>
+            <label><input type="checkbox" name="days" value="carsamba" class="pill-checkbox" /> <span class="pill-label">Çar</span></label>
+            <label><input type="checkbox" name="days" value="persembe" class="pill-checkbox" /> <span class="pill-label">Per</span></label>
+            <label><input type="checkbox" name="days" value="cuma" class="pill-checkbox" /> <span class="pill-label">Cum</span></label>
+            <label><input type="checkbox" name="days" value="cumartesi" class="pill-checkbox" /> <span class="pill-label">Cmt</span></label>
+            <label><input type="checkbox" name="days" value="pazar" class="pill-checkbox" /> <span class="pill-label">Paz</span></label>
+          </div>
+        </div>
+        <div class="input-group">
+          <span>HANGİ SAATLER MÜSAİTSİN?</span>
+          <div class="pill-group grid-4" style="margin-bottom: 10px;">
+            <label><input type="radio" name="hourPre" id="hourPreTulum" value="tum-gun" class="pill-checkbox" onchange="toggleHours(this.value)" /> <span class="pill-label" style="font-size: 13px;">Tüm Gün</span></label>
+            <label><input type="radio" name="hourPre" id="hourPreSabah" value="sabah" class="pill-checkbox" onchange="toggleHours(this.value)" /> <span class="pill-label" style="font-size: 13px; flex-direction: column;">Sabah<small style="font-size: 10px; opacity: 0.8;">06:00-12:00</small></span></label>
+            <label><input type="radio" name="hourPre" id="hourPreOglen" value="oglen" class="pill-checkbox" onchange="toggleHours(this.value)" /> <span class="pill-label" style="font-size: 13px; flex-direction: column;">Öğlen<small style="font-size: 10px; opacity: 0.8;">10:00-16:00</small></span></label>
+            <label><input type="radio" name="hourPre" id="hourPreAksam" value="aksam" class="pill-checkbox" onchange="toggleHours(this.value)" /> <span class="pill-label" style="font-size: 13px; flex-direction: column;">Akşam<small style="font-size: 10px; opacity: 0.8;">16:00-24:00</small></span></label>
+          </div>
+          <div class="pill-group grid-6" id="individualHoursGroup">
+            <label><input type="checkbox" name="hours" value="00-01" class="pill-checkbox" /> <span class="pill-label hour-block"><span>00:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>01:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="01-02" class="pill-checkbox" /> <span class="pill-label hour-block"><span>01:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>02:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="02-03" class="pill-checkbox" /> <span class="pill-label hour-block"><span>02:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>03:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="03-04" class="pill-checkbox" /> <span class="pill-label hour-block"><span>03:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>04:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="04-05" class="pill-checkbox" /> <span class="pill-label hour-block"><span>04:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>05:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="05-06" class="pill-checkbox" /> <span class="pill-label hour-block"><span>05:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>06:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="06-07" class="pill-checkbox" /> <span class="pill-label hour-block"><span>06:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>07:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="07-08" class="pill-checkbox" /> <span class="pill-label hour-block"><span>07:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>08:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="08-09" class="pill-checkbox" /> <span class="pill-label hour-block"><span>08:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>09:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="09-10" class="pill-checkbox" /> <span class="pill-label hour-block"><span>09:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>10:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="10-11" class="pill-checkbox" /> <span class="pill-label hour-block"><span>10:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>11:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="11-12" class="pill-checkbox" /> <span class="pill-label hour-block"><span>11:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>12:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="12-13" class="pill-checkbox" /> <span class="pill-label hour-block"><span>12:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>13:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="13-14" class="pill-checkbox" /> <span class="pill-label hour-block"><span>13:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>14:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="14-15" class="pill-checkbox" /> <span class="pill-label hour-block"><span>14:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>15:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="15-16" class="pill-checkbox" /> <span class="pill-label hour-block"><span>15:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>16:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="16-17" class="pill-checkbox" /> <span class="pill-label hour-block"><span>16:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>17:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="17-18" class="pill-checkbox" /> <span class="pill-label hour-block"><span>17:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>18:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="18-19" class="pill-checkbox" /> <span class="pill-label hour-block"><span>18:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>19:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="19-20" class="pill-checkbox" /> <span class="pill-label hour-block"><span>19:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>20:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="20-21" class="pill-checkbox" /> <span class="pill-label hour-block"><span>20:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>21:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="21-22" class="pill-checkbox" /> <span class="pill-label hour-block"><span>21:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>22:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="22-23" class="pill-checkbox" /> <span class="pill-label hour-block"><span>22:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>23:00</span></span></label>
+            <label><input type="checkbox" name="hours" value="23-00" class="pill-checkbox" /> <span class="pill-label hour-block"><span>23:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>00:00</span></span></label>
+          </div>
         </div>
         <div class="input-group">
           <span>HANGİ ÇALIŞMA ŞEKLİ İÇİN UYGUNSUN?</span>

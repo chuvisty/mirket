@@ -165,6 +165,8 @@ async function loadAllApplications() {
               <div class="application-card" style="margin-top: 15px; background: #f0fff4; padding: 10px; border-radius: 8px; border: 1px solid #c3e6cb;">
                 <p style="margin: 0 0 8px 0;"><strong>İşçi:</strong> ${worker.employeeName} (${worker.employeeDistrict})</p>
                 <p style="margin: 0 0 8px 0;"><strong>Eğitim / Deneyim:</strong> ${worker.education || 'Bilinmiyor'}</p>
+                <p style="margin: 0 0 8px 0;"><strong>Müsait Günler:</strong> ${worker.availableDays ? worker.availableDays.join(', ') : 'Bilinmiyor'}</p>
+                <p style="margin: 0 0 8px 0;"><strong>Müsait Saatler:</strong> ${worker.availableHours ? worker.availableHours.join(', ') : 'Bilinmiyor'}</p>
                 <div style="margin-top: 10px;">
                   <button class="btn primary" id="wa_btn_${worker.id}_${job.id}" style="width:auto; padding: 6px 12px; font-size:13px; background-color:#25D366; color:white; border:none;" onclick="triggerWhatsAppNotification('${job.id}', '${worker.id}')">
                     📱 Bildirim Gönder (WhatsApp)
@@ -180,6 +182,36 @@ async function loadAllApplications() {
     });
 
     list.innerHTML = html;
+
+    // --- Render All Workers List ---
+    const workersList = document.getElementById('adminWorkersList');
+    if (workersList) {
+      workersList.classList.remove('hidden');
+      if (workersArray.length === 0) {
+        workersList.innerHTML = '<p>Sistemde henüz kayıtlı işçi yok.</p>';
+      } else {
+        let workersHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">';
+        workersArray.forEach(worker => {
+          const daysStr = worker.availableDays ? worker.availableDays.join(', ') : 'Belirtilmedi';
+          const hoursStr = worker.availableHours ? worker.availableHours.join(', ') : 'Belirtilmedi';
+          const jobsStr = worker.jobs ? worker.jobs.join(', ') : 'Belirtilmedi';
+          const phoneStr = worker.employeePhone || 'Belirtilmedi';
+          workersHtml += `
+            <div class="card" style="padding: 15px; border: 1px solid #ddd; text-align: left; background: #fff;">
+              <h3 style="margin-top:0; color:#1d4ed8;">${worker.employeeName || 'İsimsiz'}</h3>
+              <p style="margin:5px 0;"><strong>Telefon:</strong> ${phoneStr}</p>
+              <p style="margin:5px 0;"><strong>İlçe:</strong> ${worker.employeeDistrict || 'Belirtilmedi'}</p>
+              <p style="margin:5px 0;"><strong>Yapabileceği İşler:</strong> ${jobsStr}</p>
+              <p style="margin:5px 0;"><strong>Müsait Günler:</strong> ${daysStr}</p>
+              <p style="margin:5px 0;"><strong>Müsait Saatler:</strong> ${hoursStr}</p>
+            </div>
+          `;
+        });
+        workersHtml += '</div>';
+        workersList.innerHTML = workersHtml;
+      }
+    }
+
   } catch (e) {
     console.error(e);
     list.innerHTML = '<p>Veriler yüklenirken hata oluştu.</p>';
