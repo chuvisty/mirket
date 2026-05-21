@@ -65,6 +65,11 @@ exports.sendWhatsAppPush = functions.region('europe-west3').https.onCall(async (
         const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || "YOUR_META_ACCESS_TOKEN";
         const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID || "YOUR_PHONE_NUMBER_ID";
         const TEMPLATE_NAME = process.env.TEMPLATE_NAME || "yeni_is_firsati";
+        
+        console.log(`[DEBUG] Attempting to send WhatsApp message`);
+        console.log(`[DEBUG] PHONE_NUMBER_ID: ${PHONE_NUMBER_ID}`);
+        console.log(`[DEBUG] Destination Phone: ${formattedPhone}`);
+        console.log(`[DEBUG] META_ACCESS_TOKEN starts with: ${META_ACCESS_TOKEN.substring(0, 10)}...`);
 
         // 6. Send WhatsApp Message via Meta API
         await axios.post(
