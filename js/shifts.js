@@ -1,0 +1,772 @@
+// Mirket Gözcü - Shift Management System
+// Uses Modular JS structure like rest of the app.
+
+let currentWeekStart = getStartOfWeek(new Date());
+let staffMembers = [];
+let currentShifts = [];
+let restaurantId = null;
+let restaurantOpeningHour = 6;
+let restaurantClosingHour = 23;
+
+function initGozcuPage() {
+  if (window.firebaseAuth?.onAuthStateChanged && window.auth) {
+    window.firebaseAuth.onAuthStateChanged(window.auth, async (user) => {
+    if (user) {
+      restaurantId = user.uid;
+      const isSub = await checkSubscriptionStatus(user.uid);
+      if (isSub) {
+        document.getElementById('paywallOverlay').classList.add('hidden');
+        document.getElementById('gozcuContent').classList.remove('blurred');
+        
+        // Load data
+        await loadRestaurantSettings();
+        await loadStaff();
+        await loadShiftsForCurrentWeek();
+      } else {
+        document.getElementById('paywallOverlay').classList.remove('hidden');
+        document.getElementById('gozcuContent').classList.add('blurred');
+      }
+    } else {
+      // Redirect to login if not authenticated
+      window.location.href = 'login.html';
+    }
+  });
+  }
+}
+
+async function loadRestaurantSettings() {
+  try {
+    const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', restaurantId));
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      restaurantOpeningHour = data.openingHour || 6;
+      restaurantClosingHour = data.closingHour || 23;
+      document.getElementById('restaurantOpeningHour').value = restaurantOpeningHour;
+      document.getElementById('restaurantClosingHour').value = restaurantClosingHour;
+    }
+  } catch (error) {
+    console.error("Error loading restaurant settings:", error);
+  }
+}
+
+async function saveRestaurantSettings() {
+  const opening = parseInt(document.getElementById('restaurantOpeningHour').value);
+  const closing = parseInt(document.getElementById('restaurantClosingHour').value);
+  
+  if (opening >= closing) {
+    alert('Açılış saati kapatılış saatinden önce olmalıdır.');
+    return;
+  }
+  
+  try {
+    await window.firebaseFirestore.updateDoc(
+      window.firebaseFirestore.doc(window.db, 'users', restaurantId),
+      {
+        openingHour: opening,
+        closingHour: closing
+      }
+    );
+    restaurantOpeningHour = opening;
+    restaurantClosingHour = closing;
+    alert('Açılış saatleri kaydedildi.');
+    renderCalendar();
+  } catch (error) {
+    console.error("Error saving restaurant settings:", error);
+    alert('Ayarlar kaydedilemedi.');
+  }
+}
+
+async function checkSubscriptionStatus(uid) {
+  try {
+    const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', uid));
+    if (userDoc.exists()) {
+      const data = userDoc.data();
+      console.log("Mirket Gözcü - User Data Loaded:", data); // DEBUG
+      // Ensure only restaurants can access this
+      if (data.userType !== 'restaurant') {
+        window.location.href = 'index.html';
+        return false;
+      }
+      // Check for boolean true or string 'true' (case insensitive)
+      const isSub = data.isSubscribed === true || String(data.isSubscribed).toLowerCase() === 'true';
+      console.log("Mirket Gözcü - isSubscribed evaluated as:", isSub); // DEBUG
+      return isSub;
+    }
+    console.warn("Mirket Gözcü - User document not found for uid:", uid);
+    return false;
+  } catch (error) {
+    console.error("Error checking subscription:", error);
+    return false;
+  }
+}
+
+// --- STAFF CRUD ---
+
+async function loadStaff() {
+  try {
+    const q = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'restaurantStaff'),
+      window.firebaseFirestore.where('restaurantId', '==', restaurantId)
+    );
+    const snapshot = await window.firebaseFirestore.getDocs(q);
+    staffMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderStaffList();
+    updateStaffSelectDropdown();
+  } catch (error) {
+    console.error("Error loading staff:", error);
+    showStaffMessage("Personel listesi yüklenemedi.", "error");
+  }
+}
+
+function renderStaffList() {
+  const staffListEl = document.getElementById('staffList');
+  staffListEl.innerHTML = '';
+  
+  if (staffMembers.length === 0) {
+    staffListEl.innerHTML = '<p style="text-align: center; color: #94a3b8;">Henüz personel eklenmedi.</p>';
+    return;
+  }
+  
+  staffMembers.forEach(staff => {
+    const item = document.createElement('div');
+    item.className = 'staff-item';
+    
+    // Check if mirketUserId exists to show a badge
+    const mirketBadge = staff.mirketUserId 
+      ? `<span style="font-size: 10px; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Mirket'e Bağlı</span>` 
+      : '';
+      
+    // Calculate weekly hours
+    let week1Hours = 0;
+    let week2Hours = 0;
+    
+    const week2Start = new Date(currentWeekStart);
+    week2Start.setDate(week2Start.getDate() + 7);
+    const week2StartStr = formatDateForDB(week2Start);
+
+    currentShifts.forEach(shift => {
+      if (shift.staffId === staff.id) {
+        if (shift.date < week2StartStr) {
+          week1Hours += calculateShiftHours(shift.startTime, shift.endTime);
+        } else {
+          week2Hours += calculateShiftHours(shift.startTime, shift.endTime);
+        }
+      }
+    });
+    
+    let hoursBadge = '';
+    if (week1Hours > 0 || week2Hours > 0) {
+      hoursBadge = `<span style="font-size: 11px; background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">1. Hafta: ${week1Hours.toFixed(1)}s | 2. Hafta: ${week2Hours.toFixed(1)}s</span>`;
+    }
+
+    item.innerHTML = `
+      <div class="staff-info">
+        <span class="staff-name">${staff.name} ${mirketBadge} ${hoursBadge}</span>
+        <span class="staff-role">${staff.role} | ${staff.phone || 'Telefon yok'}</span>
+      </div>
+      <div class="staff-actions">
+        <button class="btn ghost" onclick="editStaff('${staff.id}')">Düzenle</button>
+        <button class="btn ghost" style="color: #ef4444;" onclick="deleteStaff('${staff.id}')">Sil</button>
+      </div>
+    `;
+    staffListEl.appendChild(item);
+  });
+}
+
+function updateStaffSelectDropdown() {
+  const select = document.getElementById('shiftStaffSelect');
+  // Keep the first default option
+  select.innerHTML = '<option value="">-- Atanmadı (Boş Vardiya) --</option>';
+  
+  staffMembers.forEach(staff => {
+    const option = document.createElement('option');
+    option.value = staff.id;
+    option.textContent = `${staff.name} (${staff.role})`;
+    select.appendChild(option);
+  });
+}
+
+function openStaffModal() {
+  document.getElementById('staffForm').reset();
+  document.getElementById('staffId').value = '';
+  document.getElementById('staffModalTitle').textContent = 'Personel Ekle';
+  document.getElementById('staffModalMessage').classList.add('hidden');
+  document.getElementById('staffModal').classList.remove('hidden');
+}
+
+function closeStaffModal() {
+  document.getElementById('staffModal').classList.add('hidden');
+}
+
+function editStaff(staffId) {
+  const staff = staffMembers.find(s => s.id === staffId);
+  if (staff) {
+    document.getElementById('staffId').value = staff.id;
+    document.getElementById('staffName').value = staff.name;
+    document.getElementById('staffRole').value = staff.role;
+    document.getElementById('staffPhone').value = staff.phone || '';
+    document.getElementById('staffEmail').value = staff.email || '';
+    
+    document.getElementById('staffModalTitle').textContent = 'Personel Düzenle';
+    document.getElementById('staffModalMessage').classList.add('hidden');
+    document.getElementById('staffModal').classList.remove('hidden');
+  }
+}
+
+async function handleStaffSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('staffId').value;
+  const name = document.getElementById('staffName').value.trim();
+  const role = document.getElementById('staffRole').value.trim();
+  const phone = document.getElementById('staffPhone').value.trim();
+  const email = document.getElementById('staffEmail').value.trim();
+  
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Kaydediliyor...';
+  
+  try {
+    let mirketUserId = null;
+    
+    // Mirket global worker search by phone (only if phone is provided)
+    if (phone) {
+      const usersRef = window.firebaseFirestore.collection(window.db, 'users');
+      const q = window.firebaseFirestore.query(
+        usersRef, 
+        window.firebaseFirestore.where('userType', '==', 'worker'),
+        window.firebaseFirestore.where('phone', '==', phone)
+      );
+      const snapshot = await window.firebaseFirestore.getDocs(q);
+      if (!snapshot.empty) {
+        mirketUserId = snapshot.docs[0].id;
+      }
+    }
+    
+    const staffData = {
+      restaurantId,
+      name,
+      role,
+      phone,
+      email,
+      mirketUserId
+    };
+    
+    if (id) {
+      // Update
+      await window.firebaseFirestore.updateDoc(
+        window.firebaseFirestore.doc(window.db, 'restaurantStaff', id), 
+        staffData
+      );
+    } else {
+      // Create
+      await window.firebaseFirestore.addDoc(
+        window.firebaseFirestore.collection(window.db, 'restaurantStaff'), 
+        staffData
+      );
+    }
+    
+    await loadStaff();
+    closeStaffModal();
+  } catch (error) {
+    console.error("Error saving staff:", error);
+    const msgEl = document.getElementById('staffModalMessage');
+    msgEl.textContent = "Kaydedilirken bir hata oluştu.";
+    msgEl.className = 'auth-message error';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Kaydet';
+  }
+}
+
+async function deleteStaff(id) {
+  if (confirm("Bu personeli silmek istediğinize emin misiniz? Atanmış vardiyaları 'Boş Vardiya' durumuna düşebilir.")) {
+    try {
+      await window.firebaseFirestore.deleteDoc(window.firebaseFirestore.doc(window.db, 'restaurantStaff', id));
+      await loadStaff();
+    } catch (error) {
+      console.error("Error deleting staff:", error);
+      showStaffMessage("Personel silinemedi.", "error");
+    }
+  }
+}
+
+function showStaffMessage(msg, type) {
+  const el = document.getElementById('staffMessage');
+  el.textContent = msg;
+  el.className = `auth-message ${type}`;
+  setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+
+// --- CALENDAR & SHIFTS ---
+
+function calculateShiftHours(startTime, endTime) {
+  if (!startTime || !endTime) return 0;
+  const [sh, sm] = startTime.split(':').map(Number);
+  const [eh, em] = endTime.split(':').map(Number);
+  let startMinutes = sh * 60 + sm;
+  let endMinutes = eh * 60 + em;
+  if (endMinutes <= startMinutes) {
+    endMinutes += 24 * 60; // crosses midnight
+  }
+  return (endMinutes - startMinutes) / 60;
+}
+
+function getRoleColor(role) {
+  if (!role) return null;
+  const roleLower = role.toLowerCase().trim();
+  if (roleLower.includes('garson') || roleLower.includes('komi')) return 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)';
+  if (roleLower.includes('mutfak') || roleLower.includes('aşçı')) return 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)';
+  if (roleLower.includes('kasiyer')) return 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)';
+  if (roleLower.includes('temizlik') || roleLower.includes('bulaşık')) return 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)';
+  
+  const colors = [
+    'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+    'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+    'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+    'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
+    'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
+  ];
+  let hash = 0;
+  for (let i = 0; i < role.length; i++) hash += role.charCodeAt(i);
+  return colors[hash % colors.length];
+}
+
+function getStartOfWeek(date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is sunday
+  d.setDate(diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function formatDateForDB(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function formatDisplayDate(date) {
+  return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+}
+
+function changeWeek(offset) {
+  currentWeekStart.setDate(currentWeekStart.getDate() + (offset * 14));
+  updateWeekLabel();
+  loadShiftsForCurrentWeek();
+}
+
+function updateWeekLabel() {
+  const endOfWeek = new Date(currentWeekStart);
+  endOfWeek.setDate(currentWeekStart.getDate() + 13);
+  
+  const startStr = formatDisplayDate(currentWeekStart);
+  const endStr = formatDisplayDate(endOfWeek);
+  
+  document.getElementById('currentWeekLabel').textContent = `${startStr} - ${endStr}`;
+}
+
+async function loadShiftsForCurrentWeek() {
+  updateWeekLabel();
+  
+  const startDateStr = formatDateForDB(currentWeekStart);
+  const endOfWeek = new Date(currentWeekStart);
+  endOfWeek.setDate(currentWeekStart.getDate() + 13);
+  const endDateStr = formatDateForDB(endOfWeek);
+  
+  try {
+    const q = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'shifts'),
+      window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+      window.firebaseFirestore.where('date', '>=', startDateStr),
+      window.firebaseFirestore.where('date', '<=', endDateStr)
+    );
+    
+    const snapshot = await window.firebaseFirestore.getDocs(q);
+    currentShifts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    renderCalendar();
+    renderStaffList(); // Update weekly hours in staff list after shifts are loaded
+  } catch (error) {
+    console.error("Error loading shifts:", error);
+  }
+}
+
+function renderCalendar() {
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+  
+  const dayNames = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+  
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(currentWeekStart);
+    d.setDate(d.getDate() + i);
+    const dateStr = formatDateForDB(d);
+    
+    const dayCol = document.createElement('div');
+    dayCol.className = 'calendar-day';
+    
+    const header = document.createElement('div');
+    header.className = 'calendar-day-header';
+    header.innerHTML = `${dayNames[i % 7]}<br><span style="font-size:12px;color:#94a3b8;">${d.getDate()}</span>`;
+    dayCol.appendChild(header);
+    
+    // Shifts for this day
+    const dayShifts = currentShifts.filter(s => s.date === dateStr);
+    
+    // Sort by start time
+    dayShifts.sort((a, b) => a.startTime.localeCompare(b.startTime));
+    
+    dayShifts.forEach(shift => {
+      const staff = shift.staffId ? staffMembers.find(s => s.id === shift.staffId) : null;
+      const shiftEl = document.createElement('div');
+      shiftEl.className = 'shift-item';
+      shiftEl.onclick = (event) => {
+        event.stopPropagation();
+        editShift(shift.id);
+      };
+      
+      const statusClass = staff ? 'shift-assigned' : 'shift-unassigned';
+      const staffName = staff ? staff.name : 'Atanmadı';
+      
+      const tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nPersonel: ${staffName}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
+      shiftEl.title = tooltipText; // Use native title to avoid overflow:hidden clipping
+
+      // Color coding
+      if (staff && shift.role) {
+        const bg = getRoleColor(shift.role);
+        if (bg) {
+          shiftEl.style.borderLeftColor = 'transparent'; // Let background handle it or keep default
+          // We can use the bg color for the border if we parse it, but let's just keep border default and use a color bar
+        }
+      }
+      
+      shiftEl.innerHTML = `
+        <div class="shift-time">${shift.startTime} - ${shift.endTime}</div>
+        <div class="shift-name ${statusClass}">${staffName}</div>
+        ${shift.role ? `<div class="shift-role">${shift.role}</div>` : ''}
+      `;
+      
+      dayCol.appendChild(shiftEl);
+    });
+    
+    dayCol.onclick = (event) => {
+      if (event.target.closest('.shift-item') || event.target.closest('.add-shift-btn') || event.target.closest('.day-action-menu')) {
+        return;
+      }
+      openDayActionMenu(dateStr, dayCol);
+    };
+    
+    // Add button
+    const addBtn = document.createElement('div');
+    addBtn.className = 'add-shift-btn';
+    addBtn.innerHTML = '+ Vardiya';
+    addBtn.onclick = () => openShiftModal(dateStr);
+    dayCol.appendChild(addBtn);
+    
+    grid.appendChild(dayCol);
+  }
+}
+
+function openDayActionMenu(dateStr, dayCol) {
+  closeDayActionMenu();
+  const menu = document.getElementById('dayActionMenu');
+  menu.innerHTML = `
+    <button type="button" onclick="openShiftModal('${dateStr}'); closeDayActionMenu();">+ Vardiya</button>
+    <button type="button" onclick="openDayDetailModal('${dateStr}'); closeDayActionMenu();">Günlük Detay</button>
+  `;
+  menu.classList.remove('hidden');
+  dayCol.appendChild(menu);
+}
+
+function closeDayActionMenu() {
+  const menu = document.getElementById('dayActionMenu');
+  if (menu && !menu.classList.contains('hidden')) {
+    menu.classList.add('hidden');
+  }
+}
+
+function openDayDetailModal(dateStr) {
+  const title = document.getElementById('dayDetailTitle');
+  const timeline = document.getElementById('dayDetailTimeline');
+  title.textContent = `Günlük Detay - ${dateStr}`;
+  timeline.innerHTML = '';
+
+  const dayShifts = currentShifts.filter(shift => shift.date === dateStr);
+  dayShifts.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+  const visibleStart = restaurantOpeningHour;
+  const visibleEnd = restaurantClosingHour;
+  const hours = [];
+  for (let h = visibleStart; h < visibleEnd; h++) {
+    hours.push(h);
+  }
+
+  const header = document.createElement('div');
+  header.className = 'day-timeline-header';
+  const staffColHeader = document.createElement('div');
+  staffColHeader.className = 'day-timeline-staff-col';
+  staffColHeader.textContent = 'Personel';
+  header.appendChild(staffColHeader);
+  const hoursRow = document.createElement('div');
+  hoursRow.className = 'day-timeline-hours';
+  hoursRow.style.gridTemplateColumns = `repeat(${hours.length}, minmax(0, 1fr))`;
+  hours.forEach(h => {
+    const cell = document.createElement('div');
+    cell.className = 'day-timeline-hour-cell';
+    cell.textContent = `${String(h).padStart(2, '0')}:00`;
+    hoursRow.appendChild(cell);
+  });
+  header.appendChild(hoursRow);
+  timeline.appendChild(header);
+
+  const uniqueStaff = new Map();
+  dayShifts.forEach(shift => {
+    const staff = shift.staffId ? staffMembers.find(s => s.id === shift.staffId) : null;
+    const staffName = staff ? staff.name : 'Atanmadı';
+    if (!uniqueStaff.has(staffName)) {
+      uniqueStaff.set(staffName, []);
+    }
+    uniqueStaff.get(staffName).push(shift);
+  });
+
+  if (dayShifts.length === 0) {
+    const emptyMsg = document.createElement('p');
+    emptyMsg.style.cssText = 'text-align: center; color: #94a3b8; padding: 20px;';
+    emptyMsg.textContent = 'Bu gün için vardiya yok';
+    timeline.appendChild(emptyMsg);
+    document.getElementById('dayDetailModal').classList.remove('hidden');
+    return;
+  }
+
+  uniqueStaff.forEach((shifts, staffName) => {
+    let dailyHours = 0;
+    shifts.forEach(s => {
+      dailyHours += calculateShiftHours(s.startTime, s.endTime);
+    });
+
+    const row = document.createElement('div');
+    row.className = 'day-timeline-row';
+    const nameCell = document.createElement('div');
+    nameCell.className = 'day-timeline-staff-name';
+    nameCell.innerHTML = `${staffName} <span style="font-size:9px; color:#94a3b8; margin-left:4px;">(${dailyHours.toFixed(1)}s)</span>`;
+    row.appendChild(nameCell);
+    const shiftsContainer = document.createElement('div');
+    shiftsContainer.className = 'day-timeline-shifts';
+    shiftsContainer.style.gridTemplateColumns = `repeat(${hours.length}, minmax(0, 1fr))`;
+    
+    // Create background grid cells for borders
+    hours.forEach((h, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'day-timeline-bg-cell';
+      cell.style.gridColumn = `${i + 1}`;
+      cell.style.gridRow = '1';
+      shiftsContainer.appendChild(cell);
+    });
+    
+    shifts.forEach(shift => {
+      const [startH, startM] = shift.startTime.split(':').map(Number);
+      const [endH, endM] = shift.endTime.split(':').map(Number);
+      const startIdx = Math.max(0, startH - visibleStart);
+      const endIdx = Math.min(hours.length, endH - visibleStart);
+      const span = Math.max(1, endIdx - startIdx);
+      
+      const bar = document.createElement('div');
+      bar.className = 'day-timeline-shift-bar';
+      const staff = shift.staffId ? staffMembers.find(s => s.id === shift.staffId) : null;
+      if (staff) {
+        bar.classList.add('assigned');
+        if (shift.role) {
+          const bg = getRoleColor(shift.role);
+          if (bg) {
+            bar.style.background = bg;
+            bar.style.borderColor = 'rgba(0,0,0,0.1)';
+          }
+        }
+      } else {
+        bar.classList.add('unassigned');
+      }
+      bar.style.gridColumn = `${startIdx + 1} / span ${span}`;
+      bar.style.gridRow = '1'; // ensure it overlays the background cells
+      bar.style.zIndex = '2';
+      bar.textContent = `${shift.startTime}-${shift.endTime}`;
+      
+      const tooltipText = `Tarih: ${dateStr}\nSaat: ${shift.startTime} - ${shift.endTime}\nPersonel: ${staffName}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
+      bar.title = tooltipText; // Use native title to avoid overflow:hidden clipping
+      
+      if (shift.role) {
+        bar.textContent = shift.role;
+      }
+      shiftsContainer.appendChild(bar);
+    });
+    row.appendChild(shiftsContainer);
+    timeline.appendChild(row);
+  });
+
+  document.getElementById('dayDetailModal').classList.remove('hidden');
+}
+
+function closeDayDetailModal() {
+  document.getElementById('dayDetailModal').classList.add('hidden');
+}
+
+function openShiftModal(dateStr = '') {
+  document.getElementById('shiftForm').reset();
+  document.getElementById('shiftId').value = '';
+  if (dateStr) {
+    document.getElementById('shiftDate').value = dateStr;
+  }
+  document.getElementById('shiftModalTitle').textContent = 'Vardiya Ekle';
+  document.getElementById('deleteShiftBtn').classList.add('hidden');
+  document.getElementById('mirketlePromo').classList.add('hidden');
+  document.getElementById('shiftModalMessage').classList.add('hidden');
+  document.getElementById('shiftModal').classList.remove('hidden');
+}
+
+function closeShiftModal() {
+  document.getElementById('shiftModal').classList.add('hidden');
+}
+
+function editShift(shiftId) {
+  const shift = currentShifts.find(s => s.id === shiftId);
+  if (shift) {
+    document.getElementById('shiftId').value = shift.id;
+    document.getElementById('shiftDate').value = shift.date;
+    document.getElementById('shiftStartTime').value = shift.startTime;
+    document.getElementById('shiftEndTime').value = shift.endTime;
+    document.getElementById('shiftStaffSelect').value = shift.staffId || '';
+    document.getElementById('shiftRole').value = shift.role || '';
+    document.getElementById('shiftNotes').value = shift.notes || '';
+    
+    document.getElementById('shiftModalTitle').textContent = 'Vardiya Düzenle';
+    document.getElementById('deleteShiftBtn').classList.remove('hidden');
+    document.getElementById('shiftModalMessage').classList.add('hidden');
+    
+    checkShiftStaffSelect(); // To show/hide Mirket'le button
+    
+    document.getElementById('shiftModal').classList.remove('hidden');
+  }
+}
+
+document.getElementById('shiftStaffSelect').addEventListener('change', checkShiftStaffSelect);
+
+function checkShiftStaffSelect() {
+  const val = document.getElementById('shiftStaffSelect').value;
+  const promo = document.getElementById('mirketlePromo');
+  if (!val) {
+    promo.classList.remove('hidden');
+  } else {
+    promo.classList.add('hidden');
+  }
+}
+
+function applyShiftTemplate(start, end) {
+  document.getElementById('shiftStartTime').value = start;
+  document.getElementById('shiftEndTime').value = end;
+}
+
+async function handleShiftSubmit(e) {
+  e.preventDefault();
+  
+  const id = document.getElementById('shiftId').value;
+  const date = document.getElementById('shiftDate').value;
+  const startTime = document.getElementById('shiftStartTime').value;
+  const endTime = document.getElementById('shiftEndTime').value;
+  const staffId = document.getElementById('shiftStaffSelect').value || null;
+  const role = document.getElementById('shiftRole').value.trim();
+  const notes = document.getElementById('shiftNotes').value.trim();
+  const msgEl = document.getElementById('shiftModalMessage');
+  
+  if (staffId) {
+    // Conflict Detection
+    const overlapping = currentShifts.find(s => {
+      if (s.id === id) return false; // Ignore self when editing
+      if (s.date === date && s.staffId === staffId) {
+        // check if overlapping
+        const newStart = calculateShiftHours(startTime, "00:00") * -1; // just for comparison, wait a better way is to convert to minutes
+        const [nsh, nsm] = startTime.split(':').map(Number);
+        const [neh, nem] = endTime.split(':').map(Number);
+        const [esh, esm] = s.startTime.split(':').map(Number);
+        const [eeh, eem] = s.endTime.split(':').map(Number);
+        
+        let ns = nsh * 60 + nsm;
+        let ne = neh * 60 + nem;
+        if (ne <= ns) ne += 24 * 60;
+        
+        let es = esh * 60 + esm;
+        let ee = eeh * 60 + eem;
+        if (ee <= es) ee += 24 * 60;
+        
+        return Math.max(ns, es) < Math.min(ne, ee); // True if they overlap
+      }
+      return false;
+    });
+
+    if (overlapping) {
+      msgEl.textContent = `Çakışma Hatası: Seçili personelin ${overlapping.startTime}-${overlapping.endTime} saatleri arasında zaten bir vardiyası var.`;
+      msgEl.className = 'auth-message error';
+      msgEl.classList.remove('hidden');
+      return;
+    }
+  }
+  
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Kaydediliyor...';
+  
+  const shiftData = {
+    restaurantId,
+    date,
+    startTime,
+    endTime,
+    staffId,
+    role,
+    notes
+  };
+  
+  try {
+    if (id) {
+      await window.firebaseFirestore.updateDoc(
+        window.firebaseFirestore.doc(window.db, 'shifts', id), 
+        shiftData
+      );
+    } else {
+      await window.firebaseFirestore.addDoc(
+        window.firebaseFirestore.collection(window.db, 'shifts'), 
+        shiftData
+      );
+    }
+    
+    await loadShiftsForCurrentWeek();
+    closeShiftModal();
+    // Re-render staff list to update weekly hours
+    renderStaffList();
+  } catch (error) {
+    console.error("Error saving shift:", error);
+    msgEl.textContent = "Kaydedilirken bir hata oluştu.";
+    msgEl.className = 'auth-message error';
+    msgEl.classList.remove('hidden');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Kaydet';
+  }
+}
+
+async function deleteShift() {
+  const id = document.getElementById('shiftId').value;
+  if (id && confirm("Bu vardiyayı silmek istediğinize emin misiniz?")) {
+    try {
+      await window.firebaseFirestore.deleteDoc(window.firebaseFirestore.doc(window.db, 'shifts', id));
+      await loadShiftsForCurrentWeek();
+      closeShiftModal();
+    } catch (error) {
+      console.error("Error deleting shift:", error);
+      const msgEl = document.getElementById('shiftModalMessage');
+      msgEl.textContent = "Silinirken bir hata oluştu.";
+      msgEl.className = 'auth-message error';
+      msgEl.classList.remove('hidden');
+    }
+  }
+}

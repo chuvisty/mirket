@@ -17,6 +17,7 @@ async function initApp() {
   if (typeof initJobRequestPage === 'function') initJobRequestPage();
   if (typeof initWorkerFeedPage === 'function') initWorkerFeedPage();
   if (typeof initAdminPage === 'function') initAdminPage();
+  if (typeof initGozcuPage === 'function') initGozcuPage();
 }
 
 document.addEventListener('DOMContentLoaded', initApp);

@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="158e607a-0804-4181-b1d8-c2982f3c8310" type="text/javascript"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirket Gözcü | Vardiya Takip Sistemi</title>
+  <meta name="description" content="Mirket Gözcü ile personellerinizin vardiyalarını kolayca yönetin.">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Specific styles for Mirket Gözcü that could be moved to styles.css later */
+    .gozcu-container {
+      position: relative;
+    }
+    
+    .paywall-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 40px;
+      border-radius: 20px;
+    }
+
+    .paywall-content {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      max-width: 500px;
+    }
+
+    .gozcu-content {
+      transition: filter 0.3s ease;
+    }
+
+    .gozcu-content.blurred {
+      filter: blur(8px);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Roster Styles */
+    .staff-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .staff-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+    }
+    .staff-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .staff-name { font-weight: 600; color: #1e293b; }
+    .staff-role { font-size: 13px; color: #64748b; }
+    
+    .staff-actions button {
+      padding: 6px 12px;
+      font-size: 13px;
+      border-radius: 8px;
+      margin-left: 5px;
+    }
+
+    /* Weekly Calendar Styles */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      overflow-x: auto;
+    }
+    .calendar-day {
+      position: relative;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      min-width: 120px;
+      min-height: 150px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+    .calendar-day-header {
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 10px;
+      color: #334155;
+    }
+    .shift-item {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-left: 4px solid #3b82f6;
+      border-radius: 8px;
+      padding: 10px 10px 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 72px;
+      max-height: 72px;
+      overflow: hidden;
+      position: relative;
+    }
+    .shift-item:hover {
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+    }
+    .shift-time,
+    .shift-name,
+    .shift-role,
+    .shift-assigned,
+    .shift-unassigned {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+    .shift-time {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+    .shift-name {
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 11px;
+      line-height: 1.2;
+      margin-top: 4px;
+    }
+    .shift-role {
+      color: #64748b;
+      font-size: 10px;
+      line-height: 1.2;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .shift-assigned { color: #10b981; font-weight: 500; }
+    .shift-unassigned { color: #ef4444; font-weight: 500; }
+    
+    .add-shift-btn {
+      margin-top: auto;
+      background: transparent;
+      border: 1px dashed #cbd5e1;
+      color: #64748b;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .add-shift-btn:hover {
+      background: #f1f5f9;
+      color: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .day-action-menu {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.12);
+      z-index: 20;
+      width: 160px;
+      overflow: hidden;
+    }
+    .day-action-menu button {
+      width: 100%;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      color: #0f172a;
+      text-align: left;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .day-action-menu button:hover {
+      background: #f1f5f9;
+    }
+    .day-detail-modal .modal-content {
+      max-width: 900px;
+      width: calc(100% - 40px);
+    }
+    .day-timeline-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 15px;
+    }
+    .day-timeline-header {
+      display: flex;
+      gap: 0;
+      margin-bottom: 0;
+    }
+    .day-timeline-staff-col {
+      width: 120px;
+      flex-shrink: 0;
+      padding-right: 8px;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      align-items: flex-end;
+      padding-bottom: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+    }
+    .day-timeline-hours {
+      display: grid;
+      gap: 0;
+      flex: 1;
+      border-bottom: 2px solid #cbd5e1;
+      padding-bottom: 8px;
+    }
+    .day-timeline-hour-cell {
+      text-align: center;
+      font-size: 10px;
+      color: #64748b;
+      border-left: 2px solid #cbd5e1;
+      border-bottom: 2px solid #cbd5e1;
+      padding: 8px 0;
+    }
+    .day-timeline-hour-cell:first-child {
+      border-left: 2px solid #cbd5e1;
+    }
+    .day-timeline-row {
+      display: flex;
+      gap: 0;
+      border: 1px solid #cbd5e1;
+      border-top: none;
+      padding: 8px 0;
+      position: relative;
+    }
+    .day-timeline-row:first-of-type {
+      border-top: 1px solid #cbd5e1;
+    }
+    .day-timeline-row:hover {
+      background: #f8fafc;
+    }
+    .day-timeline-staff-name {
+      width: 120px;
+      flex-shrink: 0;
+      padding-right: 8px;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f172a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .day-timeline-shifts {
+      display: grid;
+      gap: 0;
+      flex: 1;
+      position: relative;
+      align-items: center;
+      border: 2px solid #cbd5e1;
+      border-left: 2px solid #94a3b8;
+    }
+    .day-timeline-shift-bar {
+      grid-column: span 1;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 9px;
+      color: white;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 2px 8px rgba(59,130,246,0.2);
+      border: 2px solid #1d4ed8;
+      margin: 2px;
+      min-height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .day-timeline-shift-bar.assigned {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-color: #047857;
+      box-shadow: 0 2px 8px rgba(16,185,129,0.2);
+    }
+    .day-timeline-shift-bar.unassigned {
+      background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+      border-color: #dc2626;
+      box-shadow: 0 2px 8px rgba(239,68,68,0.2);
+    }
+
+    /* Background Grid Cell for Timeline Borders */
+    .day-timeline-bg-cell {
+      border-left: 1px dashed #cbd5e1;
+      height: 100%;
+      min-height: 30px;
+      pointer-events: none;
+    }
+
+    /* Shift Templates Styles */
+    .shift-templates {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .shift-template-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .shift-template-btn:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+    }
+
+    /* Tooltip Styles */
+    [data-tooltip] {
+      position: relative;
+    }
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      white-space: pre-wrap;
+      z-index: 100;
+      min-width: max-content;
+      text-align: left;
+      margin-bottom: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      pointer-events: none;
+    }
+    [data-tooltip]:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #1e293b;
+      margin-bottom: -4px;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* Modal Adjustments */
+    #shiftModalContent {
+      max-width: 450px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="headerContainer"></div>
+
+<main class="container">
+  
+  <div class="gozcu-container w-100" style="width: 100%; max-width: 1000px;">
+    
+    <!-- Paywall Overlay -->
+    <div id="paywallOverlay" class="paywall-overlay hidden">
+      <div class="paywall-content">
+        <h2 style="color: #1d4ed8; font-size: 28px; margin-bottom: 10px;">Mirket Gözcü</h2>
+        <p style="color: #64748b; margin-bottom: 25px;">Personelinizin vardiyalarını, ödemelerini ve çalışma takvimlerini profesyonelce yönetmek için Gözcü aboneliğinizi başlatın.</p>
+        <button class="btn primary" style="width: 100%;" onclick="alert('Abonelik sistemimiz yakında aktif olacaktır. Test için lütfen yöneticiyle iletişime geçin.')">Aboneliği Başlat</button>
+      </div>
+    </div>
+
+    <!-- Main Content (Blurred if not subscribed) -->
+    <div id="gozcuContent" class="gozcu-content blurred">
+      
+      <!-- Staff Roster Section -->
+      <section class="card" style="max-width: 100%; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2>Personel Listesi (Roster)</h2>
+          <button class="btn secondary" onclick="openStaffModal()">+ Yeni Personel Ekle</button>
+        </div>
+        <div id="staffMessage" class="auth-message hidden" role="alert"></div>
+        <div id="staffList" class="staff-list">
+          <!-- Staff items will be injected here -->
+          <p style="text-align: center; color: #94a3b8;">Henüz personel eklenmedi.</p>
+        </div>
+      </section>
+
+      <!-- Business Hours Settings Section -->
+      <section class="card" style="max-width: 100%; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2>Çalışma Saatleri</h2>
+          <button class="btn primary" onclick="saveRestaurantSettings()">Kaydet</button>
+        </div>
+        <div style="display: flex; gap: 20px; align-items: center;">
+          <div class="input-group" style="flex: 1;">
+            <span>Açılış Saati</span>
+            <input type="number" id="restaurantOpeningHour" min="0" max="23" value="6">
+          </div>
+          <div class="input-group" style="flex: 1;">
+            <span>Kapanış Saati</span>
+            <input type="number" id="restaurantClosingHour" min="0" max="24" value="23">
+          </div>
+        </div>
+      </section>
+
+      <!-- Calendar Section -->
+      <section class="card" style="max-width: 100%;">
+        <div class="calendar-header">
+          <h2>Haftalık Vardiya Takvimi</h2>
+          <div>
+            <button class="btn ghost" onclick="changeWeek(-1)">&#8592; Önceki Hafta</button>
+            <span id="currentWeekLabel" style="margin: 0 15px; font-weight: 600;">Bu Hafta</span>
+            <button class="btn ghost" onclick="changeWeek(1)">Sonraki Hafta &#8594;</button>
+          </div>
+        </div>
+        <div id="calendarGrid" class="calendar-grid">
+          <!-- Calendar days injected here -->
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- Add/Edit Staff Modal -->
+<div id="staffModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 400px;">
+    <span class="close-modal" onclick="closeStaffModal()">&times;</span>
+    <h2 id="staffModalTitle">Personel Ekle</h2>
+    <div id="staffModalMessage" class="auth-message hidden"></div>
+    <form id="staffForm" onsubmit="handleStaffSubmit(event)">
+      <input type="hidden" id="staffId">
+      <div class="input-group">
+        <span>Ad Soyad</span>
+        <input type="text" id="staffName" required>
+      </div>
+      <div class="input-group">
+        <span>Rol (Örn: Garson, Komi)</span>
+        <input type="text" id="staffRole" required>
+      </div>
+      <div class="input-group">
+        <span>Telefon (İsteğe Bağlı)</span>
+        <input type="tel" id="staffPhone" placeholder="+90555...">
+      </div>
+      <div class="input-group">
+        <span>E-posta (İsteğe Bağlı)</span>
+        <input type="email" id="staffEmail">
+      </div>
+      <p class="small-text">Not: Telefon numarası Mirket sistemindeki bir işçiyle eşleşirse hesabı otomatik bağlanır.</p>
+      <button type="submit" class="btn primary" style="width: 100%; margin-top: 15px;">Kaydet</button>
+    </form>
+  </div>
+</div>
+
+<!-- Shift Assignment Modal -->
+<div id="shiftModal" class="modal hidden">
+  <div class="modal-content" id="shiftModalContent">
+    <span class="close-modal" onclick="closeShiftModal()">&times;</span>
+    <h2 id="shiftModalTitle">Vardiya Ekle</h2>
+    <div id="shiftModalMessage" class="auth-message hidden"></div>
+    <form id="shiftForm" onsubmit="handleShiftSubmit(event)">
+      <input type="hidden" id="shiftId">
+      <div class="input-group">
+        <span>Tarih</span>
+        <input type="date" id="shiftDate" required>
+      </div>
+      
+      <div class="input-group">
+        <span>Hızlı Şablonlar</span>
+        <div class="shift-templates">
+          <button type="button" class="shift-template-btn" onclick="applyShiftTemplate('08:00', '16:00')">Sabah (08:00-16:00)</button>
+          <button type="button" class="shift-template-btn" onclick="applyShiftTemplate('16:00', '00:00')">Akşam (16:00-00:00)</button>
+          <button type="button" class="shift-template-btn" onclick="applyShiftTemplate('08:00', '20:00')">Tam Gün (08:00-20:00)</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 15px; margin-bottom: 24px;">
+        <div class="input-group" style="flex: 1;">
+          <span>Başlangıç</span>
+          <input type="time" id="shiftStartTime" required>
+        </div>
+        <div class="input-group" style="flex: 1;">
+          <span>Bitiş</span>
+          <input type="time" id="shiftEndTime" required>
+        </div>
+      </div>
+      <div class="input-group">
+        <span>Personel Ata</span>
+        <select id="shiftStaffSelect">
+          <option value="">-- Atanmadı (Boş Vardiya) --</option>
+          <!-- Options injected here -->
+        </select>
+      </div>
+      <div class="input-group">
+        <span>Görev/Rol</span>
+        <input type="text" id="shiftRole" placeholder="Opsiyonel">
+      </div>
+      <div class="input-group">
+        <span>Notlar</span>
+        <textarea id="shiftNotes" rows="2" placeholder="Opsiyonel notlar..."></textarea>
+      </div>
+      
+      <!-- Mirket'le Button (Prepared for Phase 2) -->
+      <div id="mirketlePromo" class="hidden" style="margin-top: 15px; padding: 15px; background: #fef2f2; border: 1px dashed #ef4444; border-radius: 12px; text-align: center;">
+        <p style="font-size: 13px; color: #b91c1c; margin-bottom: 10px;">Bu vardiyaya henüz personel atanmadı.</p>
+        <button type="button" class="btn primary" disabled style="opacity: 0.6; cursor: not-allowed; width: 100%;">Mirket'le Personel Bul (Yakında)</button>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="submit" class="btn primary" style="flex: 2;">Kaydet</button>
+        <button type="button" class="btn ghost" id="deleteShiftBtn" style="flex: 1; border-color: #ef4444; color: #ef4444;" onclick="deleteShift()">Sil</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="dayActionMenu" class="day-action-menu hidden"></div>
+
+<div id="dayDetailModal" class="modal hidden day-detail-modal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeDayDetailModal()">&times;</span>
+    <h2 id="dayDetailTitle">Günlük Detay</h2>
+    <div id="dayDetailTimeline" class="day-detail-timeline"></div>
+  </div>
+</div>
+
+<div id="footerContainer"></div>
+
+<script src="firebase.js"></script>
+<script src="js/core.js"></script>
+<script src="js/auth-ui.js"></script>
+<script src="js/shifts.js"></script>
+</body>
+</html>
