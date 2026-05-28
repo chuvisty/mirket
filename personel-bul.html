@@ -38,64 +38,14 @@
         <input type="date" id="jobDate" />
       </label>
 
-      <div style="display: flex; flex-direction: column; gap: 15px;">
-        <label class="input-group">
+      <div style="display: flex; gap: 15px; margin-bottom: 24px;">
+        <label class="input-group" style="flex: 1;">
           <span>Başlangıç Saati</span>
-          <div class="pill-group grid-6" id="jobStartTimeGroup">
-            <label><input type="radio" name="jobStartTime" value="00:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">00:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="01:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">01:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="02:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">02:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="03:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">03:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="04:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">04:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="05:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">05:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="06:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">06:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="07:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">07:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="08:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">08:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="09:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">09:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="10:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">10:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="11:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">11:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="12:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">12:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="13:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">13:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="14:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">14:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="15:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">15:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="16:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">16:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="17:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">17:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="18:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">18:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="19:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">19:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="20:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">20:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="21:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">21:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="22:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">22:00</span></label>
-            <label><input type="radio" name="jobStartTime" value="23:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">23:00</span></label>
-          </div>
+          <input type="time" id="jobStartTime" required>
         </label>
-        <label class="input-group">
+        <label class="input-group" style="flex: 1;">
           <span>Bitiş Saati</span>
-          <div class="pill-group grid-6" id="jobEndTimeGroup">
-            <label><input type="radio" name="jobEndTime" value="00:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">00:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="01:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">01:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="02:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">02:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="03:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">03:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="04:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">04:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="05:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">05:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="06:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">06:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="07:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">07:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="08:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">08:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="09:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">09:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="10:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">10:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="11:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">11:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="12:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">12:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="13:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">13:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="14:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">14:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="15:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">15:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="16:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">16:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="17:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">17:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="18:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">18:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="19:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">19:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="20:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">20:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="21:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">21:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="22:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">22:00</span></label>
-            <label><input type="radio" name="jobEndTime" value="23:00" class="pill-checkbox" /> <span class="pill-label" style="padding: 8px 0; font-size: 13px;">23:00</span></label>
-          </div>
+          <input type="time" id="jobEndTime" required>
         </label>
       </div>
 

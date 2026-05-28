@@ -2,6 +2,38 @@ function initJobRequestPage() {
   const jobRequestSection = document.getElementById('jobRequestSection');
   if (!jobRequestSection) return;
 
+  // Auto-fill from URL params
+  const params = new URLSearchParams(window.location.search);
+  const dateEl = document.getElementById('jobDate');
+  const startEl = document.getElementById('jobStartTime');
+  const endEl = document.getElementById('jobEndTime');
+  
+  if (params.get('date') && dateEl) dateEl.value = params.get('date');
+  if (params.get('start') && startEl) startEl.value = params.get('start');
+  if (params.get('end') && endEl) endEl.value = params.get('end');
+  
+  if (params.get('role')) {
+    const jobRoleEl = document.getElementById('jobRole');
+    let role = params.get('role');
+    let matched = false;
+    for (let i = 0; i < jobRoleEl.options.length; i++) {
+      if (jobRoleEl.options[i].value === role || jobRoleEl.options[i].value.toLowerCase() === role.toLowerCase()) {
+        jobRoleEl.selectedIndex = i;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      jobRoleEl.value = 'Diğer';
+      document.getElementById('jobDetails').value = `Görev/Rol: ${role}\n`;
+    }
+  }
+  
+  if (params.get('notes')) {
+    const details = document.getElementById('jobDetails');
+    details.value = details.value ? details.value + params.get('notes') : params.get('notes');
+  }
+
   const jobRequestMessage = document.getElementById('jobRequestMessage');
   const jobRequestForm = document.getElementById('jobRequestForm');
 
@@ -66,8 +98,8 @@ function initJobRequestPage() {
 async function submitJobRequest() {
   const jobRole = document.getElementById('jobRole')?.value;
   const jobDate = document.getElementById('jobDate')?.value;
-  const jobStartTime = document.querySelector('input[name="jobStartTime"]:checked')?.value;
-  const jobEndTime = document.querySelector('input[name="jobEndTime"]:checked')?.value;
+  const jobStartTime = document.getElementById('jobStartTime')?.value;
+  const jobEndTime = document.getElementById('jobEndTime')?.value;
   const jobPeopleCount = document.getElementById('jobPeopleCount')?.value;
   const jobDetails = document.getElementById('jobDetails')?.value?.trim();
   const jobRequestMessage = document.getElementById('jobRequestMessage');
@@ -130,10 +162,8 @@ async function submitJobRequest() {
 
     // Reset form
     document.getElementById('jobDate').value = '';
-    const startChecked = document.querySelector('input[name="jobStartTime"]:checked');
-    if (startChecked) startChecked.checked = false;
-    const endChecked = document.querySelector('input[name="jobEndTime"]:checked');
-    if (endChecked) endChecked.checked = false;
+    document.getElementById('jobStartTime').value = '';
+    document.getElementById('jobEndTime').value = '';
     document.getElementById('jobPeopleCount').value = '1';
     document.getElementById('jobDetails').value = '';
 

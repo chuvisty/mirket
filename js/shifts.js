@@ -176,7 +176,7 @@ function renderStaffList() {
 function updateStaffSelectDropdown() {
   const select = document.getElementById('shiftStaffSelect');
   // Keep the first default option
-  select.innerHTML = '<option value="">-- Atanmadı (Boş Vardiya) --</option>';
+  select.innerHTML = '<option value="">Mirket ile doldur</option>';
   
   staffMembers.forEach(staff => {
     const option = document.createElement('option');
@@ -472,10 +472,15 @@ function renderCalendar() {
 
 function openDayActionMenu(dateStr, dayCol) {
   closeDayActionMenu();
-  const menu = document.getElementById('dayActionMenu');
+  let menu = document.getElementById('dayActionMenu');
+  if (!menu) {
+    menu = document.createElement('div');
+    menu.id = 'dayActionMenu';
+    menu.className = 'day-action-menu hidden';
+  }
   menu.innerHTML = `
     <button type="button" onclick="openShiftModal('${dateStr}'); closeDayActionMenu();">+ Vardiya</button>
-    <button type="button" onclick="openDayDetailModal('${dateStr}'); closeDayActionMenu();">Günlük Detay</button>
+    <button type="button" onclick="openDayDetail('${dateStr}'); closeDayActionMenu();">Günlük Detay</button>
   `;
   menu.classList.remove('hidden');
   dayCol.appendChild(menu);
@@ -488,7 +493,7 @@ function closeDayActionMenu() {
   }
 }
 
-function openDayDetailModal(dateStr) {
+function openDayDetail(dateStr) {
   const title = document.getElementById('dayDetailTitle');
   const timeline = document.getElementById('dayDetailTimeline');
   title.textContent = `Günlük Detay - ${dateStr}`;
@@ -537,7 +542,7 @@ function openDayDetailModal(dateStr) {
     emptyMsg.style.cssText = 'text-align: center; color: #94a3b8; padding: 20px;';
     emptyMsg.textContent = 'Bu gün için vardiya yok';
     timeline.appendChild(emptyMsg);
-    document.getElementById('dayDetailModal').classList.remove('hidden');
+    document.getElementById('dayDetailSection').classList.remove('hidden');
     return;
   }
 
@@ -605,11 +610,11 @@ function openDayDetailModal(dateStr) {
     timeline.appendChild(row);
   });
 
-  document.getElementById('dayDetailModal').classList.remove('hidden');
+  document.getElementById('dayDetailSection').classList.remove('hidden');
 }
 
-function closeDayDetailModal() {
-  document.getElementById('dayDetailModal').classList.add('hidden');
+function closeDayDetail() {
+  document.getElementById('dayDetailSection').classList.add('hidden');
 }
 
 function openShiftModal(dateStr = '') {
@@ -769,4 +774,29 @@ async function deleteShift() {
       msgEl.classList.remove('hidden');
     }
   }
+}
+
+function redirectToPersonelBul() {
+  const date = document.getElementById('shiftDate').value;
+  const start = document.getElementById('shiftStartTime').value;
+  const end = document.getElementById('shiftEndTime').value;
+  const role = document.getElementById('shiftRole').value;
+  const notes = document.getElementById('shiftNotes').value;
+
+  if (!date || !start || !end) {
+    const msgEl = document.getElementById('shiftModalMessage');
+    msgEl.textContent = 'Lütfen Mirket ile personel aramadan önce Tarih, Başlangıç ve Bitiş saatlerini doldurunuz. Bu bilgiler ilanınıza yansıtılacaktır.';
+    msgEl.className = 'auth-message warning';
+    msgEl.classList.remove('hidden');
+    return;
+  }
+
+  const params = new URLSearchParams();
+  if (date) params.append('date', date);
+  if (start) params.append('start', start);
+  if (end) params.append('end', end);
+  if (role) params.append('role', role);
+  if (notes) params.append('notes', notes);
+
+  window.location.href = `personel-bul.html?${params.toString()}`;
 }

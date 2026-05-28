@@ -219,17 +219,36 @@ async function applyForJob(jobId, restaurantId, restaurantName, jobRole) {
 
 function showWorkerFeed() {
   document.getElementById('workerFeedSection').classList.remove('hidden');
-  const myApps = document.getElementById('myApplicationsSection');
-  if (myApps) myApps.classList.add('hidden');
+  document.getElementById('myApplicationsSection')?.classList.add('hidden');
+  document.getElementById('myShiftsSection')?.classList.add('hidden');
+  
+  document.getElementById('tabWorkerFeed').className = 'btn primary';
+  document.getElementById('tabMyApplications').className = 'btn secondary';
+  document.getElementById('tabMyShifts').className = 'btn secondary';
 }
 
 function showMyApplications() {
   document.getElementById('workerFeedSection').classList.add('hidden');
-  const myApps = document.getElementById('myApplicationsSection');
-  if (myApps) {
-    myApps.classList.remove('hidden');
-    loadMyApplications();
-  }
+  document.getElementById('myApplicationsSection')?.classList.remove('hidden');
+  document.getElementById('myShiftsSection')?.classList.add('hidden');
+  
+  document.getElementById('tabWorkerFeed').className = 'btn secondary';
+  document.getElementById('tabMyApplications').className = 'btn primary';
+  document.getElementById('tabMyShifts').className = 'btn secondary';
+  
+  loadMyApplications();
+}
+
+function showMyShifts() {
+  document.getElementById('workerFeedSection').classList.add('hidden');
+  document.getElementById('myApplicationsSection')?.classList.add('hidden');
+  document.getElementById('myShiftsSection')?.classList.remove('hidden');
+  
+  document.getElementById('tabWorkerFeed').className = 'btn secondary';
+  document.getElementById('tabMyApplications').className = 'btn secondary';
+  document.getElementById('tabMyShifts').className = 'btn primary';
+  
+  loadMyShifts();
 }
 
 async function loadMyApplications() {
@@ -277,5 +296,89 @@ async function loadMyApplications() {
   } catch (e) {
     console.error(e);
     list.innerHTML = '<p>Başvurular yüklenirken hata oluştu.</p>';
+  }
+}
+
+async function loadMyShifts() {
+  const list = document.getElementById('myShiftsList');
+  if (!list) return;
+
+  const user = window.auth?.currentUser;
+  if (!user) return;
+
+  list.innerHTML = '<p>Vardiyalarınız yükleniyor...</p>';
+
+  try {
+    const staffRef = window.firebaseFirestore.collection(window.db, 'restaurantStaff');
+    const staffQ = window.firebaseFirestore.query(staffRef, window.firebaseFirestore.where('mirketUserId', '==', user.uid));
+    const staffSnap = await window.firebaseFirestore.getDocs(staffQ);
+    
+    if (staffSnap.empty) {
+      list.innerHTML = '<p>Şu anda sistemde herhangi bir işletmede personel olarak kayıtlı değilsiniz.</p>';
+      return;
+    }
+
+    const staffIds = [];
+    const staffMap = {};
+    staffSnap.forEach(doc => {
+      staffIds.push(doc.id);
+      staffMap[doc.id] = doc.data();
+    });
+
+    const chunks = [];
+    for (let i = 0; i < staffIds.length; i += 30) {
+      chunks.push(staffIds.slice(i, i + 30));
+    }
+
+    let allShifts = [];
+    const shiftsRef = window.firebaseFirestore.collection(window.db, 'shifts');
+
+    for (const chunk of chunks) {
+      const shiftsQ = window.firebaseFirestore.query(shiftsRef, window.firebaseFirestore.where('staffId', 'in', chunk));
+      const shiftsSnap = await window.firebaseFirestore.getDocs(shiftsQ);
+      shiftsSnap.forEach(doc => {
+         allShifts.push({id: doc.id, ...doc.data()});
+      });
+    }
+
+    allShifts.sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      return b.startTime.localeCompare(a.startTime);
+    });
+
+    if (allShifts.length === 0) {
+      list.innerHTML = '<p>Size atanmış geçmiş veya gelecek bir vardiya bulunmuyor.</p>';
+      return;
+    }
+
+    const restaurantIds = [...new Set(allShifts.map(s => s.restaurantId))];
+    const restaurantNames = {};
+    for (const rid of restaurantIds) {
+      try {
+        const rDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', rid));
+        if (rDoc.exists()) {
+           restaurantNames[rid] = rDoc.data().businessName || 'İşletme';
+        }
+      } catch (e) {}
+    }
+
+    let html = '';
+    allShifts.forEach(shift => {
+      const restName = restaurantNames[shift.restaurantId] || 'İşletme';
+      const roleStr = shift.role || staffMap[shift.staffId]?.role || 'Belirtilmedi';
+      html += `
+        <div class="job-card" style="margin-bottom: 15px; padding: 15px;">
+          <h3 style="margin-top:0;">${shift.date} | ${shift.startTime} - ${shift.endTime}</h3>
+          <p><strong>İşletme:</strong> ${restName}</p>
+          <p><strong>Görev:</strong> ${roleStr}</p>
+          ${shift.notes ? '<p><strong>Notlar:</strong> ' + shift.notes + '</p>' : ''}
+        </div>
+      `;
+    });
+    list.innerHTML = html;
+
+  } catch (error) {
+    console.error(error);
+    list.innerHTML = '<p>Vardiyalar yüklenirken bir hata oluştu.</p>';
   }
 }

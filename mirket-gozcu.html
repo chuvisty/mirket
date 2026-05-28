@@ -414,6 +414,30 @@
     <!-- Main Content (Blurred if not subscribed) -->
     <div id="gozcuContent" class="gozcu-content blurred">
       
+      <!-- Daily Detail Section (Hidden by default) -->
+      <section id="dayDetailSection" class="card hidden" style="max-width: 100%; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h2 id="dayDetailTitle">Günlük Detay</h2>
+          <button class="btn ghost" onclick="closeDayDetail()" style="color: #64748b;">Kapat &times;</button>
+        </div>
+        <div id="dayDetailTimeline" class="day-timeline-container"></div>
+      </section>
+
+      <!-- Calendar Section -->
+      <section class="card" style="max-width: 100%; margin-bottom: 20px;">
+        <div class="calendar-header">
+          <h2>Haftalık Vardiya Takvimi</h2>
+          <div>
+            <button class="btn ghost" onclick="changeWeek(-1)">&#8592; Önceki Hafta</button>
+            <span id="currentWeekLabel" style="margin: 0 15px; font-weight: 600;">Bu Hafta</span>
+            <button class="btn ghost" onclick="changeWeek(1)">Sonraki Hafta &#8594;</button>
+          </div>
+        </div>
+        <div id="calendarGrid" class="calendar-grid">
+          <!-- Calendar days injected here -->
+        </div>
+      </section>
+
       <!-- Staff Roster Section -->
       <section class="card" style="max-width: 100%; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -428,35 +452,19 @@
       </section>
 
       <!-- Business Hours Settings Section -->
-      <section class="card" style="max-width: 100%; margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-          <h2>Çalışma Saatleri</h2>
-          <button class="btn primary" onclick="saveRestaurantSettings()">Kaydet</button>
-        </div>
-        <div style="display: flex; gap: 20px; align-items: center;">
-          <div class="input-group" style="flex: 1;">
-            <span>Açılış Saati</span>
-            <input type="number" id="restaurantOpeningHour" min="0" max="23" value="6">
+      <section class="card" style="max-width: 100%; padding: 15px 30px; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <h2 style="margin: 0; font-size: 18px; white-space: nowrap;">Çalışma Saatleri</h2>
+        
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+          <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+            <span style="font-size: 14px; white-space: nowrap;">Açılış:</span>
+            <input type="number" id="restaurantOpeningHour" min="0" max="23" value="6" style="width: 70px; padding: 6px 10px; font-size: 14px; height: 38px; border-radius: 8px;">
           </div>
-          <div class="input-group" style="flex: 1;">
-            <span>Kapanış Saati</span>
-            <input type="number" id="restaurantClosingHour" min="0" max="24" value="23">
+          <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+            <span style="font-size: 14px; white-space: nowrap;">Kapanış:</span>
+            <input type="number" id="restaurantClosingHour" min="0" max="24" value="23" style="width: 70px; padding: 6px 10px; font-size: 14px; height: 38px; border-radius: 8px;">
           </div>
-        </div>
-      </section>
-
-      <!-- Calendar Section -->
-      <section class="card" style="max-width: 100%;">
-        <div class="calendar-header">
-          <h2>Haftalık Vardiya Takvimi</h2>
-          <div>
-            <button class="btn ghost" onclick="changeWeek(-1)">&#8592; Önceki Hafta</button>
-            <span id="currentWeekLabel" style="margin: 0 15px; font-weight: 600;">Bu Hafta</span>
-            <button class="btn ghost" onclick="changeWeek(1)">Sonraki Hafta &#8594;</button>
-          </div>
-        </div>
-        <div id="calendarGrid" class="calendar-grid">
-          <!-- Calendar days injected here -->
+          <button class="btn primary" onclick="saveRestaurantSettings()" style="padding: 6px 16px; font-size: 14px; height: 38px; display: flex; align-items: center; justify-content: center;">Kaydet</button>
         </div>
       </section>
 
@@ -479,7 +487,17 @@
       </div>
       <div class="input-group">
         <span>Rol (Örn: Garson, Komi)</span>
-        <input type="text" id="staffRole" required>
+        <select id="staffRole" required>
+          <option value="" disabled selected>Seçiniz</option>
+          <option value="Garson">Garson</option>
+          <option value="Komi">Komi</option>
+          <option value="Şef Garson">Şef Garson</option>
+          <option value="Aşçı">Aşçı</option>
+          <option value="Bulaşıkçı">Bulaşıkçı</option>
+          <option value="Host/Hostes">Host / Hostes</option>
+          <option value="Barista">Barista</option>
+          <option value="Diğer">Diğer</option>
+        </select>
       </div>
       <div class="input-group">
         <span>Telefon (İsteğe Bağlı)</span>
@@ -530,13 +548,23 @@
       <div class="input-group">
         <span>Personel Ata</span>
         <select id="shiftStaffSelect">
-          <option value="">-- Atanmadı (Boş Vardiya) --</option>
+          <option value="">Mirket ile doldur</option>
           <!-- Options injected here -->
         </select>
       </div>
       <div class="input-group">
         <span>Görev/Rol</span>
-        <input type="text" id="shiftRole" placeholder="Opsiyonel">
+        <select id="shiftRole">
+          <option value="">-- Opsiyonel --</option>
+          <option value="Garson">Garson</option>
+          <option value="Komi">Komi</option>
+          <option value="Şef Garson">Şef Garson</option>
+          <option value="Aşçı">Aşçı</option>
+          <option value="Bulaşıkçı">Bulaşıkçı</option>
+          <option value="Host/Hostes">Host / Hostes</option>
+          <option value="Barista">Barista</option>
+          <option value="Diğer">Diğer</option>
+        </select>
       </div>
       <div class="input-group">
         <span>Notlar</span>
@@ -544,9 +572,9 @@
       </div>
       
       <!-- Mirket'le Button (Prepared for Phase 2) -->
-      <div id="mirketlePromo" class="hidden" style="margin-top: 15px; padding: 15px; background: #fef2f2; border: 1px dashed #ef4444; border-radius: 12px; text-align: center;">
-        <p style="font-size: 13px; color: #b91c1c; margin-bottom: 10px;">Bu vardiyaya henüz personel atanmadı.</p>
-        <button type="button" class="btn primary" disabled style="opacity: 0.6; cursor: not-allowed; width: 100%;">Mirket'le Personel Bul (Yakında)</button>
+      <div id="mirketlePromo" class="hidden" style="margin-top: 15px; padding: 15px; background: #eff6ff; border: 1px dashed #3b82f6; border-radius: 12px; text-align: center;">
+        <p style="font-size: 13px; color: #1d4ed8; margin-bottom: 10px;">Mirket ağından anında personel çağırabilirsiniz.</p>
+        <button type="button" class="btn secondary" style="width: 100%;" onclick="redirectToPersonelBul()">Mirket ile Personel Bul</button>
       </div>
 
       <div style="display: flex; gap: 10px; margin-top: 20px;">
@@ -558,14 +586,6 @@
 </div>
 
 <div id="dayActionMenu" class="day-action-menu hidden"></div>
-
-<div id="dayDetailModal" class="modal hidden day-detail-modal">
-  <div class="modal-content">
-    <span class="close-modal" onclick="closeDayDetailModal()">&times;</span>
-    <h2 id="dayDetailTitle">Günlük Detay</h2>
-    <div id="dayDetailTimeline" class="day-detail-timeline"></div>
-  </div>
-</div>
 
 <div id="footerContainer"></div>
 

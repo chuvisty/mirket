@@ -14,8 +14,9 @@
 
 <main class="container">
   <div style="width: 100%; max-width: 600px; display: flex; justify-content: center; gap: 10px; margin-bottom: 20px;">
-    <button class="btn primary" style="flex: 1;" onclick="showWorkerFeed()">Aktif İlanlar</button>
-    <button class="btn secondary" style="flex: 1;" onclick="showMyApplications()">Başvurularım</button>
+    <button class="btn primary" id="tabWorkerFeed" style="flex: 1;" onclick="showWorkerFeed()">Aktif İlanlar</button>
+    <button class="btn secondary" id="tabMyApplications" style="flex: 1;" onclick="showMyApplications()">Başvurularım</button>
+    <button class="btn secondary" id="tabMyShifts" style="flex: 1;" onclick="showMyShifts()">Vardiyalarım</button>
   </div>
 
   <section class="card" id="workerFeedSection">
@@ -41,6 +42,15 @@
     <p>Daha önce başvuru yaptığınız ilanlar ve güncel durumları.</p>
     
     <div id="myApplicationsList" class="jobs-list">
+      <p>Yükleniyor...</p>
+    </div>
+  </section>
+
+  <section class="card hidden" id="myShiftsSection">
+    <h1>Vardiyalarım</h1>
+    <p>İşletmeler tarafından size atanan güncel vardiya programınız.</p>
+    
+    <div id="myShiftsList" class="jobs-list">
       <p>Yükleniyor...</p>
     </div>
   </section>
