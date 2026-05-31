@@ -1,4 +1,4 @@
-// Mirket Gözcü - Shift Management System
+// Vardiyan Gözcü - Shift Management System
 // Uses Modular JS structure like rest of the app.
 
 let currentWeekStart = getStartOfWeek(new Date());
@@ -81,7 +81,7 @@ async function checkSubscriptionStatus(uid) {
     const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', uid));
     if (userDoc.exists()) {
       const data = userDoc.data();
-      console.log("Mirket Gözcü - User Data Loaded:", data); // DEBUG
+      console.log("Vardiyan Gözcü - User Data Loaded:", data); // DEBUG
       // Ensure only restaurants can access this
       if (data.userType !== 'restaurant') {
         window.location.href = 'index.html';
@@ -89,10 +89,10 @@ async function checkSubscriptionStatus(uid) {
       }
       // Check for boolean true or string 'true' (case insensitive)
       const isSub = data.isSubscribed === true || String(data.isSubscribed).toLowerCase() === 'true';
-      console.log("Mirket Gözcü - isSubscribed evaluated as:", isSub); // DEBUG
+      console.log("Vardiyan Gözcü - isSubscribed evaluated as:", isSub); // DEBUG
       return isSub;
     }
-    console.warn("Mirket Gözcü - User document not found for uid:", uid);
+    console.warn("Vardiyan Gözcü - User document not found for uid:", uid);
     return false;
   } catch (error) {
     console.error("Error checking subscription:", error);
@@ -131,9 +131,9 @@ function renderStaffList() {
     const item = document.createElement('div');
     item.className = 'staff-item';
     
-    // Check if mirketUserId exists to show a badge
-    const mirketBadge = staff.mirketUserId 
-      ? `<span style="font-size: 10px; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Mirket'e Bağlı</span>` 
+    // Check if vardiyanUserId exists to show a badge
+    const vardiyanBadge = staff.vardiyanUserId 
+      ? `<span style="font-size: 10px; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Vardiyan'e Bağlı</span>` 
       : '';
       
     // Calculate weekly hours
@@ -161,7 +161,7 @@ function renderStaffList() {
 
     item.innerHTML = `
       <div class="staff-info">
-        <span class="staff-name">${staff.name} ${mirketBadge} ${hoursBadge}</span>
+        <span class="staff-name">${staff.name} ${vardiyanBadge} ${hoursBadge}</span>
         <span class="staff-role">${staff.role} | ${staff.phone || 'Telefon yok'}</span>
       </div>
       <div class="staff-actions">
@@ -176,7 +176,7 @@ function renderStaffList() {
 function updateStaffSelectDropdown() {
   const select = document.getElementById('shiftStaffSelect');
   // Keep the first default option
-  select.innerHTML = '<option value="">Mirket ile doldur</option>';
+  select.innerHTML = '<option value="">Vardiyan ile doldur</option>';
   
   staffMembers.forEach(staff => {
     const option = document.createElement('option');
@@ -226,9 +226,9 @@ async function handleStaffSubmit(e) {
   submitBtn.textContent = 'Kaydediliyor...';
   
   try {
-    let mirketUserId = null;
+    let vardiyanUserId = null;
     
-    // Mirket global worker search by phone (only if phone is provided)
+    // Vardiyan global worker search by phone (only if phone is provided)
     if (phone) {
       const usersRef = window.firebaseFirestore.collection(window.db, 'users');
       const q = window.firebaseFirestore.query(
@@ -238,7 +238,7 @@ async function handleStaffSubmit(e) {
       );
       const snapshot = await window.firebaseFirestore.getDocs(q);
       if (!snapshot.empty) {
-        mirketUserId = snapshot.docs[0].id;
+        vardiyanUserId = snapshot.docs[0].id;
       }
     }
     
@@ -248,7 +248,7 @@ async function handleStaffSubmit(e) {
       role,
       phone,
       email,
-      mirketUserId
+      vardiyanUserId
     };
     
     if (id) {
@@ -625,7 +625,7 @@ function openShiftModal(dateStr = '') {
   }
   document.getElementById('shiftModalTitle').textContent = 'Vardiya Ekle';
   document.getElementById('deleteShiftBtn').classList.add('hidden');
-  document.getElementById('mirketlePromo').classList.add('hidden');
+  document.getElementById('vardiyanlePromo').classList.add('hidden');
   document.getElementById('shiftModalMessage').classList.add('hidden');
   document.getElementById('shiftModal').classList.remove('hidden');
 }
@@ -649,7 +649,7 @@ function editShift(shiftId) {
     document.getElementById('deleteShiftBtn').classList.remove('hidden');
     document.getElementById('shiftModalMessage').classList.add('hidden');
     
-    checkShiftStaffSelect(); // To show/hide Mirket'le button
+    checkShiftStaffSelect(); // To show/hide Vardiyan'le button
     
     document.getElementById('shiftModal').classList.remove('hidden');
   }
@@ -659,7 +659,7 @@ document.getElementById('shiftStaffSelect').addEventListener('change', checkShif
 
 function checkShiftStaffSelect() {
   const val = document.getElementById('shiftStaffSelect').value;
-  const promo = document.getElementById('mirketlePromo');
+  const promo = document.getElementById('vardiyanlePromo');
   if (!val) {
     promo.classList.remove('hidden');
   } else {
@@ -785,7 +785,7 @@ function redirectToPersonelBul() {
 
   if (!date || !start || !end) {
     const msgEl = document.getElementById('shiftModalMessage');
-    msgEl.textContent = 'Lütfen Mirket ile personel aramadan önce Tarih, Başlangıç ve Bitiş saatlerini doldurunuz. Bu bilgiler ilanınıza yansıtılacaktır.';
+    msgEl.textContent = 'Lütfen Vardiyan ile personel aramadan önce Tarih, Başlangıç ve Bitiş saatlerini doldurunuz. Bu bilgiler ilanınıza yansıtılacaktır.';
     msgEl.className = 'auth-message warning';
     msgEl.classList.remove('hidden');
     return;

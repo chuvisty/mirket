@@ -1,7 +1,7 @@
-# Mirket Project - Current State (STATE.md)
+# Vardiyan Project - Current State (STATE.md)
 
 ## 📌 Project Overview
-Mirket is a platform that quickly connects restaurant businesses with daily or full-time job seekers. The platform is currently built on a **"Broker / Agency Model"**. In this model, restaurants and workers cannot see each other's direct contact information. All matches are provided manually (or semi-automatically) by the **Admin** via WhatsApp or phone.
+Vardiyan is a platform that quickly connects restaurant businesses with daily or full-time job seekers. The platform is currently built on a **"Broker / Agency Model"**. In this model, restaurants and workers cannot see each other's direct contact information. All matches are provided manually (or semi-automatically) by the **Admin** via WhatsApp or phone.
 
 ## 🏗 Architecture & Technologies
 - **Frontend:** Vanilla HTML, CSS, JavaScript (Modular structure)

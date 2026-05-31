@@ -97,7 +97,7 @@ exports.sendWhatsAppPush = functions.region('europe-west3').https.onCall(async (
                                 },
                                 {
                                     type: "text",
-                                    text: "https://mirket-team.web.app"
+                                    text: "https://vardiyan-team.web.app"
                                 }
                             ]
                         }

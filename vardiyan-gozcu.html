@@ -4,11 +4,11 @@
   <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="158e607a-0804-4181-b1d8-c2982f3c8310" type="text/javascript"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mirket Gözcü | Vardiya Takip Sistemi</title>
-  <meta name="description" content="Mirket Gözcü ile personellerinizin vardiyalarını kolayca yönetin.">
+  <title>Vardiyan Gözcü | Vardiya Takip Sistemi</title>
+  <meta name="description" content="Vardiyan Gözcü ile personellerinizin vardiyalarını kolayca yönetin.">
   <link rel="stylesheet" href="styles.css">
   <style>
-    /* Specific styles for Mirket Gözcü that could be moved to styles.css later */
+    /* Specific styles for Vardiyan Gözcü that could be moved to styles.css later */
     .gozcu-container {
       position: relative;
     }
@@ -393,6 +393,8 @@
       max-width: 450px;
     }
   </style>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" href="/images/favicon.png">
 </head>
 <body>
 
@@ -405,7 +407,7 @@
     <!-- Paywall Overlay -->
     <div id="paywallOverlay" class="paywall-overlay hidden">
       <div class="paywall-content">
-        <h2 style="color: #1d4ed8; font-size: 28px; margin-bottom: 10px;">Mirket Gözcü</h2>
+        <h2 style="color: #1d4ed8; font-size: 28px; margin-bottom: 10px;">Vardiyan Gözcü</h2>
         <p style="color: #64748b; margin-bottom: 25px;">Personelinizin vardiyalarını, ödemelerini ve çalışma takvimlerini profesyonelce yönetmek için Gözcü aboneliğinizi başlatın.</p>
         <button class="btn primary" style="width: 100%;" onclick="alert('Abonelik sistemimiz yakında aktif olacaktır. Test için lütfen yöneticiyle iletişime geçin.')">Aboneliği Başlat</button>
       </div>
@@ -507,7 +509,7 @@
         <span>E-posta (İsteğe Bağlı)</span>
         <input type="email" id="staffEmail">
       </div>
-      <p class="small-text">Not: Telefon numarası Mirket sistemindeki bir işçiyle eşleşirse hesabı otomatik bağlanır.</p>
+      <p class="small-text">Not: Telefon numarası Vardiyan sistemindeki bir işçiyle eşleşirse hesabı otomatik bağlanır.</p>
       <button type="submit" class="btn primary" style="width: 100%; margin-top: 15px;">Kaydet</button>
     </form>
   </div>
@@ -548,7 +550,7 @@
       <div class="input-group">
         <span>Personel Ata</span>
         <select id="shiftStaffSelect">
-          <option value="">Mirket ile doldur</option>
+          <option value="">Vardiyan ile doldur</option>
           <!-- Options injected here -->
         </select>
       </div>
@@ -571,10 +573,10 @@
         <textarea id="shiftNotes" rows="2" placeholder="Opsiyonel notlar..."></textarea>
       </div>
       
-      <!-- Mirket'le Button (Prepared for Phase 2) -->
-      <div id="mirketlePromo" class="hidden" style="margin-top: 15px; padding: 15px; background: #eff6ff; border: 1px dashed #3b82f6; border-radius: 12px; text-align: center;">
-        <p style="font-size: 13px; color: #1d4ed8; margin-bottom: 10px;">Mirket ağından anında personel çağırabilirsiniz.</p>
-        <button type="button" class="btn secondary" style="width: 100%;" onclick="redirectToPersonelBul()">Mirket ile Personel Bul</button>
+      <!-- Vardiyan'le Button (Prepared for Phase 2) -->
+      <div id="vardiyanlePromo" class="hidden" style="margin-top: 15px; padding: 15px; background: #eff6ff; border: 1px dashed #3b82f6; border-radius: 12px; text-align: center;">
+        <p style="font-size: 13px; color: #1d4ed8; margin-bottom: 10px;">Vardiyan ağından anında personel çağırabilirsiniz.</p>
+        <button type="button" class="btn secondary" style="width: 100%;" onclick="redirectToPersonelBul()">Vardiyan ile Personel Bul</button>
       </div>
 
       <div style="display: flex; gap: 10px; margin-top: 20px;">

@@ -1,4 +1,4 @@
-# Mirket Project - To Do (TODO.md)
+# Vardiyan Project - To Do (TODO.md)
 
 This file was created to track features that are missing, need testing, or will be added in the future.
 

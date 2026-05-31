@@ -310,7 +310,7 @@ async function loadMyShifts() {
 
   try {
     const staffRef = window.firebaseFirestore.collection(window.db, 'restaurantStaff');
-    const staffQ = window.firebaseFirestore.query(staffRef, window.firebaseFirestore.where('mirketUserId', '==', user.uid));
+    const staffQ = window.firebaseFirestore.query(staffRef, window.firebaseFirestore.where('vardiyanUserId', '==', user.uid));
     const staffSnap = await window.firebaseFirestore.getDocs(staffQ);
     
     if (staffSnap.empty) {
