@@ -1,4 +1,4 @@
-name: Deploy to Firebase Hosting and Firestore Rules on merge
+name: Deploy to Firebase Hosting on merge
 on:
   push:
     branches:
@@ -8,7 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -16,17 +15,3 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MIRKET_TEAM }}
           channelId: live
           projectId: mirket-team
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Deploy Firestore Rules
-        run: |
-          cat << 'EOF' > sa.json
-          ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MIRKET_TEAM }}
-          EOF
-          export GOOGLE_APPLICATION_CREDENTIALS=$PWD/sa.json
-          npx firebase-tools deploy --only firestore:rules --project mirket-team --non-interactive
-          rm -f sa.json
