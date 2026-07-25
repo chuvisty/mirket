@@ -413,9 +413,19 @@
       </div>
     </div>
 
-    <!-- Main Content (Blurred if not subscribed) -->
-    <div id="gozcuContent" class="gozcu-content blurred">
-      
+      <!-- Top Action Bar for Live QR Code -->
+      <section class="card" style="max-width: 100%; margin-bottom: 20px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; border: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div>
+            <h2 style="color: white; margin: 0 0 5px 0; font-size: 20px;">📱 Vardiya QR Kod Ekranı</h2>
+            <p style="color: #94a3b8; font-size: 13px; margin: 0;">Restoran kasasındaki/tabletindeki ekranda bu QR kod açık kalsın. Çalışanlar konum doğrulamasıyla taretarak giriş-çıkış yapabilir.</p>
+          </div>
+          <button class="btn primary" onclick="openRestaurantQrModal()" style="background: #3b82f6; color: white; padding: 10px 20px; font-weight: 600;">
+            ▶ Canlı QR Ekranını Aç
+          </button>
+        </div>
+      </section>
+
       <!-- Daily Detail Section (Hidden by default) -->
       <section id="dayDetailSection" class="card hidden" style="max-width: 100%; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -440,6 +450,47 @@
         </div>
       </section>
 
+      <!-- Attendance Logs & Reporting Section -->
+      <section class="card" style="max-width: 100%; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+          <div>
+            <h2 style="margin: 0;">📊 Mesai & Giriş-Çıkış Raporları</h2>
+            <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0;">Çalışanların hangi gün kaçta giriş/çıkış yaptığını görün ve CSV raporu indirin.</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <select id="attendanceFilterPeriod" onchange="loadAttendanceLogs(restaurantId, this.value)" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13px;">
+              <option value="today">Bugün</option>
+              <option value="week">Bu Hafta</option>
+              <option value="month">Bu Ay</option>
+              <option value="all">Tüm Zamanlar</option>
+            </select>
+            <button class="btn secondary" onclick="exportAttendanceToCSV()" style="font-size: 13px;">
+              📥 CSV Raporu İndir
+            </button>
+          </div>
+        </div>
+        
+        <div style="overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
+                <th style="padding: 10px;">Çalışan</th>
+                <th style="padding: 10px;">Tarih</th>
+                <th style="padding: 10px;">Giriş Saati</th>
+                <th style="padding: 10px;">Çıkış Saati</th>
+                <th style="padding: 10px;">Süre</th>
+                <th style="padding: 10px;">Durum & Doğrulama</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceLogsTableBody">
+              <tr>
+                <td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Mesai kayıtları yükleniyor...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- Staff Roster Section -->
       <section class="card" style="max-width: 100%; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -453,21 +504,37 @@
         </div>
       </section>
 
-      <!-- Business Hours Settings Section -->
-      <section class="card" style="max-width: 100%; padding: 15px 30px; flex-direction: row; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-        <h2 style="margin: 0; font-size: 18px; white-space: nowrap;">Çalışma Saatleri</h2>
+      <!-- Business Hours & Location Settings Section -->
+      <section class="card" style="max-width: 100%; padding: 20px 30px; margin-bottom: 20px;">
+        <h2 style="margin-bottom: 15px; font-size: 18px;">İşletme Ayarları & Konum Tanımı</h2>
         
-        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-          <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
-            <span style="font-size: 14px; white-space: nowrap;">Açılış:</span>
-            <input type="number" id="restaurantOpeningHour" min="0" max="23" value="6" style="width: 70px; padding: 6px 10px; font-size: 14px; height: 38px; border-radius: 8px;">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: space-between; align-items: flex-end;">
+          <!-- Business Hours -->
+          <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+              <span style="font-size: 14px; white-space: nowrap;">Açılış:</span>
+              <input type="number" id="restaurantOpeningHour" min="0" max="23" value="6" style="width: 70px; padding: 6px 10px; font-size: 14px; height: 38px; border-radius: 8px;">
+            </div>
+            <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+              <span style="font-size: 14px; white-space: nowrap;">Kapanış:</span>
+              <input type="number" id="restaurantClosingHour" min="0" max="24" value="23" style="width: 70px; padding: 6px 10px; font-size: 14px; height: 38px; border-radius: 8px;">
+            </div>
+            <button class="btn primary" onclick="saveRestaurantSettings()" style="padding: 6px 16px; font-size: 14px; height: 38px;">Çalışma Saatlerini Kaydet</button>
           </div>
-          <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
-            <span style="font-size: 14px; white-space: nowrap;">Kapanış:</span>
-            <input type="number" id="restaurantClosingHour" min="0" max="24" value="23" style="width: 70px; padding: 6px 10px; font-size: 14px; height: 38px; border-radius: 8px;">
+
+          <!-- GPS Location -->
+          <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+            <div class="input-group" style="flex-direction: row; align-items: center; gap: 8px;">
+              <span style="font-size: 14px; white-space: nowrap;">Giriş Yarıçapı (m):</span>
+              <input type="number" id="restaurantGeofenceRadius" min="50" max="1000" value="150" style="width: 80px; padding: 6px 10px; font-size: 14px; height: 38px; border-radius: 8px;">
+            </div>
+            <button class="btn secondary" onclick="getCurrentGeoLocationAndSave(restaurantId)" style="padding: 6px 16px; font-size: 14px; height: 38px;">
+              📍 Konumu Burası Yap (GPS Kaydet)
+            </button>
           </div>
-          <button class="btn primary" onclick="saveRestaurantSettings()" style="padding: 6px 16px; font-size: 14px; height: 38px; display: flex; align-items: center; justify-content: center;">Kaydet</button>
         </div>
+        
+        <div id="locationSaveMessage" class="auth-message hidden" style="margin-top: 15px;"></div>
       </section>
 
     </div>
@@ -587,13 +654,28 @@
   </div>
 </div>
 
+<!-- Restaurant Live QR Modal -->
+<div id="restaurantQrModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 480px; text-align: center; padding: 30px;">
+    <span class="close-modal" onclick="closeRestaurantQrModal()">&times;</span>
+    <h2 style="font-size: 22px; color: #1e293b; margin-bottom: 5px;">📱 Vardiya QR Kodu</h2>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Çalışanlar kendi telefonlarından bu kodu okutarak giriş/çıkış yapabilir. Kod 60 saniyede bir otomatik yenilenir.</p>
+    <div id="qrcodeContainer" style="display: inline-block; padding: 20px; background: white; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 15px;"></div>
+    <p style="font-size: 12px; color: #10b981; font-weight: 600;">● CANLI QR AKIŞI AKTİF</p>
+  </div>
+</div>
+
 <div id="dayActionMenu" class="day-action-menu hidden"></div>
 
 <div id="footerContainer"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <script src="firebase.js"></script>
 <script src="js/core.js"></script>
 <script src="js/auth-ui.js"></script>
+<script src="js/attendance.js"></script>
 <script src="js/shifts.js"></script>
 </body>
 </html>

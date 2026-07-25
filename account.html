@@ -23,13 +23,34 @@
       <button class="btn primary hidden" type="button" id="adminPanelButton" style="display:none; margin-bottom: 10px;" onclick="window.location.href='admin.html'">Admin Paneline Git</button>
       <button class="btn secondary" type="button" id="accountLogoutButton">Çıkış Yap</button>
     </section>
+    <section class="account-card card" id="workerAttendanceCard" style="display: none; margin-top: 20px;">
+      <h2 style="font-size: 20px; color: #1e293b; margin-bottom: 8px;">Vardiya Giriş / Çıkış (Clock-In)</h2>
+      <p style="color: #64748b; font-size: 13px; margin-bottom: 15px;">İş yerinize ulaştığınızda restoran ekranındaki QR kodu okutarak vardiyanızı başlatın veya bitirin.</p>
+      <div id="workerShiftStatus" style="margin-bottom: 15px;"></div>
+    </section>
   </main>
 
+  <!-- QR Scan Modal -->
+  <div id="qrScanModal" class="modal hidden">
+    <div class="modal-content" style="max-width: 440px; text-align: center;">
+      <span class="close-modal" onclick="closeQrScanModal()">&times;</span>
+      <h2 style="font-size: 20px; color: #1e293b; margin-bottom: 8px;">Restoran QR Kodu Okutun</h2>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">GPS konumunuz kontrol ediliyor. Restoran tabletindeki QR kodu kameraya doğrultunuz.</p>
+      <div id="qrScanMessage" class="auth-message hidden" style="margin-bottom: 15px;"></div>
+      <div id="qrReader" style="width: 100%; min-height: 250px; background: #0f172a; border-radius: 12px; overflow: hidden; margin-top: 10px;"></div>
+    </div>
+  </div>
+
   <div id="footerContainer"></div>
+
+  <!-- QR Generator & Scanner CDNs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
   <script src="firebase.js"></script>
   <script src="js/core.js"></script>
   <script src="js/auth-ui.js"></script>
+  <script src="js/attendance.js"></script>
   <script src="js/account.js"></script>
   <script src="js/restaurant.js"></script>
   <script src="js/worker.js"></script>

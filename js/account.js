@@ -96,6 +96,19 @@ async function renderAccountPage(user) {
     accountDetails.innerHTML = details.join('');
     setAccountMessage('', 'info');
 
+    // Worker attendance card & status check
+    const workerAttendanceCard = document.getElementById('workerAttendanceCard');
+    if (workerAttendanceCard) {
+      if (userData.userType === 'worker' || userData.userType === 'jobseeker') {
+        workerAttendanceCard.style.display = 'block';
+        if (typeof checkWorkerActiveShift === 'function') {
+          checkWorkerActiveShift(user.uid);
+        }
+      } else {
+        workerAttendanceCard.style.display = 'none';
+      }
+    }
+
     // Show Admin Panel button if admin
     const adminBtn = document.getElementById('adminPanelButton');
     if (adminBtn) {

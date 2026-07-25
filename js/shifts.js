@@ -22,6 +22,9 @@ function initGozcuPage() {
         await loadRestaurantSettings();
         await loadStaff();
         await loadShiftsForCurrentWeek();
+        if (typeof loadAttendanceLogs === 'function') {
+          await loadAttendanceLogs(restaurantId, 'today');
+        }
       } else {
         document.getElementById('paywallOverlay').classList.remove('hidden');
         document.getElementById('gozcuContent').classList.add('blurred');
@@ -41,11 +44,43 @@ async function loadRestaurantSettings() {
       const data = userDoc.data();
       restaurantOpeningHour = data.openingHour || 6;
       restaurantClosingHour = data.closingHour || 23;
-      document.getElementById('restaurantOpeningHour').value = restaurantOpeningHour;
-      document.getElementById('restaurantClosingHour').value = restaurantClosingHour;
+      if (document.getElementById('restaurantOpeningHour')) document.getElementById('restaurantOpeningHour').value = restaurantOpeningHour;
+      if (document.getElementById('restaurantClosingHour')) document.getElementById('restaurantClosingHour').value = restaurantClosingHour;
+      
+      if (data.location) {
+        if (document.getElementById('restaurantGeofenceRadius')) {
+          document.getElementById('restaurantGeofenceRadius').value = data.location.radiusMeters || 150;
+        }
+        const msgEl = document.getElementById('locationSaveMessage');
+        if (msgEl && data.location.latitude && data.location.longitude) {
+          msgEl.textContent = `📍 Tanımlı İşletme Konumu: Lat ${data.location.latitude.toFixed(4)}, Lng ${data.location.longitude.toFixed(4)} (${data.location.radiusMeters || 150}m yarıçap)`;
+          msgEl.className = 'auth-message info';
+          msgEl.classList.remove('hidden');
+        }
+      }
     }
   } catch (error) {
     console.error("Error loading restaurant settings:", error);
+  }
+}
+
+function openRestaurantQrModal() {
+  const modal = document.getElementById('restaurantQrModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    if (typeof startDynamicQrStream === 'function' && restaurantId) {
+      startDynamicQrStream(restaurantId, 'qrcodeContainer');
+    }
+  }
+}
+
+function closeRestaurantQrModal() {
+  const modal = document.getElementById('restaurantQrModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    if (typeof stopDynamicQrStream === 'function') {
+      stopDynamicQrStream();
+    }
   }
 }
 
