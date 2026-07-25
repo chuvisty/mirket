@@ -24,7 +24,9 @@ jobs:
 
       - name: Deploy Firestore Rules
         run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MIRKET_TEAM }}' > sa.json
-          export GOOGLE_APPLICATION_CREDENTIALS=sa.json
-          npx firebase-tools deploy --only firestore:rules --project mirket-team
-          rm sa.json
+          cat << 'EOF' > sa.json
+          ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MIRKET_TEAM }}
+          EOF
+          export GOOGLE_APPLICATION_CREDENTIALS=$PWD/sa.json
+          npx firebase-tools deploy --only firestore:rules --project mirket-team --non-interactive
+          rm -f sa.json
