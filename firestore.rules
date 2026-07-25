@@ -12,14 +12,8 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
     }
 
-    function isSubscribed() {
-      return isAuthenticated() && 
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubscribed == true || 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isSubscribed == 'true');
-    }
-
     match /users/{userId} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin() || resource.data.userType == 'restaurant');
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.auth.uid == userId;
       allow update: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow delete: if isAdmin();
@@ -33,27 +27,23 @@ service cloud.firestore {
     }
 
     match /jobApplications/{appId} {
-      allow read: if isAuthenticated() && (resource.data.workerId == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (resource.data.workerId == request.auth.uid || resource.data.restaurantId == request.auth.uid || isAdmin());
       allow create: if isAuthenticated() && request.resource.data.workerId == request.auth.uid;
       allow update: if isAuthenticated() && (resource.data.workerId == request.auth.uid || isAdmin());
       allow delete: if isAdmin();
     }
 
     match /restaurantStaff/{staffId} {
-      allow read: if isAuthenticated() && resource.data.restaurantId == request.auth.uid;
-      allow create: if isSubscribed() && request.resource.data.restaurantId == request.auth.uid;
-      allow update: if isSubscribed() && resource.data.restaurantId == request.auth.uid && request.resource.data.restaurantId == request.auth.uid;
-      allow delete: if isSubscribed() && resource.data.restaurantId == request.auth.uid;
+      allow read: if isAuthenticated() && (resource.data.restaurantId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.restaurantId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.restaurantId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.restaurantId == request.auth.uid;
     }
 
     match /shifts/{shiftId} {
-      allow read: if isAuthenticated() && (resource.data.restaurantId == request.auth.uid || resource.data.workerId == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated() && (request.resource.data.restaurantId == request.auth.uid || request.resource.data.workerId == request.auth.uid);
-      allow update: if isAuthenticated() && (
-        (resource.data.restaurantId == request.auth.uid && request.resource.data.restaurantId == request.auth.uid) ||
-        (resource.data.workerId == request.auth.uid && request.resource.data.workerId == request.auth.uid) ||
-        isAdmin()
-      );
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
       allow delete: if isAuthenticated() && (resource.data.restaurantId == request.auth.uid || isAdmin());
     }
   }
