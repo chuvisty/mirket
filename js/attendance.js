@@ -78,6 +78,30 @@ function stopDynamicQrStream() {
   }
 }
 
+function openRestaurantQrModal() {
+  const modal = document.getElementById('restaurantQrModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    const rId = window.restaurantId || (window.auth?.currentUser?.uid);
+    if (typeof startDynamicQrStream === 'function' && rId) {
+      startDynamicQrStream(rId, 'qrcodeContainer');
+    }
+  }
+}
+
+function closeRestaurantQrModal() {
+  const modal = document.getElementById('restaurantQrModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    if (typeof stopDynamicQrStream === 'function') {
+      stopDynamicQrStream();
+    }
+  }
+}
+
+window.openRestaurantQrModal = openRestaurantQrModal;
+window.closeRestaurantQrModal = closeRestaurantQrModal;
+
 // --- 4. WORKER ACTIVE SHIFT CHECK & UI UPDATE ---
 async function checkWorkerActiveShift(workerUid) {
   const statusContainer = document.getElementById('workerShiftStatus');
