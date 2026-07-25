@@ -444,10 +444,10 @@ async function handleAuthSubmit() {
         const userRef = window.firebaseFirestore.doc(window.db, 'users', window.currentUserId);
         await window.firebaseFirestore.setDoc(userRef, userData);
         showAuthMessage('Kayıt tamamlandı! Yönlendiriliyorsunuz...', 'success');
-        let redirectUrl = 'index.html';
-        if (finalUserType === 'worker') redirectUrl = 'gunluk-is-bul.html';
-        else if (finalUserType === 'restaurant') redirectUrl = 'personel-bul.html';
+        let redirectUrl = 'account.html';
+        if (finalUserType === 'restaurant') redirectUrl = 'gunluk-is-bul.html';
         else if (finalUserType === 'admin') redirectUrl = 'admin.html';
+        else redirectUrl = 'account.html';
         setTimeout(function() { window.location.href = redirectUrl; }, 1400);
       } catch (error) {
         console.error('Firestore error:', error);
@@ -460,15 +460,15 @@ async function handleAuthSubmit() {
   try {
     await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
     showAuthMessage('Başarıyla giriş yapıldı! Yönlendiriliyorsunuz...', 'success');
-    let redirectUrl = 'index.html';
+    let redirectUrl = 'account.html';
     try {
       if (window.firebaseAuth.currentUser) {
         const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', window.firebaseAuth.currentUser.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          if (userData.userType === 'worker') redirectUrl = 'gunluk-is-bul.html';
-          else if (userData.userType === 'restaurant') redirectUrl = 'personel-bul.html';
+          if (userData.userType === 'restaurant') redirectUrl = 'gunluk-is-bul.html';
           else if (userData.userType === 'admin') redirectUrl = 'admin.html';
+          else redirectUrl = 'account.html';
         }
       }
     } catch(err) {

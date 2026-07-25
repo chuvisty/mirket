@@ -21,7 +21,19 @@
       <div id="accountMessage" class="auth-message hidden" role="alert"></div>
       
       <!-- Worker QR Code & Shift Status Banner -->
-      <div id="workerShiftStatus" style="margin-top: 15px;"></div>
+      <div id="workerShiftStatus" style="margin-top: 15px;">
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 5px solid #f68709; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="margin: 0 0 4px 0; color: #1e293b; font-size: 18px;">Vardiya Giriş / Çıkış (Clock-In)</h3>
+              <p style="margin: 0; font-size: 13px; color: #64748b;">İş yerinize ulaştığınızda restoran ekranındaki QR kodu okutarak mesainizi başlatın veya bitirin.</p>
+            </div>
+            <button class="btn primary" onclick="openQrScanModal()" style="padding: 12px 22px; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;">
+              <span>📷 QR Kod Okut (Giriş / Çıkış)</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div id="accountDetails" class="account-details"></div>
       <button class="btn primary hidden" type="button" id="adminPanelButton" style="display:none; margin-bottom: 10px;" onclick="window.location.href='admin.html'">Admin Paneline Git</button>

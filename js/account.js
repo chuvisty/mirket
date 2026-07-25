@@ -99,13 +99,13 @@ async function renderAccountPage(user) {
     // Worker shift status banner & active shift check
     const workerShiftStatus = document.getElementById('workerShiftStatus');
     if (workerShiftStatus) {
-      if (userData.userType !== 'restaurant' && userData.userType !== 'admin') {
+      if (userData.userType === 'restaurant') {
+        workerShiftStatus.style.display = 'none';
+      } else {
         workerShiftStatus.style.display = 'block';
         if (typeof checkWorkerActiveShift === 'function') {
           checkWorkerActiveShift(user.uid);
         }
-      } else {
-        workerShiftStatus.style.display = 'none';
       }
     }
 
