@@ -327,20 +327,20 @@ async function processClockInOut(scannedToken, workerCoords) {
       workerPhone = wData.employeePhone || wData.authorizedPhone || wData.phone || '';
     }
 
-    // 3. Check if there's an ACTIVE shift for this worker at this restaurant
+    // 3. Check if there's an ACTIVE shift for this worker
     const q = window.firebaseFirestore.query(
       window.firebaseFirestore.collection(window.db, 'shifts'),
       window.firebaseFirestore.where('workerId', '==', workerUser.uid),
-      window.firebaseFirestore.where('restaurantId', '==', restaurantId),
       window.firebaseFirestore.where('status', '==', 'active')
     );
     const activeShiftSnap = await window.firebaseFirestore.getDocs(q);
 
     const todayStr = new Date().toISOString().split('T')[0];
+    const matchingActiveDoc = activeShiftSnap.docs.find(d => d.data().restaurantId === restaurantId);
 
-    if (!activeShiftSnap.empty) {
+    if (matchingActiveDoc) {
       // --- CLOCK-OUT ACTION ---
-      const activeDoc = activeShiftSnap.docs[0];
+      const activeDoc = matchingActiveDoc;
       const shiftData = activeDoc.data();
       
       const checkInDate = shiftData.checkInTime && typeof shiftData.checkInTime.toDate === 'function'
