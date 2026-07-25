@@ -20,7 +20,10 @@ function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
 
 // --- 2. DYNAMIC QR TOKEN GENERATION & PARSING ---
 function generateQrToken(restaurantId) {
-  // Token window changes every 60 seconds
+  if (!restaurantId || restaurantId === 'undefined' || restaurantId === 'null') {
+    console.error("Geçersiz restaurantId:", restaurantId);
+    return null;
+  }
   const windowTime = Math.floor(Date.now() / 60000);
   return `VARDIYAN_SHIFT|${restaurantId}|${windowTime}`;
 }
@@ -31,6 +34,10 @@ function parseQrToken(tokenString) {
   if (parts.length !== 3 || parts[0] !== 'VARDIYAN_SHIFT') return null;
   
   const restaurantId = parts[1];
+  if (!restaurantId || restaurantId === 'undefined' || restaurantId === 'null') {
+    return { valid: false, error: 'QR Kod geçersiz (Restoran kimliği okunamadı). Lütfen ekranı yenileyiniz.' };
+  }
+
   const tokenWindow = parseInt(parts[2], 10);
   const currentWindow = Math.floor(Date.now() / 60000);
   
@@ -46,10 +53,19 @@ function parseQrToken(tokenString) {
 function startDynamicQrStream(restaurantId, containerId = 'qrcode') {
   const container = document.getElementById(containerId);
   if (!container) return;
+
+  if (!restaurantId || restaurantId === 'undefined' || restaurantId === 'null') {
+    container.innerHTML = '<p style="color:#ef4444; font-size:13px; padding:10px;">Restoran kimliği bulunamadı. Lütfen sayfayı yenileyiniz.</p>';
+    return;
+  }
   
   function renderQr() {
     container.innerHTML = '';
     const token = generateQrToken(restaurantId);
+    if (!token) {
+      container.innerHTML = '<p style="color:#ef4444; font-size:13px;">QR kod oluşturulamadı.</p>';
+      return;
+    }
     if (window.QRCode) {
       new QRCode(container, {
         text: token,
@@ -81,9 +97,13 @@ function stopDynamicQrStream() {
 function openRestaurantQrModal() {
   const modal = document.getElementById('restaurantQrModal');
   if (modal) {
-    modal.classList.remove('hidden');
     const rId = window.restaurantId || (window.auth?.currentUser?.uid);
-    if (typeof startDynamicQrStream === 'function' && rId) {
+    if (!rId) {
+      alert("Restoran kimliği bulunamadı. Lütfen sayfayı yenileyiniz.");
+      return;
+    }
+    modal.classList.remove('hidden');
+    if (typeof startDynamicQrStream === 'function') {
       startDynamicQrStream(rId, 'qrcodeContainer');
     }
   }

@@ -13,6 +13,7 @@ function initGozcuPage() {
     window.firebaseAuth.onAuthStateChanged(window.auth, async (user) => {
     if (user) {
       restaurantId = user.uid;
+      window.restaurantId = user.uid;
       const isSub = await checkSubscriptionStatus(user.uid);
       if (isSub) {
         document.getElementById('paywallOverlay').classList.add('hidden');
