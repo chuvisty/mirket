@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -16,9 +17,14 @@ jobs:
           channelId: live
           projectId: mirket-team
 
-      - name: Deploy Firestore Rules
-        uses: w9jds/firebase-action@master
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          args: deploy --only firestore:rules
-        env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_MIRKET_TEAM }}
+          node-version: 20
+
+      - name: Deploy Firestore Rules
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MIRKET_TEAM }}' > sa.json
+          export GOOGLE_APPLICATION_CREDENTIALS=sa.json
+          npx firebase-tools deploy --only firestore:rules --project mirket-team
+          rm sa.json
