@@ -124,28 +124,32 @@ async function checkWorkerActiveShift(workerUid) {
         : 'Belirtilmedi';
         
       statusContainer.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-          <div>
-            <span style="background: #10b981; color: white; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">● AKTİF MESAİDE</span>
-            <p style="margin: 6px 0 0 0; font-weight: 600; color: #0f172a;">${currentActiveShift.restaurantName || 'Restoran'}</p>
-            <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Giriş Saati: ${checkInTimeStr}</p>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 5px solid #22c55e; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <div>
+              <span style="background: #166534; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">● AKTİF MESAİDE</span>
+              <h3 style="margin: 8px 0 2px 0; color: #1e293b; font-size: 18px;">${currentActiveShift.restaurantName || 'Restoran'}</h3>
+              <p style="margin: 0; font-size: 13px; color: #64748b;">Giriş Saati: <strong style="color: #0f172a;">${checkInTimeStr}</strong></p>
+            </div>
+            <button class="btn primary" onclick="openQrScanModal()" style="background: #ef4444; border: none; padding: 12px 22px; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;">
+              <span>🚪 Çıkış Yap (Clock-Out)</span>
+            </button>
           </div>
-          <button class="btn secondary" onclick="openQrScanModal()" style="background: #ef4444; color: white; border: none;">
-            🚪 Çıkış Yap (Clock-Out)
-          </button>
         </div>
       `;
     } else {
       currentActiveShift = null;
       statusContainer.innerHTML = `
-        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-          <div>
-            <span style="background: #64748b; color: white; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;">PASİF</span>
-            <p style="margin: 6px 0 0 0; font-size: 13px; color: #475569;">Şu an aktif bir vardiyanız bulunmuyor.</p>
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-left: 5px solid #f68709; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h3 style="margin: 0 0 4px 0; color: #1e293b; font-size: 18px;">Vardiya Giriş / Çıkış (Clock-In)</h3>
+              <p style="margin: 0; font-size: 13px; color: #64748b;">İş yerinize ulaştığınızda restoran ekranındaki QR kodu okutarak mesainizi başlatın veya bitirin.</p>
+            </div>
+            <button class="btn primary" onclick="openQrScanModal()" style="padding: 12px 22px; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;">
+              <span>📷 QR Kod Okut (Giriş / Çıkış)</span>
+            </button>
           </div>
-          <button class="btn primary" onclick="openQrScanModal()">
-            📷 Giriş Yap (Clock-In)
-          </button>
         </div>
       `;
     }
@@ -175,6 +179,9 @@ function closeQrScanModal() {
   if (modal) modal.classList.add('hidden');
   stopQrCameraScanner();
 }
+
+window.openQrScanModal = openQrScanModal;
+window.closeQrScanModal = closeQrScanModal;
 
 function stopQrCameraScanner() {
   if (html5QrScanner) {
