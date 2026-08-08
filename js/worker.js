@@ -299,14 +299,20 @@ async function loadMyApplications() {
   }
 }
 
+window.allMyShiftsData = [];
+window.myShiftsStaffMap = {};
+window.myShiftsRestaurantNames = {};
+
 async function loadMyShifts() {
   const list = document.getElementById('myShiftsList');
+  const section = document.getElementById('workerShiftsSection');
   if (!list) return;
 
   const user = window.auth?.currentUser;
   if (!user) return;
 
-  list.innerHTML = '<p>Vardiyalarınız yükleniyor...</p>';
+  if (section) section.classList.remove('hidden');
+  list.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">Vardiyalarınız yükleniyor...</p>';
 
   try {
     const staffRef = window.firebaseFirestore.collection(window.db, 'restaurantStaff');
@@ -314,15 +320,15 @@ async function loadMyShifts() {
     const staffSnap = await window.firebaseFirestore.getDocs(staffQ);
     
     if (staffSnap.empty) {
-      list.innerHTML = '<p>Şu anda sistemde herhangi bir işletmede personel olarak kayıtlı değilsiniz.</p>';
+      list.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 20px;">Şu anda sistemde herhangi bir işletmede personel olarak kayıtlı değilsiniz.</p>';
       return;
     }
 
     const staffIds = [];
-    const staffMap = {};
+    window.myShiftsStaffMap = {};
     staffSnap.forEach(doc => {
       staffIds.push(doc.id);
-      staffMap[doc.id] = doc.data();
+      window.myShiftsStaffMap[doc.id] = doc.data();
     });
 
     const chunks = [];
@@ -346,39 +352,94 @@ async function loadMyShifts() {
       return b.startTime.localeCompare(a.startTime);
     });
 
-    if (allShifts.length === 0) {
-      list.innerHTML = '<p>Size atanmış geçmiş veya gelecek bir vardiya bulunmuyor.</p>';
-      return;
-    }
+    window.allMyShiftsData = allShifts;
 
     const restaurantIds = [...new Set(allShifts.map(s => s.restaurantId))];
-    const restaurantNames = {};
+    window.myShiftsRestaurantNames = {};
     for (const rid of restaurantIds) {
       try {
         const rDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', rid));
         if (rDoc.exists()) {
-           restaurantNames[rid] = rDoc.data().businessName || 'İşletme';
+           window.myShiftsRestaurantNames[rid] = rDoc.data().businessName || 'İşletme';
         }
       } catch (e) {}
     }
 
-    let html = '';
-    allShifts.forEach(shift => {
-      const restName = restaurantNames[shift.restaurantId] || 'İşletme';
-      const roleStr = shift.role || staffMap[shift.staffId]?.role || 'Belirtilmedi';
-      html += `
-        <div class="job-card" style="margin-bottom: 15px; padding: 15px;">
-          <h3 style="margin-top:0;">${shift.date} | ${shift.startTime} - ${shift.endTime}</h3>
-          <p><strong>İşletme:</strong> ${restName}</p>
-          <p><strong>Görev:</strong> ${roleStr}</p>
-          ${shift.notes ? '<p><strong>Notlar:</strong> ' + shift.notes + '</p>' : ''}
-        </div>
-      `;
-    });
-    list.innerHTML = html;
+    // Default to 'upcoming' (Gelecek Vardiyalar) on page load
+    filterMyShifts('upcoming');
 
   } catch (error) {
-    console.error(error);
-    list.innerHTML = '<p>Vardiyalar yüklenirken bir hata oluştu.</p>';
+    console.error("Error loading my shifts:", error);
+    list.innerHTML = '<p style="text-align: center; color: #ef4444; padding: 20px;">Vardiyalar yüklenirken bir hata oluştu.</p>';
   }
+}
+
+function filterMyShifts(filterType) {
+  const list = document.getElementById('myShiftsList');
+  if (!list) return;
+
+  const tabUpcoming = document.getElementById('tabUpcoming');
+  const tabPast = document.getElementById('tabPast');
+  const tabAll = document.getElementById('tabAll');
+
+  if (tabUpcoming) tabUpcoming.classList.toggle('active', filterType === 'upcoming');
+  if (tabPast) tabPast.classList.toggle('active', filterType === 'past');
+  if (tabAll) tabAll.classList.toggle('active', filterType === 'all');
+
+  const allShifts = window.allMyShiftsData || [];
+  if (allShifts.length === 0) {
+    list.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 20px;">Size atanmış geçmiş veya gelecek bir vardiya bulunmuyor.</p>';
+    return;
+  }
+
+  const todayStr = (function() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  })();
+
+  let filteredShifts = [];
+  if (filterType === 'upcoming') {
+    filteredShifts = allShifts.filter(s => s.date >= todayStr);
+  } else if (filterType === 'past') {
+    filteredShifts = allShifts.filter(s => s.date < todayStr);
+  } else {
+    filteredShifts = [...allShifts];
+  }
+
+  if (filteredShifts.length === 0) {
+    const msg = filterType === 'upcoming' 
+      ? '📅 Yaklaşan gelecek bir vardiyanız bulunmuyor.' 
+      : filterType === 'past' 
+      ? '📜 Geçmiş vardiya kaydınız bulunmuyor.' 
+      : 'Size atanmış bir vardiya bulunmuyor.';
+    list.innerHTML = `<p style="text-align: center; color: #64748b; padding: 25px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">${msg}</p>`;
+    return;
+  }
+
+  let html = '';
+  filteredShifts.forEach(shift => {
+    const restName = window.myShiftsRestaurantNames[shift.restaurantId] || 'İşletme';
+    const roleStr = shift.role || window.myShiftsStaffMap[shift.staffId]?.role || 'Belirtilmedi';
+    const isPast = shift.date < todayStr;
+    const badgeStyle = isPast 
+      ? 'background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1;' 
+      : 'background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;';
+    const badgeText = isPast ? 'Tamamlandı / Geçmiş' : '⏰ Gelecek Vardiya';
+
+    html += `
+      <div class="job-card" style="margin-bottom: 15px; padding: 18px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+          <h3 style="margin: 0; font-size: 17px; color: #1e293b;">📅 ${shift.date} | ${shift.startTime} - ${shift.endTime}</h3>
+          <span style="font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; ${badgeStyle}">${badgeText}</span>
+        </div>
+        <p style="margin: 4px 0; font-size: 14px; color: #334155;"><strong>🏬 İşletme:</strong> ${restName}</p>
+        <p style="margin: 4px 0; font-size: 14px; color: #334155;"><strong>👔 Görev:</strong> ${roleStr}</p>
+        ${shift.notes ? '<p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border-left: 3px solid #cbd5e1;"><strong>📝 Not:</strong> ' + shift.notes + '</p>' : ''}
+      </div>
+    `;
+  });
+  list.innerHTML = html;
 }

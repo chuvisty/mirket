@@ -549,6 +549,20 @@
     <span class="close-modal" onclick="closeStaffModal()">&times;</span>
     <h2 id="staffModalTitle">Personel Ekle</h2>
     <div id="staffModalMessage" class="auth-message hidden"></div>
+    
+    <!-- Quick Addition via Worker Code -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 18px;">
+      <h4 style="margin: 0 0 4px 0; color: #0f172a; font-size: 13px; font-weight: 700;">⚡ Vardiyan Kodu ile Anında Ekle</h4>
+      <p style="margin: 0 0 10px 0; font-size: 11px; color: #64748b;">Çalışanın profilindeki 6 haneli kodu (veya VK-123456) girin, bilgileri otomatik doldurulsun.</p>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="quickWorkerCode" placeholder="Örn: 849201" maxlength="10" style="flex: 1; text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px; padding: 8px 10px; font-size: 14px;">
+        <button type="button" class="btn primary" onclick="fetchWorkerByCode()" style="padding: 8px 12px; font-size: 12px; white-space: nowrap;">Sorgula & Doldur</button>
+      </div>
+      <div id="quickCodeStatus" class="auth-message hidden" style="margin-top: 8px; font-size: 12px;"></div>
+    </div>
+    
+    <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">— veya manuel bilgi girin —</p>
+
     <form id="staffForm" onsubmit="handleStaffSubmit(event)">
       <input type="hidden" id="staffId">
       <div class="input-group">

@@ -226,6 +226,8 @@ function updateStaffSelectDropdown() {
 
 function openStaffModal() {
   document.getElementById('staffForm').reset();
+  if (document.getElementById('quickWorkerCode')) document.getElementById('quickWorkerCode').value = '';
+  if (document.getElementById('quickCodeStatus')) document.getElementById('quickCodeStatus').classList.add('hidden');
   document.getElementById('staffId').value = '';
   document.getElementById('staffModalTitle').textContent = 'Personel Ekle';
   document.getElementById('staffModalMessage').classList.add('hidden');
@@ -234,6 +236,73 @@ function openStaffModal() {
 
 function closeStaffModal() {
   document.getElementById('staffModal').classList.add('hidden');
+}
+
+async function fetchWorkerByCode() {
+  const codeInput = document.getElementById('quickWorkerCode');
+  const statusEl = document.getElementById('quickCodeStatus');
+  if (!codeInput || !statusEl) return;
+
+  let code = codeInput.value.trim().toUpperCase().replace(/^VK-/, '');
+  if (!code) {
+    statusEl.textContent = 'Lütfen 6 haneli çalışan kodunu girin.';
+    statusEl.className = 'auth-message warning';
+    statusEl.classList.remove('hidden');
+    return;
+  }
+
+  statusEl.textContent = 'Sorgulanıyor...';
+  statusEl.className = 'auth-message info';
+  statusEl.classList.remove('hidden');
+
+  try {
+    const usersRef = window.firebaseFirestore.collection(window.db, 'users');
+    const q = window.firebaseFirestore.query(
+      usersRef,
+      window.firebaseFirestore.where('userType', '==', 'worker'),
+      window.firebaseFirestore.where('workerCode', '==', code)
+    );
+    const snapshot = await window.firebaseFirestore.getDocs(q);
+
+    if (snapshot.empty) {
+      statusEl.textContent = `❌ '${code}' koduna ait onaylı bir çalışan hesabı bulunamadı. Kodu kontrol edin.`;
+      statusEl.className = 'auth-message error';
+      return;
+    }
+
+    const workerDoc = snapshot.docs[0];
+    const wData = workerDoc.data();
+
+    // Fill form automatically
+    if (document.getElementById('staffName')) document.getElementById('staffName').value = wData.employeeName || '';
+    if (document.getElementById('staffPhone')) document.getElementById('staffPhone').value = wData.employeePhone || wData.phone || '';
+    if (document.getElementById('staffEmail')) document.getElementById('staffEmail').value = wData.email || '';
+
+    // Auto select first role if available
+    const roleSelect = document.getElementById('staffRole');
+    if (roleSelect && wData.jobs && wData.jobs.length > 0) {
+      const primaryJob = wData.jobs[0];
+      const roleMap = {
+        "garson": "Garson",
+        "komi": "Komi",
+        "sef-garson": "Şef Garson",
+        "asci": "Aşçı",
+        "bulasikci": "Bulaşıkçı",
+        "host": "Host/Hostes",
+        "barista": "Barista"
+      };
+      if (roleMap[primaryJob]) {
+        roleSelect.value = roleMap[primaryJob];
+      }
+    }
+
+    statusEl.innerHTML = `✅ <strong>${wData.employeeName || 'Çalışan'}</strong> bulundu ve bilgileri dolduruldu. 'Kaydet' butonuna basarak ekleyin.`;
+    statusEl.className = 'auth-message success';
+  } catch (error) {
+    console.error("Error fetching worker by code:", error);
+    statusEl.textContent = 'Sorgulama sırasında bir hata oluştu.';
+    statusEl.className = 'auth-message error';
+  }
 }
 
 function editStaff(staffId) {

@@ -82,6 +82,25 @@ async function renderAccountPage(user) {
       details.push(`<p><strong>Yetkili Adı / Ünvanı:</strong> ${userData.authorizedName || ''}</p>`);
       details.push(`<p><strong>Yetkili Telefon:</strong> ${userData.authorizedPhone || ''}</p>`);
     } else {
+      let workerCode = userData.workerCode;
+      if (!workerCode) {
+        workerCode = Math.floor(100000 + Math.random() * 900000).toString();
+        try {
+          await window.firebaseFirestore.updateDoc(userRef, { workerCode });
+        } catch (codeErr) {
+          console.error("Error updating workerCode:", codeErr);
+        }
+      }
+
+      const codeBanner = `
+        <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 2px dashed #3b82f6; border-radius: 14px; padding: 18px; margin-bottom: 20px; text-align: center; box-shadow: 0 4px 15px rgba(59,130,246,0.08);">
+          <span style="font-size: 12px; color: #1e40af; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">🔑 Özel Vardiyan Çalışan Kodunuz</span>
+          <h2 style="margin: 6px 0 2px 0; color: #1e3a8a; font-size: 32px; letter-spacing: 4px; font-family: monospace; font-weight: 700;">VK-${workerCode}</h2>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #3b82f6;">Restoran yöneticinize bu 6 haneli kodu (<strong>${workerCode}</strong>) vererek sizi tek tıkla kadroya eklemesini sağlayabilirsiniz.</p>
+        </div>
+      `;
+      details.push(codeBanner);
+
       details.push(`<p><strong>Ad Soyad:</strong> ${userData.employeeName || ''}</p>`);
       details.push(`<p><strong>Doğum Tarihi:</strong> ${userData.employeeBirthDate || ''}</p>`);
       details.push(`<p><strong>Telefon:</strong> ${userData.employeePhone || ''}</p>`);

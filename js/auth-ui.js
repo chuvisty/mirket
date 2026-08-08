@@ -436,7 +436,8 @@ async function handleAuthSubmit() {
           availableDays,
           availableHours,
           workTypes,
-          whatsapp
+          whatsapp,
+          workerCode: Math.floor(100000 + Math.random() * 900000).toString()
         });
       }
 
