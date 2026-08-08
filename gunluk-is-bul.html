@@ -49,8 +49,17 @@
   </section>
 
   <section class="card hidden" id="myShiftsSection">
-    <h1>Vardiyalarım</h1>
-    <p>İşletmeler tarafından size atanan güncel vardiya programınız.</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+      <div>
+        <h1 style="margin: 0;">Vardiyalarım</h1>
+        <p style="margin: 4px 0 0 0; color: #64748b; font-size: 14px;">İşletmeler tarafından size atanan güncel vardiya programınız.</p>
+      </div>
+      <div class="shift-filter-tabs" style="display: flex; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: 10px;">
+        <button class="tab-btn active" id="tabUpcoming" onclick="filterMyShifts('upcoming')" type="button">📅 Gelecek Vardiyalar</button>
+        <button class="tab-btn" id="tabPast" onclick="filterMyShifts('past')" type="button">📜 Geçmiş Vardiyalar</button>
+        <button class="tab-btn" id="tabAll" onclick="filterMyShifts('all')" type="button">🌐 Tümü</button>
+      </div>
+    </div>
     
     <div id="myShiftsList" class="jobs-list">
       <p>Yükleniyor...</p>

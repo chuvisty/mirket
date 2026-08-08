@@ -315,21 +315,23 @@ async function loadMyShifts() {
   list.innerHTML = '<p style="text-align: center; color: #64748b; padding: 20px;">Vardiyalarınız yükleniyor...</p>';
 
   try {
-    const staffRef = window.firebaseFirestore.collection(window.db, 'restaurantStaff');
-    const staffQ = window.firebaseFirestore.query(staffRef, window.firebaseFirestore.where('vardiyanUserId', '==', user.uid));
-    const staffSnap = await window.firebaseFirestore.getDocs(staffQ);
-    
-    if (staffSnap.empty) {
-      list.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 20px;">Şu anda sistemde herhangi bir işletmede personel olarak kayıtlı değilsiniz.</p>';
-      return;
-    }
-
-    const staffIds = [];
+    const staffIds = [user.uid]; // Include worker's UID directly
     window.myShiftsStaffMap = {};
-    staffSnap.forEach(doc => {
-      staffIds.push(doc.id);
-      window.myShiftsStaffMap[doc.id] = doc.data();
-    });
+
+    try {
+      const staffRef = window.firebaseFirestore.collection(window.db, 'restaurantStaff');
+      const staffQ = window.firebaseFirestore.query(staffRef, window.firebaseFirestore.where('vardiyanUserId', '==', user.uid));
+      const staffSnap = await window.firebaseFirestore.getDocs(staffQ);
+      
+      staffSnap.forEach(doc => {
+        if (doc.id && !staffIds.includes(doc.id)) {
+          staffIds.push(doc.id);
+        }
+        window.myShiftsStaffMap[doc.id] = doc.data();
+      });
+    } catch (staffErr) {
+      console.warn("Could not query restaurantStaff collection:", staffErr);
+    }
 
     const chunks = [];
     for (let i = 0; i < staffIds.length; i += 30) {
@@ -340,29 +342,42 @@ async function loadMyShifts() {
     const shiftsRef = window.firebaseFirestore.collection(window.db, 'shifts');
 
     for (const chunk of chunks) {
-      const shiftsQ = window.firebaseFirestore.query(shiftsRef, window.firebaseFirestore.where('staffId', 'in', chunk));
-      const shiftsSnap = await window.firebaseFirestore.getDocs(shiftsQ);
-      shiftsSnap.forEach(doc => {
-         allShifts.push({id: doc.id, ...doc.data()});
-      });
+      if (!chunk || chunk.length === 0) continue;
+      try {
+        const shiftsQ = window.firebaseFirestore.query(shiftsRef, window.firebaseFirestore.where('staffId', 'in', chunk));
+        const shiftsSnap = await window.firebaseFirestore.getDocs(shiftsQ);
+        shiftsSnap.forEach(doc => {
+           allShifts.push({id: doc.id, ...doc.data()});
+        });
+      } catch (shiftErr) {
+        console.warn("Error querying shift chunk:", shiftErr);
+      }
     }
 
     allShifts.sort((a, b) => {
-      if (a.date !== b.date) return b.date.localeCompare(a.date);
-      return b.startTime.localeCompare(a.startTime);
+      const dateA = a.date || '';
+      const dateB = b.date || '';
+      if (dateA !== dateB) return dateB.localeCompare(dateA);
+      const timeA = a.startTime || '';
+      const timeB = b.startTime || '';
+      return timeB.localeCompare(timeA);
     });
 
     window.allMyShiftsData = allShifts;
 
-    const restaurantIds = [...new Set(allShifts.map(s => s.restaurantId))];
+    const restaurantIds = [...new Set(allShifts.map(s => s.restaurantId).filter(Boolean))];
     window.myShiftsRestaurantNames = {};
     for (const rid of restaurantIds) {
+      if (!rid || typeof rid !== 'string') continue;
       try {
-        const rDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', rid));
+        const userDocRef = window.firebaseFirestore.doc(window.db, 'users', rid);
+        const rDoc = await window.firebaseFirestore.getDoc(userDocRef);
         if (rDoc.exists()) {
            window.myShiftsRestaurantNames[rid] = rDoc.data().businessName || 'İşletme';
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn("Could not fetch restaurant info for rid:", rid, e);
+      }
     }
 
     // Default to 'upcoming' (Gelecek Vardiyalar) on page load
@@ -421,9 +436,17 @@ function filterMyShifts(filterType) {
 
   let html = '';
   filteredShifts.forEach(shift => {
-    const restName = escapeHTML(window.myShiftsRestaurantNames[shift.restaurantId] || 'İşletme');
-    const roleStr = escapeHTML(shift.role || window.myShiftsStaffMap[shift.staffId]?.role || 'Belirtilmedi');
-    const isPast = shift.date < todayStr;
+    const rawRestName = (window.myShiftsRestaurantNames && window.myShiftsRestaurantNames[shift.restaurantId]) || 'İşletme';
+    const rawRoleStr = shift.role || (window.myShiftsStaffMap && window.myShiftsStaffMap[shift.staffId]?.role) || 'Belirtilmedi';
+    
+    const restName = typeof escapeHTML === 'function' ? escapeHTML(rawRestName) : rawRestName;
+    const roleStr = typeof escapeHTML === 'function' ? escapeHTML(rawRoleStr) : rawRoleStr;
+    const dateStr = typeof escapeHTML === 'function' ? escapeHTML(shift.date || '') : (shift.date || '');
+    const startTimeStr = typeof escapeHTML === 'function' ? escapeHTML(shift.startTime || '') : (shift.startTime || '');
+    const endTimeStr = typeof escapeHTML === 'function' ? escapeHTML(shift.endTime || '') : (shift.endTime || '');
+    const notesStr = shift.notes ? (typeof escapeHTML === 'function' ? escapeHTML(shift.notes) : shift.notes) : '';
+
+    const isPast = (shift.date || '') < todayStr;
     const badgeStyle = isPast 
       ? 'background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1;' 
       : 'background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;';
@@ -432,12 +455,12 @@ function filterMyShifts(filterType) {
     html += `
       <div class="job-card" style="margin-bottom: 15px; padding: 18px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-          <h3 style="margin: 0; font-size: 17px; color: #1e293b;">📅 ${escapeHTML(shift.date)} | ${escapeHTML(shift.startTime)} - ${escapeHTML(shift.endTime)}</h3>
+          <h3 style="margin: 0; font-size: 17px; color: #1e293b;">📅 ${dateStr} | ${startTimeStr} - ${endTimeStr}</h3>
           <span style="font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; ${badgeStyle}">${badgeText}</span>
         </div>
         <p style="margin: 4px 0; font-size: 14px; color: #334155;"><strong>🏬 İşletme:</strong> ${restName}</p>
         <p style="margin: 4px 0; font-size: 14px; color: #334155;"><strong>👔 Görev:</strong> ${roleStr}</p>
-        ${shift.notes ? '<p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border-left: 3px solid #cbd5e1;"><strong>📝 Not:</strong> ' + escapeHTML(shift.notes) + '</p>' : ''}
+        ${notesStr ? '<p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border-left: 3px solid #cbd5e1;"><strong>📝 Not:</strong> ' + notesStr + '</p>' : ''}
       </div>
     `;
   });
