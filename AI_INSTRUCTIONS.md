@@ -16,7 +16,7 @@ reduce ambiguity
 split large work into smaller independent tickets
 make scope boundaries explicit
 call out assumptions when they matter
-preserve backward compatibility unless a breaking change is explicitly intended
+Do not preserve backward compatibility. Remove obsolete paths instead of adding compatibility layers, fallbacks, or migrations.
 Do not default to long discovery discussions. Do not force the user through unnecessary requirement workshops. When the likely solution is obvious, propose it directly.
 
 **BA Preferred Working Style**
@@ -43,3 +43,13 @@ optimize api , BE ,DB calls so that dont use much traffic on firebase or on othe
 
 ## 3. Kodlama Standartları (Coding Standards)
 - **Modülerlik (Modularity):** Projeyi geliştirirken "monolithic" (tek bir devasa dosya, örn: `script.js`) yapılar yerine, her zaman kodları mantıksal parçalara veya özelliklere göre modüler dosyalara bölmeyi (Örn: `js/core.js`, `js/auth-ui.js`, `js/admin.js` vb.) tercih et. Bu yaklaşım kodun okunabilirliğini, sürdürülebilirliğini ve performansını optimize eder. Dosyaları böldükten sonra eski dosyayı silmekten çekinme, ancak bunu yaparken HTML dosya bağlamalarının (script src) doğru sırayla güncellendiğinden kesinlikle emin ol.
+
+## 4. Temel Mühendislik ve Mimari Kurallar (Core Architecture Rules)
+tüm gelecek geliştirmelerde ve taleplerde aşağıdaki kurallar harfiyen uygulanacaktır:
+- **No Backward Compatibility:** Do not preserve backward compatibility. Remove obsolete paths instead of adding compatibility layers, fallbacks, or migrations.
+- **Simplest Implementation:** Choose the simplest implementation that fully meets the current requirements. Avoid speculative abstractions, configuration, and indirection.
+- **Layered Growth:** Grow the system in layers. Start from the smallest version that works end to end, and add each new capability on top of a product that already works. Never trade a working product for unfinished complexity.
+- **Modular Components & Separation of Concerns:** Keep components modular and concerns clearly separated.
+- **Prefer Established Libraries:** Prefer established, well-maintained libraries when they reduce overall complexity or improve reliability. Do not reimplement common functionality without a clear reason.
+- **Lean on Existing Dependencies:** Lean on the dependencies already in the project before writing your own implementation or adding packages. Do not assume a library lacks a capability without checking its documentation and types.
+- **Long-term Architecture:** Make architectural decisions for the long term. Do not accept a stopgap that only works for now and is meant to be replaced later.
