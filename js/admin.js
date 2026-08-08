@@ -207,6 +207,7 @@ async function loadAllApplications() {
               <p style="margin:5px 0;"><strong>Yapabileceği İşler:</strong> ${jobsStr}</p>
               <p style="margin:5px 0;"><strong>Müsait Günler:</strong> ${daysStr}</p>
               <p style="margin:5px 0;"><strong>Müsait Saatler:</strong> ${hoursStr}</p>
+              ${worker.email ? `<button class="btn secondary" style="margin-top: 10px; width: 100%; padding: 6px 10px; font-size: 12px; border-color: #ea580c; color: #ea580c;" onclick="startAdminImpersonationSession('${worker.email}')">🔑 Oturumuna Geç (${worker.email})</button>` : ''}
             </div>
           `;
         });
@@ -341,6 +342,61 @@ async function runRetroactiveStaffMatchingScan(specificUids = null) {
     if (statusEl) {
       statusEl.className = 'auth-message error';
       statusEl.textContent = 'Hata: ' + (error.message || 'Eşleştirme sırasında bir hata oluştu.');
+    }
+  }
+}
+
+async function startAdminImpersonationSession(targetEmailOverride) {
+  const emailInput = document.getElementById('debugTargetEmail');
+  const statusEl = document.getElementById('debugImpersonationStatus');
+  const targetEmail = targetEmailOverride || (emailInput ? emailInput.value.trim() : '');
+
+  if (!targetEmail) {
+    if (statusEl) {
+      statusEl.textContent = 'Lütfen oturumuna geçmek istediğiniz e-posta adresini girin.';
+      statusEl.className = 'auth-message warning';
+      statusEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.textContent = `'${targetEmail}' hesabı için oturum anahtarı üretiliyor...`;
+    statusEl.className = 'auth-message info';
+    statusEl.classList.remove('hidden');
+  }
+
+  try {
+    const createCustomSession = window.firebaseFunctions.httpsCallable(window.functions, 'createCustomSession');
+    const result = await createCustomSession({ targetEmail });
+
+    if (result.data && result.data.customToken) {
+      if (statusEl) {
+        statusEl.innerHTML = `🔑 <strong>${result.data.displayName}</strong> (${result.data.userType}) hesabına geçiş yapılıyor...`;
+        statusEl.className = 'auth-message success';
+      }
+
+      // Sign in with generated custom token
+      await window.firebaseAuth.signInWithCustomToken(window.auth, result.data.customToken);
+
+      setTimeout(() => {
+        if (result.data.userType === 'restaurant') {
+          window.location.href = 'vardiyan-gozcu.html';
+        } else if (result.data.userType === 'worker') {
+          window.location.href = 'account.html';
+        } else {
+          window.location.href = 'index.html';
+        }
+      }, 1200);
+
+    } else {
+      throw new Error("Geçersiz oturum yanıtı alındı.");
+    }
+  } catch (err) {
+    console.error("Error during admin impersonation:", err);
+    if (statusEl) {
+      statusEl.textContent = '❌ Oturum açma hatası: ' + (err.message || 'Yetki veya hesap bulunamadı.');
+      statusEl.className = 'auth-message error';
     }
   }
 }

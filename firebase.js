@@ -10,7 +10,7 @@ const firebaseConfig = {
 
 async function initFirebase() {
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js");
-  const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js");
+  const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js");
   const { getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, orderBy } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
   const { getFunctions, httpsCallable, connectFunctionsEmulator } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-functions.js");
 
@@ -27,6 +27,7 @@ async function initFirebase() {
   window.firebaseAuth = {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    signInWithCustomToken,
     onAuthStateChanged,
     signOut
   };

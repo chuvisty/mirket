@@ -125,3 +125,77 @@ exports.sendWhatsAppPush = functions.region('europe-west3').https.onCall(async (
         throw new functions.https.HttpsError("internal", "An error occurred while sending the message. Check logs for details.");
     }
 });
+
+/**
+ * Callable function for Admin Debug Impersonation.
+ * Accepts a target email or UID, finds/verifies the user, and generates a Firebase Custom Auth Token.
+ * Allows Admin to securely switch sessions to any target user for debugging.
+ */
+exports.createCustomSession = functions.region('europe-west3').https.onCall(async (data, context) => {
+    // 1. Verify Authentication & Admin Role
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "Yönetici girişi yapmalısınız.");
+    }
+
+    const callerId = context.auth.uid;
+    const callerSnap = await admin.firestore().collection("users").doc(callerId).get();
+
+    if (!callerSnap.exists || callerSnap.data().userType !== "admin") {
+        throw new functions.https.HttpsError("permission-denied", "Bu işlem sadece Yönetici (Admin) yetkisiyle gerçekleştirilebilir.");
+    }
+
+    const { targetEmail, targetUid } = data;
+    if (!targetEmail && !targetUid) {
+        throw new functions.https.HttpsError("invalid-argument", "Lütfen bir e-posta adresi veya kullanıcı ID'si belirtin.");
+    }
+
+    let uidToImpersonate = targetUid;
+    let targetUserData = null;
+
+    if (!uidToImpersonate && targetEmail) {
+        const cleanEmail = targetEmail.trim().toLowerCase();
+        try {
+            const userRecord = await admin.auth().getUserByEmail(cleanEmail);
+            uidToImpersonate = userRecord.uid;
+        } catch (emailErr) {
+            // Fallback: search firestore users collection by email
+            const usersQ = await admin.firestore().collection("users")
+                .where("email", "==", cleanEmail)
+                .get();
+            if (!usersQ.empty) {
+                uidToImpersonate = usersQ.docs[0].id;
+                targetUserData = usersQ.docs[0].data();
+            } else {
+                throw new functions.https.HttpsError("not-found", `'${targetEmail}' e-posta adresine ait bir kullanıcı bulunamadı.`);
+            }
+        }
+    }
+
+    if (!targetUserData && uidToImpersonate) {
+        const docSnap = await admin.firestore().collection("users").doc(uidToImpersonate).get();
+        if (docSnap.exists) {
+            targetUserData = docSnap.data();
+        }
+    }
+
+    try {
+        // Mint custom token with Firebase Admin SDK
+        const customToken = await admin.auth().createCustomToken(uidToImpersonate, {
+            debugImpersonatedByAdmin: true
+        });
+
+        console.log(`[ADMIN IMPERSONATION] Admin UID '${callerId}' generated custom session token for User UID '${uidToImpersonate}' (${targetEmail || targetUserData?.email || 'N/A'})`);
+
+        return {
+            success: true,
+            customToken,
+            targetUid: uidToImpersonate,
+            targetEmail: targetEmail || targetUserData?.email || '',
+            userType: targetUserData?.userType || 'unknown',
+            displayName: targetUserData?.employeeName || targetUserData?.businessName || targetUserData?.authorizedName || 'Kullanıcı'
+        };
+    } catch (err) {
+        console.error("Error creating custom token:", err);
+        throw new functions.https.HttpsError("internal", "Oturum jetonu üretilirken hata oluştu: " + err.message);
+    }
+});
