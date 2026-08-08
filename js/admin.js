@@ -23,6 +23,9 @@ function initAdminPage() {
         if (userSnap.exists() && userSnap.data().userType === 'admin') {
           if (msg) msg.classList.add('hidden');
           loadAllApplications();
+          // Auto-run scan for target 8 UIDs on load
+          const targetUids = ['qGv1FDiX7kfvnA93vC4lybnz4B02','j1syEYlWAmVUIGPdDecVNDFUy9j1','uf1yEUp6VXXLSRzuiUUw1JkwNQC3','QSSPwGwSu3bQVvzIhvKjFGitWAP2','e8cuO9QQ2hhYvij86vISLXMdmon2','Oa05CQx0AubnoVNrvpZn1aRTZtJ3','RLLvKJpoDEgwln07QNYh9qffzD33','c9chx9QhvRTKZYxZd9eU36xabUQ2'];
+          runRetroactiveStaffMatchingScan(targetUids);
         } else {
           if (msg) {
             msg.textContent = 'Bu sayfayı görüntüleme yetkiniz yok.';
@@ -268,6 +271,76 @@ async function triggerWhatsAppNotification(jobId, workerId) {
     if (btn) {
       btn.textContent = "Tekrar Dene";
       btn.disabled = false;
+    }
+  }
+}
+
+async function runRetroactiveStaffMatchingScan(specificUids = null) {
+  const statusEl = document.getElementById('matchingScanStatus');
+  if (statusEl) {
+    statusEl.className = 'auth-message info';
+    statusEl.textContent = '🔄 Eşleştirme taraması başlatılıyor...';
+    statusEl.classList.remove('hidden');
+  }
+
+  try {
+    const usersRef = window.firebaseFirestore.collection(window.db, 'users');
+    const qWorkers = window.firebaseFirestore.query(usersRef, window.firebaseFirestore.where('userType', '==', 'worker'));
+    const workersSnap = await window.firebaseFirestore.getDocs(qWorkers);
+    
+    let workersToScan = [];
+    workersSnap.forEach(doc => {
+      if (!specificUids || specificUids.includes(doc.id)) {
+        workersToScan.push({ id: doc.id, ...doc.data() });
+      }
+    });
+
+    if (workersToScan.length === 0) {
+      if (statusEl) statusEl.textContent = 'Tarama için uygun çalışan bulunamadı.';
+      return;
+    }
+
+    const staffRef = window.firebaseFirestore.collection(window.db, 'restaurantStaff');
+    const staffSnap = await window.firebaseFirestore.getDocs(staffRef);
+    let allStaff = [];
+    staffSnap.forEach(doc => allStaff.push({ id: doc.id, ...doc.data() }));
+
+    let updatedCount = 0;
+    let matchedDetails = [];
+
+    for (const worker of workersToScan) {
+      const normWorkerPhone = typeof normalizePhone === 'function' ? normalizePhone(worker.employeePhone || worker.phone) : (worker.employeePhone || worker.phone || '');
+      if (!normWorkerPhone) continue;
+
+      for (const staff of allStaff) {
+        const normStaffPhone = typeof normalizePhone === 'function' ? normalizePhone(staff.phone) : (staff.phone || '');
+        if (normStaffPhone && normStaffPhone === normWorkerPhone) {
+          if (staff.vardiyanUserId !== worker.id) {
+            await window.firebaseFirestore.updateDoc(
+              window.firebaseFirestore.doc(window.db, 'restaurantStaff', staff.id),
+              { vardiyanUserId: worker.id }
+            );
+            updatedCount++;
+            matchedDetails.push(`✅ ${staff.name} (${staff.phone}) -> ${worker.employeeName || worker.email} [${worker.id}] bağlandı.`);
+          }
+        }
+      }
+    }
+
+    if (statusEl) {
+      statusEl.className = 'auth-message success';
+      if (updatedCount > 0) {
+        statusEl.innerHTML = `🎉 <strong>Tarama Tamamlandı!</strong> Toplam <strong>${updatedCount}</strong> personel kaydı çalışan hesaplarıyla eşleştirildi.<br><br>` + matchedDetails.join('<br>');
+      } else {
+        statusEl.textContent = '✅ Tarama tamamlandı: Belirtilen 8 çalışan (ve diğer çalışanlar) için tüm restoran kayıtları zaten eşleştirilmiş durumda!';
+      }
+    }
+    console.log("Retroactive matching scan completed. Updated count:", updatedCount);
+  } catch (error) {
+    console.error("Matching scan error:", error);
+    if (statusEl) {
+      statusEl.className = 'auth-message error';
+      statusEl.textContent = 'Hata: ' + (error.message || 'Eşleştirme sırasında bir hata oluştu.');
     }
   }
 }

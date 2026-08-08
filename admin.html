@@ -34,6 +34,17 @@
       <p>Yükleniyor...</p>
     </div>
 
+    <!-- Retroactive Staff Matching Tool Card -->
+    <div style="margin-top: 30px; padding: 20px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px;">
+      <h3 style="margin-top:0; color: #0369a1;">⚡ Personel & Vardiya Eşleştirme Aracı</h3>
+      <p style="font-size: 13px; color: #334155;">Restoranlar tarafından eklenmiş ancak henüz kullanıcı hesabına bağlanmamış tüm personel kayıtlarını telefon numarasına göre otomatik tarar ve eşleştirir.</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn primary" onclick="runRetroactiveStaffMatchingScan()" type="button">🔄 Tüm Veritabanını Tara & Eşleşmeleri Bağla</button>
+        <button class="btn secondary" onclick="runRetroactiveStaffMatchingScan(['qGv1FDiX7kfvnA93vC4lybnz4B02','j1syEYlWAmVUIGPdDecVNDFUy9j1','uf1yEUp6VXXLSRzuiUUw1JkwNQC3','QSSPwGwSu3bQVvzIhvKjFGitWAP2','e8cuO9QQ2hhYvij86vISLXMdmon2','Oa05CQx0AubnoVNrvpZn1aRTZtJ3','RLLvKJpoDEgwln07QNYh9qffzD33','c9chx9QhvRTKZYxZd9eU36xabUQ2'])" type="button">🎯 Belirtilen 8 Kullanıcıyı Eşleştir</button>
+      </div>
+      <div id="matchingScanStatus" class="auth-message hidden" style="margin-top: 15px;"></div>
+    </div>
+
     <h2 style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">Tüm İşçiler ve Tercihleri</h2>
     <div id="adminWorkersList" class="jobs-list hidden">
       <p>İşçiler yükleniyor...</p>
