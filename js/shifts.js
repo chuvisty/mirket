@@ -15,9 +15,11 @@ function initGozcuPage() {
       restaurantId = user.uid;
       window.restaurantId = user.uid;
       const isSub = await checkSubscriptionStatus(user.uid);
+      const paywallEl = document.getElementById('paywallOverlay');
+      const gozcuContentEl = document.getElementById('gozcuContent');
       if (isSub) {
-        document.getElementById('paywallOverlay').classList.add('hidden');
-        document.getElementById('gozcuContent').classList.remove('blurred');
+        if (paywallEl) paywallEl.classList.add('hidden');
+        if (gozcuContentEl) gozcuContentEl.classList.remove('blurred');
         
         // Load data
         await loadRestaurantSettings();
@@ -27,8 +29,8 @@ function initGozcuPage() {
           await loadAttendanceLogs(restaurantId, 'today');
         }
       } else {
-        document.getElementById('paywallOverlay').classList.remove('hidden');
-        document.getElementById('gozcuContent').classList.add('blurred');
+        if (paywallEl) paywallEl.classList.remove('hidden');
+        if (gozcuContentEl) gozcuContentEl.classList.add('blurred');
       }
     } else {
       // Redirect to login if not authenticated
@@ -422,11 +424,11 @@ async function loadShiftsForCurrentWeek() {
     
     const snapshot = await window.firebaseFirestore.getDocs(q);
     currentShifts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
-    renderCalendar();
-    renderStaffList(); // Update weekly hours in staff list after shifts are loaded
   } catch (error) {
     console.error("Error loading shifts:", error);
+  } finally {
+    renderCalendar();
+    renderStaffList(); // Update weekly hours in staff list after shifts are loaded
   }
 }
 
