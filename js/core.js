@@ -44,3 +44,17 @@ function toggleMenu() {
 function goHome() {
   window.location.href = "index.html";
 }
+
+function normalizePhone(rawPhone) {
+  if (!rawPhone) return '';
+  let digits = String(rawPhone).replace(/\D/g, '');
+  if (digits.length === 12 && digits.startsWith('90')) {
+    digits = digits.substring(2);
+  } else if (digits.length === 11 && digits.startsWith('0')) {
+    digits = digits.substring(1);
+  }
+  if (digits.length > 10) {
+    digits = digits.slice(-10);
+  }
+  return digits;
+}

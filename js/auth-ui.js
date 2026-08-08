@@ -443,6 +443,16 @@ async function handleAuthSubmit() {
       try {
         const userRef = window.firebaseFirestore.doc(window.db, 'users', window.currentUserId);
         await window.firebaseFirestore.setDoc(userRef, userData);
+
+        // Retroactively link any existing restaurant staff entries matching worker's phone
+        if (finalUserType === 'worker' && userData.employeePhone) {
+          try {
+            await linkExistingStaffToNewWorker(window.currentUserId, userData.employeePhone);
+          } catch (linkErr) {
+            console.error("Error during retroactive staff linking:", linkErr);
+          }
+        }
+
         showAuthMessage('Kayıt tamamlandı! Yönlendiriliyorsunuz...', 'success');
         let redirectUrl = 'account.html';
         if (finalUserType === 'restaurant') redirectUrl = 'gunluk-is-bul.html';
@@ -643,5 +653,31 @@ function initHourRangeSelection() {
       }
     });
   });
+}
+
+async function linkExistingStaffToNewWorker(workerUid, rawPhone) {
+  const normWorkerPhone = normalizePhone(rawPhone);
+  if (!normWorkerPhone) return;
+
+  try {
+    const staffRef = window.firebaseFirestore.collection(window.db, 'restaurantStaff');
+    const snapshot = await window.firebaseFirestore.getDocs(staffRef);
+
+    for (const docSnap of snapshot.docs) {
+      const staffData = docSnap.data();
+      const staffNormPhone = normalizePhone(staffData.phone);
+      if (staffNormPhone && staffNormPhone === normWorkerPhone) {
+        if (staffData.vardiyanUserId !== workerUid) {
+          await window.firebaseFirestore.updateDoc(
+            window.firebaseFirestore.doc(window.db, 'restaurantStaff', docSnap.id),
+            { vardiyanUserId: workerUid }
+          );
+          console.log(`Retroactively linked staff record ${docSnap.id} to new worker ${workerUid}`);
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error linking existing staff to new worker:", error);
+  }
 }
 

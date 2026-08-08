@@ -266,17 +266,24 @@ async function handleStaffSubmit(e) {
   try {
     let vardiyanUserId = null;
     
-    // Vardiyan global worker search by phone (only if phone is provided)
+    // Vardiyan global worker search by normalized phone (only if phone is provided)
     if (phone) {
-      const usersRef = window.firebaseFirestore.collection(window.db, 'users');
-      const q = window.firebaseFirestore.query(
-        usersRef, 
-        window.firebaseFirestore.where('userType', '==', 'worker'),
-        window.firebaseFirestore.where('phone', '==', phone)
-      );
-      const snapshot = await window.firebaseFirestore.getDocs(q);
-      if (!snapshot.empty) {
-        vardiyanUserId = snapshot.docs[0].id;
+      const normInputPhone = normalizePhone(phone);
+      if (normInputPhone) {
+        const usersRef = window.firebaseFirestore.collection(window.db, 'users');
+        const q = window.firebaseFirestore.query(
+          usersRef, 
+          window.firebaseFirestore.where('userType', '==', 'worker')
+        );
+        const snapshot = await window.firebaseFirestore.getDocs(q);
+        for (const userDoc of snapshot.docs) {
+          const wData = userDoc.data();
+          const wPhone = normalizePhone(wData.employeePhone || wData.phone);
+          if (wPhone && wPhone === normInputPhone) {
+            vardiyanUserId = userDoc.id;
+            break;
+          }
+        }
       }
     }
     
