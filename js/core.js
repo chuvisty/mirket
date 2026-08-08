@@ -22,6 +22,16 @@ async function initApp() {
 
 document.addEventListener('DOMContentLoaded', initApp);
 
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function formatList(value) {
   if (!value) return '';
   if (Array.isArray(value)) {
@@ -32,9 +42,10 @@ function formatList(value) {
 
 function humanizeValue(value) {
   if (!value) return '';
-  return String(value)
+  const str = String(value)
     .replace(/[-_]/g, ' ')
     .replace(/\b\w/g, function(chr) { return chr.toUpperCase(); });
+  return escapeHTML(str);
 }
 
 function toggleMenu() {

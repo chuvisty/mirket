@@ -421,8 +421,8 @@ function filterMyShifts(filterType) {
 
   let html = '';
   filteredShifts.forEach(shift => {
-    const restName = window.myShiftsRestaurantNames[shift.restaurantId] || 'İşletme';
-    const roleStr = shift.role || window.myShiftsStaffMap[shift.staffId]?.role || 'Belirtilmedi';
+    const restName = escapeHTML(window.myShiftsRestaurantNames[shift.restaurantId] || 'İşletme');
+    const roleStr = escapeHTML(shift.role || window.myShiftsStaffMap[shift.staffId]?.role || 'Belirtilmedi');
     const isPast = shift.date < todayStr;
     const badgeStyle = isPast 
       ? 'background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1;' 
@@ -432,12 +432,12 @@ function filterMyShifts(filterType) {
     html += `
       <div class="job-card" style="margin-bottom: 15px; padding: 18px; border-radius: 14px; background: #ffffff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-          <h3 style="margin: 0; font-size: 17px; color: #1e293b;">📅 ${shift.date} | ${shift.startTime} - ${shift.endTime}</h3>
+          <h3 style="margin: 0; font-size: 17px; color: #1e293b;">📅 ${escapeHTML(shift.date)} | ${escapeHTML(shift.startTime)} - ${escapeHTML(shift.endTime)}</h3>
           <span style="font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; ${badgeStyle}">${badgeText}</span>
         </div>
         <p style="margin: 4px 0; font-size: 14px; color: #334155;"><strong>🏬 İşletme:</strong> ${restName}</p>
         <p style="margin: 4px 0; font-size: 14px; color: #334155;"><strong>👔 Görev:</strong> ${roleStr}</p>
-        ${shift.notes ? '<p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border-left: 3px solid #cbd5e1;"><strong>📝 Not:</strong> ' + shift.notes + '</p>' : ''}
+        ${shift.notes ? '<p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border-left: 3px solid #cbd5e1;"><strong>📝 Not:</strong> ' + escapeHTML(shift.notes) + '</p>' : ''}
       </div>
     `;
   });

@@ -77,10 +77,10 @@ async function renderAccountPage(user) {
     }
 
     if (userData.userType === 'restaurant') {
-      details.push(`<p><strong>İşletme Adı:</strong> ${userData.businessName || ''}</p>`);
-      details.push(`<p><strong>İşletme Konumu:</strong> ${userData.businessCity || ''} / ${userData.businessDistrict || ''} / ${userData.businessNeighborhood || ''}</p>`);
-      details.push(`<p><strong>Yetkili Adı / Ünvanı:</strong> ${userData.authorizedName || ''}</p>`);
-      details.push(`<p><strong>Yetkili Telefon:</strong> ${userData.authorizedPhone || ''}</p>`);
+      details.push(`<p><strong>İşletme Adı:</strong> ${escapeHTML(userData.businessName)}</p>`);
+      details.push(`<p><strong>İşletme Konumu:</strong> ${escapeHTML(userData.businessCity)} / ${escapeHTML(userData.businessDistrict)} / ${escapeHTML(userData.businessNeighborhood)}</p>`);
+      details.push(`<p><strong>Yetkili Adı / Ünvanı:</strong> ${escapeHTML(userData.authorizedName)}</p>`);
+      details.push(`<p><strong>Yetkili Telefon:</strong> ${escapeHTML(userData.authorizedPhone)}</p>`);
     } else {
       let workerCode = userData.workerCode;
       if (!workerCode) {
@@ -101,10 +101,10 @@ async function renderAccountPage(user) {
       `;
       details.push(codeBanner);
 
-      details.push(`<p><strong>Ad Soyad:</strong> ${userData.employeeName || ''}</p>`);
-      details.push(`<p><strong>Doğum Tarihi:</strong> ${userData.employeeBirthDate || ''}</p>`);
-      details.push(`<p><strong>Telefon:</strong> ${userData.employeePhone || ''}</p>`);
-      details.push(`<p><strong>Adres:</strong> ${userData.employeeCity || ''} / ${userData.employeeDistrict || ''} / ${userData.employeeNeighborhood || ''}</p>`);
+      details.push(`<p><strong>Ad Soyad:</strong> ${escapeHTML(userData.employeeName)}</p>`);
+      details.push(`<p><strong>Doğum Tarihi:</strong> ${escapeHTML(userData.employeeBirthDate)}</p>`);
+      details.push(`<p><strong>Telefon:</strong> ${escapeHTML(userData.employeePhone)}</p>`);
+      details.push(`<p><strong>Adres:</strong> ${escapeHTML(userData.employeeCity)} / ${escapeHTML(userData.employeeDistrict)} / ${escapeHTML(userData.employeeNeighborhood)}</p>`);
       details.push(`<p><strong>Eğitim Durumu:</strong> ${humanizeValue(userData.education) || ''}</p>`);
       details.push(`<p><strong>Yapabileceği İşler:</strong> ${formatList(userData.jobs)}</p>`);
       details.push(`<p><strong>Uygun Günler:</strong> ${formatList(userData.availableDays)}</p>`);
