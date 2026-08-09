@@ -67,12 +67,17 @@ async function loadAllApplications() {
     let appsArray = [];
     appsSnap.forEach(doc => appsArray.push({ id: doc.id, ...doc.data() }));
 
-    // 3. Fetch all workers for matching
+    // 3. Fetch all workers and restaurants for matching and subscription management
     const usersRef = window.firebaseFirestore.collection(window.db, 'users');
     const qWorkers = window.firebaseFirestore.query(usersRef, window.firebaseFirestore.where('userType', '==', 'worker'));
     const workersSnap = await window.firebaseFirestore.getDocs(qWorkers);
     let workersArray = [];
     workersSnap.forEach(doc => workersArray.push({ id: doc.id, ...doc.data() }));
+
+    const qRestaurants = window.firebaseFirestore.query(usersRef, window.firebaseFirestore.where('userType', '==', 'restaurant'));
+    const restSnap = await window.firebaseFirestore.getDocs(qRestaurants);
+    let restaurantsArray = [];
+    restSnap.forEach(doc => restaurantsArray.push({ id: doc.id, ...doc.data() }));
 
     let html = '';
     
@@ -185,6 +190,45 @@ async function loadAllApplications() {
     });
 
     list.innerHTML = html;
+
+    // --- Render All Restaurants List ---
+    const restaurantsList = document.getElementById('adminRestaurantsList');
+    if (restaurantsList) {
+      restaurantsList.classList.remove('hidden');
+      if (restaurantsArray.length === 0) {
+        restaurantsList.innerHTML = '<p>Sistemde henüz kayıtlı restoran yok.</p>';
+      } else {
+        let restHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">';
+        restaurantsArray.forEach(rest => {
+          const isSub = rest.isSubscribed === true || String(rest.isSubscribed).toLowerCase() === 'true';
+          const subBadge = isSub 
+            ? '<span style="background:#dcfce7; color:#15803d; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">⭐ Vardiyan Aktif</span>'
+            : '<span style="background:#fef2f2; color:#b91c1c; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">❌ Vardiyan Pasif</span>';
+          
+          restHtml += `
+            <div class="card" style="padding: 15px; border: 1px solid #ddd; text-align: left; background: #fff;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
+                <h3 style="margin:0; color:#1064ac;">${rest.businessName || rest.restaurantName || rest.authorizedName || 'İsimsiz Restoran'}</h3>
+                ${subBadge}
+              </div>
+              <p style="margin:4px 0; font-size:13px;"><strong>E-posta:</strong> ${rest.email || 'Belirtilmedi'}</p>
+              <p style="margin:4px 0; font-size:13px;"><strong>Telefon:</strong> ${rest.phone || rest.authorizedPhone || 'Belirtilmedi'}</p>
+              <p style="margin:4px 0; font-size:12px; color:#64748b;"><strong>UID:</strong> <code>${rest.id}</code></p>
+              
+              <div style="margin-top: 12px; display:flex; gap:6px;">
+                ${isSub 
+                  ? `<button class="btn secondary" style="flex:1; padding: 5px; font-size: 11px; border-color: #dc2626; color: #dc2626;" onclick="toggleVardiyanSubscriptionForUid(false, '${rest.id}')">❌ Devre Dışı Bırak</button>`
+                  : `<button class="btn primary" style="flex:1; padding: 5px; font-size: 11px; background-color: #16a34a; border-color: #16a34a;" onclick="toggleVardiyanSubscriptionForUid(true, '${rest.id}')">✅ Vardiyan Özelliğini Aç</button>`
+                }
+                ${rest.email ? `<button class="btn secondary" style="padding: 5px 8px; font-size: 11px; border-color: #ea580c; color: #ea580c;" onclick="startAdminImpersonationSession('${rest.email}')">🔑 Oturum</button>` : ''}
+              </div>
+            </div>
+          `;
+        });
+        restHtml += '</div>';
+        restaurantsList.innerHTML = restHtml;
+      }
+    }
 
     // --- Render All Workers List ---
     const workersList = document.getElementById('adminWorkersList');
@@ -400,3 +444,59 @@ async function startAdminImpersonationSession(targetEmailOverride) {
     }
   }
 }
+
+async function toggleVardiyanSubscriptionForUid(status, directUid = null) {
+  const uidInput = document.getElementById('targetVardiyanUid');
+  const statusEl = document.getElementById('vardiyanActivationStatus');
+  const uid = directUid || (uidInput ? uidInput.value.trim() : '');
+
+  if (!uid) {
+    if (statusEl) {
+      statusEl.textContent = 'Lütfen bir Kullanıcı ID (UID) giriniz.';
+      statusEl.className = 'auth-message warning';
+      statusEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (statusEl) {
+    statusEl.textContent = `UID: '${uid}' için Vardiyan özelliği güncelleniyor...`;
+    statusEl.className = 'auth-message info';
+    statusEl.classList.remove('hidden');
+  }
+
+  try {
+    const userRef = window.firebaseFirestore.doc(window.db, 'users', uid);
+    const userSnap = await window.firebaseFirestore.getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      throw new Error(`'${uid}' ID'li kullanıcı veritabanında bulunamadı.`);
+    }
+
+    await window.firebaseFirestore.updateDoc(userRef, {
+      isSubscribed: Boolean(status),
+      updatedAt: window.firebaseFirestore.Timestamp.now()
+    });
+
+    const userData = userSnap.data();
+    const userName = userData.businessName || userData.restaurantName || userData.employeeName || userData.email || uid;
+
+    if (statusEl) {
+      statusEl.innerHTML = `🎉 <strong>${userName}</strong> (${uid}) kullanıcısının Vardiyan (Vardiya / Gözcü) özelliği <strong>${status ? 'AKTİFLEŞTİRİLDİ' : 'DEVRE DIŞI BIRAKILDI'}</strong>!`;
+      statusEl.className = 'auth-message success';
+    }
+
+    // Refresh application & restaurant list
+    setTimeout(() => {
+      loadAllApplications();
+    }, 1000);
+
+  } catch (err) {
+    console.error("Error toggling Vardiyan subscription:", err);
+    if (statusEl) {
+      statusEl.textContent = '❌ İşlem başarısız: ' + (err.message || 'Yetki veya bağlantı hatası.');
+      statusEl.className = 'auth-message error';
+    }
+  }
+}
+

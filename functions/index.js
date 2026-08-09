@@ -199,3 +199,48 @@ exports.createCustomSession = functions.region('europe-west3').https.onCall(asyn
         throw new functions.https.HttpsError("internal", "Oturum jetonu üretilirken hata oluştu: " + err.message);
     }
 });
+
+/**
+ * Callable function for Admin to toggle Vardiyan (Shift / Gözcü) feature subscription.
+ * Sets isSubscribed: true/false for a specified target UID in Firestore.
+ */
+exports.setVardiyanSubscription = functions.region('europe-west3').https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError("unauthenticated", "Yönetici girişi yapmalısınız.");
+    }
+
+    const callerId = context.auth.uid;
+    const callerSnap = await admin.firestore().collection("users").doc(callerId).get();
+
+    if (!callerSnap.exists || callerSnap.data().userType !== "admin") {
+        throw new functions.https.HttpsError("permission-denied", "Bu işlem sadece Yönetici (Admin) yetkisiyle gerçekleştirilebilir.");
+    }
+
+    const { targetUid, isSubscribed } = data;
+    if (!targetUid) {
+        throw new functions.https.HttpsError("invalid-argument", "Hedef kullanıcı ID (targetUid) belirtilmelidir.");
+    }
+
+    const userRef = admin.firestore().collection("users").doc(targetUid);
+    const userSnap = await userRef.get();
+    if (!userSnap.exists) {
+        throw new functions.https.HttpsError("not-found", `'${targetUid}' ID'li kullanıcı bulunamadı.`);
+    }
+
+    const newSubStatus = isSubscribed !== undefined ? Boolean(isSubscribed) : true;
+
+    await userRef.update({
+        isSubscribed: newSubStatus,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    console.log(`[ADMIN SET SUBSCRIPTION] Admin '${callerId}' set isSubscribed: ${newSubStatus} for user '${targetUid}'`);
+
+    return {
+        success: true,
+        message: `Vardiyan özelliği '${targetUid}' kullanıcısı için ${newSubStatus ? 'AKTİFLEŞTİRİLDİ' : 'DEVRE DIŞI BIRAKILDI'}.`,
+        targetUid,
+        isSubscribed: newSubStatus
+    };
+});
+

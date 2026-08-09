@@ -45,6 +45,18 @@
       <div id="matchingScanStatus" class="auth-message hidden" style="margin-top: 15px;"></div>
     </div>
 
+    <!-- Vardiyan (Gözcü) Subscription Activation Tool Card -->
+    <div style="margin-top: 25px; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
+      <h3 style="margin-top:0; color: #15803d;">⭐ Vardiyan (Gözcü) Özelliği Yönetimi</h3>
+      <p style="font-size: 13px; color: #166534; margin-bottom: 12px;">Kullanıcının Vardiyan (Vardiya / Gözcü) aboneliğini ve özelliğini tek tıkla aktifleştirin veya devre dışı bırakın.</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <input type="text" id="targetVardiyanUid" value="TjGbcEwiiIcg4ezV45wbXieehyD3" placeholder="Kullanıcı ID (UID)" style="flex: 1; min-width: 240px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+        <button class="btn primary" onclick="toggleVardiyanSubscriptionForUid(true)" type="button" style="background-color: #16a34a; border-color: #16a34a;">✅ Vardiyan Özelliğini Aktifleştir</button>
+        <button class="btn secondary" onclick="toggleVardiyanSubscriptionForUid(false)" type="button" style="border-color: #dc2626; color: #dc2626;">❌ Devre Dışı Bırak</button>
+      </div>
+      <div id="vardiyanActivationStatus" class="auth-message hidden" style="margin-top: 12px;"></div>
+    </div>
+
     <!-- Admin Debug Account Impersonation Card -->
     <div style="margin-top: 25px; padding: 20px; background: #fff7ed; border: 1px solid #ffedd5; border-radius: 12px;">
       <h3 style="margin-top:0; color: #c2410c;">🔑 Admin Hata Ayıklama (Debug) Oturum Erişimi</h3>
@@ -56,6 +68,11 @@
       <div id="debugImpersonationStatus" class="auth-message hidden" style="margin-top: 12px;"></div>
     </div>
 
+    <h2 style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">Tüm Restoranlar ve Vardiyan Abonelik Durumları</h2>
+    <div id="adminRestaurantsList" class="jobs-list">
+      <p>Restoranlar yükleniyor...</p>
+    </div>
+
     <h2 style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">Tüm İşçiler ve Tercihleri</h2>
     <div id="adminWorkersList" class="jobs-list hidden">
       <p>İşçiler yükleniyor...</p>
@@ -64,12 +81,12 @@
 </main>
 <div id="footerContainer"></div>
 
-<script src="firebase.js?v=2"></script>
-<script src="js/core.js?v=2"></script>
-<script src="js/auth-ui.js"></script>
-<script src="js/account.js"></script>
-<script src="js/restaurant.js"></script>
-<script src="js/worker.js"></script>
-<script src="js/admin.js?v=2"></script>
+<script src="firebase.js?v=3"></script>
+<script src="js/core.js?v=3"></script>
+<script src="js/auth-ui.js?v=3"></script>
+<script src="js/account.js?v=3"></script>
+<script src="js/restaurant.js?v=3"></script>
+<script src="js/worker.js?v=3"></script>
+<script src="js/admin.js?v=3"></script>
 </body>
 </html>
