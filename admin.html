@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vardiyan | Admin Paneli</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
   <style>
     .application-card {
       border: 1px solid #ddd;
@@ -15,9 +17,41 @@
       background-color: #f9f9f9;
     }
     .application-card h3 { margin-top: 0; }
+
+    /* Admin Tab Bar */
+    .admin-tab-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0;
+    }
+    .admin-tab-btn {
+      padding: 10px 24px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      color: #64748b;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      border-radius: 6px 6px 0 0;
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .admin-tab-btn:hover {
+      color: #1064ac;
+      background: #f0f9ff;
+    }
+    .admin-tab-btn.active {
+      color: #1064ac;
+      border-bottom: 3px solid #1064ac;
+      background: #f0f9ff;
+    }
+    .admin-tab-panel { display: none; }
+    .admin-tab-panel.active { display: block; }
   </style>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/png" href="/images/favicon.png">
 </head>
 <body>
 
@@ -26,67 +60,83 @@
 <main class="container">
   <section class="card" id="adminSection">
     <h1>Yönetici Paneli</h1>
-    <p>Tüm işçi başvurularını buradan görüntüleyebilirsiniz. İşletmelerle iletişime geçip onay/ödeme aldıktan sonra işçi bilgilerini iletebilirsiniz.</p>
+    <p>İlanlar, Restoranlar ve Çalışanlar sekmelerini kullanarak sistemi yönetin.</p>
 
     <div id="adminMessage" class="auth-message hidden" role="alert"></div>
 
-    <div id="adminApplicationsList" class="jobs-list hidden">
-      <p>Yükleniyor...</p>
+    <!-- Tab Navigation -->
+    <div class="admin-tab-bar" id="adminTabBar">
+      <button class="admin-tab-btn active" id="tab-btn-ilanlar" onclick="switchAdminTab('ilanlar')">📋 İlanlar & Başvurular</button>
+      <button class="admin-tab-btn" id="tab-btn-restoranlar" onclick="switchAdminTab('restoranlar')">🏪 Restoranlar</button>
+      <button class="admin-tab-btn" id="tab-btn-calisanlar" onclick="switchAdminTab('calisanlar')">👷 Çalışanlar</button>
     </div>
 
-    <!-- Retroactive Staff Matching Tool Card -->
-    <div style="margin-top: 30px; padding: 20px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px;">
-      <h3 style="margin-top:0; color: #0369a1;">⚡ Personel & Vardiya Eşleştirme Aracı</h3>
-      <p style="font-size: 13px; color: #334155;">Restoranlar tarafından eklenmiş ancak henüz kullanıcı hesabına bağlanmamış tüm personel kayıtlarını telefon numarasına göre otomatik tarar ve eşleştirir.</p>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button class="btn primary" onclick="runRetroactiveStaffMatchingScan()" type="button">🔄 Tüm Veritabanını Tara & Eşleşmeleri Bağla</button>
-        <button class="btn secondary" onclick="runRetroactiveStaffMatchingScan(['qGv1FDiX7kfvnA93vC4lybnz4B02','j1syEYlWAmVUIGPdDecVNDFUy9j1','uf1yEUp6VXXLSRzuiUUw1JkwNQC3','QSSPwGwSu3bQVvzIhvKjFGitWAP2','e8cuO9QQ2hhYvij86vISLXMdmon2','Oa05CQx0AubnoVNrvpZn1aRTZtJ3','RLLvKJpoDEgwln07QNYh9qffzD33','c9chx9QhvRTKZYxZd9eU36xabUQ2'])" type="button">🎯 Belirtilen 8 Kullanıcıyı Eşleştir</button>
+    <!-- TAB: İlanlar -->
+    <div class="admin-tab-panel active" id="tab-panel-ilanlar">
+      <!-- Retroactive Staff Matching Tool Card -->
+      <div style="padding: 20px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; margin-bottom: 24px;">
+        <h3 style="margin-top:0; color: #0369a1;">⚡ Personel & Vardiya Eşleştirme Aracı</h3>
+        <p style="font-size: 13px; color: #334155;">Restoranlar tarafından eklenmiş ancak henüz kullanıcı hesabına bağlanmamış tüm personel kayıtlarını telefon numarasına göre otomatik tarar ve eşleştirir.</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn primary" onclick="runRetroactiveStaffMatchingScan()" type="button">🔄 Tüm Veritabanını Tara & Eşleşmeleri Bağla</button>
+          <button class="btn secondary" onclick="runRetroactiveStaffMatchingScan(['qGv1FDiX7kfvnA93vC4lybnz4B02','j1syEYlWAmVUIGPdDecVNDFUy9j1','uf1yEUp6VXXLSRzuiUUw1JkwNQC3','QSSPwGwSu3bQVvzIhvKjFGitWAP2','e8cuO9QQ2hhYvij86vISLXMdmon2','Oa05CQx0AubnoVNrvpZn1aRTZtJ3','RLLvKJpoDEgwln07QNYh9qffzD33','c9chx9QhvRTKZYxZd9eU36xabUQ2'])" type="button">🎯 Belirtilen 8 Kullanıcıyı Eşleştir</button>
+        </div>
+        <div id="matchingScanStatus" class="auth-message hidden" style="margin-top: 15px;"></div>
       </div>
-      <div id="matchingScanStatus" class="auth-message hidden" style="margin-top: 15px;"></div>
-    </div>
 
-    <!-- Vardiyan (Gözcü) Subscription Activation Tool Card -->
-    <div style="margin-top: 25px; padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
-      <h3 style="margin-top:0; color: #15803d;">⭐ Vardiyan (Gözcü) Özelliği Yönetimi</h3>
-      <p style="font-size: 13px; color: #166534; margin-bottom: 12px;">Kullanıcının Vardiyan (Vardiya / Gözcü) aboneliğini ve özelliğini tek tıkla aktifleştirin veya devre dışı bırakın.</p>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <input type="text" id="targetVardiyanUid" value="TjGbcEwiiIcg4ezV45wbXieehyD3" placeholder="Kullanıcı ID (UID)" style="flex: 1; min-width: 240px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
-        <button class="btn primary" onclick="toggleVardiyanSubscriptionForUid(true)" type="button" style="background-color: #16a34a; border-color: #16a34a;">✅ Vardiyan Özelliğini Aktifleştir</button>
-        <button class="btn secondary" onclick="toggleVardiyanSubscriptionForUid(false)" type="button" style="border-color: #dc2626; color: #dc2626;">❌ Devre Dışı Bırak</button>
+      <div id="adminApplicationsList" class="jobs-list">
+        <p style="color:#64748b;">İlanları yüklemek için sayfayı bekleyiniz...</p>
       </div>
-      <div id="vardiyanActivationStatus" class="auth-message hidden" style="margin-top: 12px;"></div>
     </div>
 
-    <!-- Admin Debug Account Impersonation Card -->
-    <div style="margin-top: 25px; padding: 20px; background: #fff7ed; border: 1px solid #ffedd5; border-radius: 12px;">
-      <h3 style="margin-top:0; color: #c2410c;">🔑 Admin Hata Ayıklama (Debug) Oturum Erişimi</h3>
-      <p style="font-size: 13px; color: #431407; margin-bottom: 12px;">Sorun bildiren herhangi bir restoran veya çalışanın hesabına doğrudan geçiş yaparak ekranını ve verilerini test edebilirsiniz.</p>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <input type="email" id="debugTargetEmail" placeholder="Hedef e-posta (ör. calisan@mirket.com)" style="flex: 1; min-width: 240px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
-        <button class="btn primary" onclick="startAdminImpersonationSession()" type="button" style="background-color: #ea580c; border-color: #ea580c;">🚀 Bu Hesaba Geçiş Yap</button>
+    <!-- TAB: Restoranlar -->
+    <div class="admin-tab-panel" id="tab-panel-restoranlar">
+      <!-- Vardiyan Subscription Tool -->
+      <div style="padding: 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; margin-bottom: 24px;">
+        <h3 style="margin-top:0; color: #15803d;">⭐ Vardiyan (Gözcü) Özelliği Yönetimi</h3>
+        <p style="font-size: 13px; color: #166534; margin-bottom: 12px;">Kullanıcının Vardiyan (Vardiya / Gözcü) aboneliğini ve özelliğini tek tıkla aktifleştirin veya devre dışı bırakın.</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <input type="text" id="targetVardiyanUid" value="TjGbcEwiiIcg4ezV45wbXieehyD3" placeholder="Kullanıcı ID (UID)" style="flex: 1; min-width: 240px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+          <button class="btn primary" onclick="toggleVardiyanSubscriptionForUid(true)" type="button" style="background-color: #16a34a; border-color: #16a34a;">✅ Vardiyan Özelliğini Aktifleştir</button>
+          <button class="btn secondary" onclick="toggleVardiyanSubscriptionForUid(false)" type="button" style="border-color: #dc2626; color: #dc2626;">❌ Devre Dışı Bırak</button>
+        </div>
+        <div id="vardiyanActivationStatus" class="auth-message hidden" style="margin-top: 12px;"></div>
       </div>
-      <div id="debugImpersonationStatus" class="auth-message hidden" style="margin-top: 12px;"></div>
+
+      <!-- Admin Impersonation -->
+      <div style="padding: 20px; background: #fff7ed; border: 1px solid #ffedd5; border-radius: 12px; margin-bottom: 24px;">
+        <h3 style="margin-top:0; color: #c2410c;">🔑 Admin Hata Ayıklama (Debug) Oturum Erişimi</h3>
+        <p style="font-size: 13px; color: #431407; margin-bottom: 12px;">Sorun bildiren herhangi bir restoran veya çalışanın hesabına doğrudan geçiş yaparak ekranını ve verilerini test edebilirsiniz.</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <input type="email" id="debugTargetEmail" placeholder="Hedef e-posta (ör. calisan@mirket.com)" style="flex: 1; min-width: 240px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+          <button class="btn primary" onclick="startAdminImpersonationSession()" type="button" style="background-color: #ea580c; border-color: #ea580c;">🚀 Bu Hesaba Geçiş Yap</button>
+        </div>
+        <div id="debugImpersonationStatus" class="auth-message hidden" style="margin-top: 12px;"></div>
+      </div>
+
+      <div id="adminRestaurantsList" class="jobs-list">
+        <p style="color:#64748b;">Restoranları yüklemek için bu sekmeye tıklayınız...</p>
+      </div>
     </div>
 
-    <h2 style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">Tüm Restoranlar ve Vardiyan Abonelik Durumları</h2>
-    <div id="adminRestaurantsList" class="jobs-list">
-      <p>Restoranlar yükleniyor...</p>
+    <!-- TAB: Çalışanlar -->
+    <div class="admin-tab-panel" id="tab-panel-calisanlar">
+      <div id="adminWorkersList" class="jobs-list">
+        <p style="color:#64748b;">Çalışanları yüklemek için bu sekmeye tıklayınız...</p>
+      </div>
     </div>
 
-    <h2 style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">Tüm İşçiler ve Tercihleri</h2>
-    <div id="adminWorkersList" class="jobs-list hidden">
-      <p>İşçiler yükleniyor...</p>
-    </div>
   </section>
 </main>
 <div id="footerContainer"></div>
 
-<script src="firebase.js?v=3"></script>
-<script src="js/core.js?v=3"></script>
-<script src="js/auth-ui.js?v=3"></script>
-<script src="js/account.js?v=3"></script>
-<script src="js/restaurant.js?v=3"></script>
-<script src="js/worker.js?v=3"></script>
-<script src="js/admin.js?v=3"></script>
+<script src="firebase.js?v=4"></script>
+<script src="js/core.js?v=4"></script>
+<script src="js/auth-ui.js?v=4"></script>
+<script src="js/account.js?v=4"></script>
+<script src="js/restaurant.js?v=4"></script>
+<script src="js/worker.js?v=4"></script>
+<script src="js/admin.js?v=4"></script>
 </body>
 </html>
+

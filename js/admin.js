@@ -1,9 +1,31 @@
+// Tracks which tabs have already been loaded
+const _tabLoaded = { ilanlar: false, restoranlar: false, calisanlar: false };
+
+function switchAdminTab(tab) {
+  // Update buttons
+  document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+  const activeBtn = document.getElementById('tab-btn-' + tab);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // Update panels
+  document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.remove('active'));
+  const activePanel = document.getElementById('tab-panel-' + tab);
+  if (activePanel) activePanel.classList.add('active');
+
+  // Lazy load data for the tab
+  if (!_tabLoaded[tab]) {
+    _tabLoaded[tab] = true;
+    if (tab === 'ilanlar') loadApplicationsTab();
+    else if (tab === 'restoranlar') loadRestaurantsTab();
+    else if (tab === 'calisanlar') loadWorkersTab();
+  }
+}
+
 function initAdminPage() {
   const adminSection = document.getElementById('adminSection');
   if (!adminSection) return;
 
   const msg = document.getElementById('adminMessage');
-  const list = document.getElementById('adminApplicationsList');
 
   if (window.firebaseAuth?.onAuthStateChanged && window.auth) {
     window.firebaseAuth.onAuthStateChanged(window.auth, async function(user) {
@@ -22,10 +44,9 @@ function initAdminPage() {
         const userSnap = await window.firebaseFirestore.getDoc(userRef);
         if (userSnap.exists() && userSnap.data().userType === 'admin') {
           if (msg) msg.classList.add('hidden');
-          loadAllApplications();
-          // Auto-run scan for target 8 UIDs on load
-          const targetUids = ['qGv1FDiX7kfvnA93vC4lybnz4B02','j1syEYlWAmVUIGPdDecVNDFUy9j1','uf1yEUp6VXXLSRzuiUUw1JkwNQC3','QSSPwGwSu3bQVvzIhvKjFGitWAP2','e8cuO9QQ2hhYvij86vISLXMdmon2','Oa05CQx0AubnoVNrvpZn1aRTZtJ3','RLLvKJpoDEgwln07QNYh9qffzD33','c9chx9QhvRTKZYxZd9eU36xabUQ2'];
-          runRetroactiveStaffMatchingScan(targetUids);
+          // Load default tab (İlanlar) on page open
+          _tabLoaded.ilanlar = true;
+          loadApplicationsTab();
         } else {
           if (msg) {
             msg.textContent = 'Bu sayfayı görüntüleme yetkiniz yok.';
@@ -41,15 +62,14 @@ function initAdminPage() {
   }
 }
 
-async function loadAllApplications() {
+
+// ───── TAB: İLANLAR ─────
+async function loadApplicationsTab() {
   const list = document.getElementById('adminApplicationsList');
   if (!list) return;
-
-  list.classList.remove('hidden');
   list.innerHTML = '<p>Başvurular ve Eşleşmeler yükleniyor...</p>';
 
   try {
-    // 1. Fetch all job requests (active ads)
     const jobsRef = window.firebaseFirestore.collection(window.db, 'jobRequests');
     const jobsSnap = await window.firebaseFirestore.getDocs(jobsRef);
     let jobsArray = [];
@@ -61,91 +81,56 @@ async function loadAllApplications() {
       return;
     }
 
-    // 2. Fetch all job applications
     const appsRef = window.firebaseFirestore.collection(window.db, 'jobApplications');
     const appsSnap = await window.firebaseFirestore.getDocs(appsRef);
     let appsArray = [];
     appsSnap.forEach(doc => appsArray.push({ id: doc.id, ...doc.data() }));
 
-    // 3. Fetch all workers and restaurants for matching and subscription management
     const usersRef = window.firebaseFirestore.collection(window.db, 'users');
     const qWorkers = window.firebaseFirestore.query(usersRef, window.firebaseFirestore.where('userType', '==', 'worker'));
     const workersSnap = await window.firebaseFirestore.getDocs(qWorkers);
     let workersArray = [];
     workersSnap.forEach(doc => workersArray.push({ id: doc.id, ...doc.data() }));
 
-    const qRestaurants = window.firebaseFirestore.query(usersRef, window.firebaseFirestore.where('userType', '==', 'restaurant'));
-    const restSnap = await window.firebaseFirestore.getDocs(qRestaurants);
-    let restaurantsArray = [];
-    restSnap.forEach(doc => restaurantsArray.push({ id: doc.id, ...doc.data() }));
-
     let html = '';
-    
     jobsArray.forEach(job => {
-      // Find applications for this job
       const jobApps = appsArray.filter(app => app.jobId === job.id);
-      
-      // Find possible matches for this job (strict matching, case-insensitive)
       const possibleMatches = workersArray.filter(worker => {
-        // Map job roles from restaurant select to worker checkbox values
-        const roleMap = {
-          "Garson": "garson",
-          "Komi": "komi",
-          "Şef Garson": "sef-garson",
-          "Aşçı": "asci",
-          "Bulaşıkçı": "bulasikci",
-          "Host/Hostes": "host",
-          "Barista": "barista",
-          "Diğer": "diger"
-        };
-        
+        const roleMap = { "Garson": "garson", "Komi": "komi", "Şef Garson": "sef-garson", "Aşçı": "asci", "Bulaşıkçı": "bulasikci", "Host/Hostes": "host", "Barista": "barista", "Diğer": "diger" };
         const mappedJobRole = roleMap[job.jobRole] || (job.jobRole || "").toLowerCase().trim();
         const workerJobs = worker.jobs || [];
         const hasRole = workerJobs.includes(mappedJobRole) || workerJobs.includes((job.jobRole || "").toLowerCase().trim());
-
-        // Match district case-insensitively
-        const jobDistLower = (job.restaurantDistrict || "").toLowerCase().trim();
-        const workerDistLower = (worker.employeeDistrict || "").toLowerCase().trim();
-        const hasSameDistrict = workerDistLower === jobDistLower;
-
+        const hasSameDistrict = (worker.employeeDistrict || "").toLowerCase().trim() === (job.restaurantDistrict || "").toLowerCase().trim();
         const wantsWhatsApp = worker.whatsapp === 'yes';
-        
-        // Exclude workers who have already applied
         const alreadyApplied = jobApps.some(app => app.workerId === worker.id);
-
         return hasRole && hasSameDistrict && wantsWhatsApp && !alreadyApplied;
       });
 
       const dateStr = job.createdAt && typeof job.createdAt.toDate === 'function' ? job.createdAt.toDate().toLocaleString('tr-TR') : '';
-
       html += `
         <div class="card" style="border: 2px solid #1064ac; margin-bottom: 20px; padding: 15px; text-align: left; width: 100%; box-sizing: border-box;">
           <h2 style="margin-top:0; color: #1064ac;">İlan: ${job.jobRole}</h2>
           <p><strong>İşletme:</strong> ${job.restaurantName} (${job.restaurantDistrict})</p>
           <p><small>Tarih: ${dateStr} | Durum: ${job.status}</small></p>
-          
           <h3 style="margin-top:15px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Gelen Başvurular (${jobApps.length})</h3>
       `;
-
       if (jobApps.length === 0) {
-         html += `<p style="color:gray; font-size: 14px;">Henüz bu ilana gelen bir başvuru yok.</p>`;
+        html += `<p style="color:gray; font-size: 14px;">Henüz bu ilana gelen bir başvuru yok.</p>`;
       } else {
         jobApps.forEach(app => {
           const appDate = app.createdAt && typeof app.createdAt.toDate === 'function' ? app.createdAt.toDate().toLocaleString('tr-TR') : '';
           const phone = app.workerPhone ? app.workerPhone.replace(/[^0-9+]/g, '') : '';
           const waLink = phone ? `https://wa.me/${phone}` : '#';
           const telLink = phone ? `tel:${phone}` : '#';
-          
           let statusBadge = '';
           if (app.status === 'pending') statusBadge = '<span style="color:orange; font-weight:bold;">Bekliyor</span>';
           else if (app.status === 'approved') statusBadge = '<span style="color:green; font-weight:bold;">Onaylandı</span>';
           else if (app.status === 'rejected') statusBadge = '<span style="color:red; font-weight:bold;">Reddedildi</span>';
           else statusBadge = `<span style="color:blue; font-weight:bold;">${app.status}</span>`;
-
           html += `
             <div class="application-card" style="margin-top: 15px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee;">
               <p style="margin: 0 0 8px 0;"><strong>İşçi:</strong> ${app.workerName} - ${statusBadge}</p>
-              <p style="margin: 0 0 8px 0;"><strong>Telefon:</strong> ${app.workerPhone} 
+              <p style="margin: 0 0 8px 0;"><strong>Telefon:</strong> ${app.workerPhone}
                 <a href="${waLink}" target="_blank" class="btn secondary" style="padding: 4px 8px; font-size:12px; text-decoration:none; background-color:#25D366; color:white;">WhatsApp İle Yaz</a>
                 <a href="${telLink}" class="btn secondary" style="padding: 4px 8px; font-size:12px; text-decoration:none; background-color:#34b7f1; color:white;">Ara</a>
               </p>
@@ -162,111 +147,136 @@ async function loadAllApplications() {
           `;
         });
       }
-
       html += `<h3 style="margin-top:25px; border-bottom: 1px solid #ccc; padding-bottom: 5px; color:#28a745;">Olası Eşleşmeler (${possibleMatches.length})</h3>`;
-      
       if (possibleMatches.length === 0) {
-         html += `<p style="color:gray; font-size: 14px;">Bu ilanın kriterlerine (${job.jobRole} - ${job.restaurantDistrict}) uyan işçi bulunamadı.</p>`;
+        html += `<p style="color:gray; font-size: 14px;">Bu ilanın kriterlerine (${job.jobRole} - ${job.restaurantDistrict}) uyan işçi bulunamadı.</p>`;
       } else {
-         possibleMatches.forEach(worker => {
-            html += `
-              <div class="application-card" style="margin-top: 15px; background: #f0fff4; padding: 10px; border-radius: 8px; border: 1px solid #c3e6cb;">
-                <p style="margin: 0 0 8px 0;"><strong>İşçi:</strong> ${worker.employeeName} (${worker.employeeDistrict})</p>
-                <p style="margin: 0 0 8px 0;"><strong>Eğitim / Deneyim:</strong> ${worker.education || 'Bilinmiyor'}</p>
-                <p style="margin: 0 0 8px 0;"><strong>Müsait Günler:</strong> ${worker.availableDays ? worker.availableDays.join(', ') : 'Bilinmiyor'}</p>
-                <p style="margin: 0 0 8px 0;"><strong>Müsait Saatler:</strong> ${worker.availableHours ? worker.availableHours.join(', ') : 'Bilinmiyor'}</p>
-                <div style="margin-top: 10px;">
-                  <button class="btn primary" id="wa_btn_${worker.id}_${job.id}" style="width:auto; padding: 6px 12px; font-size:13px; background-color:#25D366; color:white; border:none;" onclick="triggerWhatsAppNotification('${job.id}', '${worker.id}')">
-                    📱 Bildirim Gönder (WhatsApp)
-                  </button>
-                  <span id="wa_status_${worker.id}_${job.id}" style="margin-left: 10px; font-size: 13px; color: #555;"></span>
-                </div>
+        possibleMatches.forEach(worker => {
+          html += `
+            <div class="application-card" style="margin-top: 15px; background: #f0fff4; padding: 10px; border-radius: 8px; border: 1px solid #c3e6cb;">
+              <p style="margin: 0 0 8px 0;"><strong>İşçi:</strong> ${worker.employeeName} (${worker.employeeDistrict})</p>
+              <p style="margin: 0 0 8px 0;"><strong>Eğitim / Deneyim:</strong> ${worker.education || 'Bilinmiyor'}</p>
+              <p style="margin: 0 0 8px 0;"><strong>Müsait Günler:</strong> ${worker.availableDays ? worker.availableDays.join(', ') : 'Bilinmiyor'}</p>
+              <p style="margin: 0 0 8px 0;"><strong>Müsait Saatler:</strong> ${worker.availableHours ? worker.availableHours.join(', ') : 'Bilinmiyor'}</p>
+              <div style="margin-top: 10px;">
+                <button class="btn primary" id="wa_btn_${worker.id}_${job.id}" style="width:auto; padding: 6px 12px; font-size:13px; background-color:#25D366; color:white; border:none;" onclick="triggerWhatsAppNotification('${job.id}', '${worker.id}')">
+                  📱 Bildirim Gönder (WhatsApp)
+                </button>
+                <span id="wa_status_${worker.id}_${job.id}" style="margin-left: 10px; font-size: 13px; color: #555;"></span>
               </div>
-            `;
-         });
+            </div>
+          `;
+        });
       }
-
-      html += `</div>`; // Close job card
+      html += `</div>`;
     });
-
     list.innerHTML = html;
-
-    // --- Render All Restaurants List ---
-    const restaurantsList = document.getElementById('adminRestaurantsList');
-    if (restaurantsList) {
-      restaurantsList.classList.remove('hidden');
-      if (restaurantsArray.length === 0) {
-        restaurantsList.innerHTML = '<p>Sistemde henüz kayıtlı restoran yok.</p>';
-      } else {
-        let restHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">';
-        restaurantsArray.forEach(rest => {
-          const isSub = rest.isSubscribed === true || String(rest.isSubscribed).toLowerCase() === 'true';
-          const subBadge = isSub 
-            ? '<span style="background:#dcfce7; color:#15803d; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">⭐ Vardiyan Aktif</span>'
-            : '<span style="background:#fef2f2; color:#b91c1c; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">❌ Vardiyan Pasif</span>';
-          
-          restHtml += `
-            <div class="card" style="padding: 15px; border: 1px solid #ddd; text-align: left; background: #fff;">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
-                <h3 style="margin:0; color:#1064ac;">${rest.businessName || rest.restaurantName || rest.authorizedName || 'İsimsiz Restoran'}</h3>
-                ${subBadge}
-              </div>
-              <p style="margin:4px 0; font-size:13px;"><strong>E-posta:</strong> ${rest.email || 'Belirtilmedi'}</p>
-              <p style="margin:4px 0; font-size:13px;"><strong>Telefon:</strong> ${rest.phone || rest.authorizedPhone || 'Belirtilmedi'}</p>
-              <p style="margin:4px 0; font-size:12px; color:#64748b;"><strong>UID:</strong> <code>${rest.id}</code></p>
-              
-              <div style="margin-top: 12px; display:flex; gap:6px;">
-                ${isSub 
-                  ? `<button class="btn secondary" style="flex:1; padding: 5px; font-size: 11px; border-color: #dc2626; color: #dc2626;" onclick="toggleVardiyanSubscriptionForUid(false, '${rest.id}')">❌ Devre Dışı Bırak</button>`
-                  : `<button class="btn primary" style="flex:1; padding: 5px; font-size: 11px; background-color: #16a34a; border-color: #16a34a;" onclick="toggleVardiyanSubscriptionForUid(true, '${rest.id}')">✅ Vardiyan Özelliğini Aç</button>`
-                }
-                ${rest.email ? `<button class="btn secondary" style="padding: 5px 8px; font-size: 11px; border-color: #ea580c; color: #ea580c;" onclick="startAdminImpersonationSession('${rest.email}')">🔑 Oturum</button>` : ''}
-              </div>
-            </div>
-          `;
-        });
-        restHtml += '</div>';
-        restaurantsList.innerHTML = restHtml;
-      }
-    }
-
-    // --- Render All Workers List ---
-    const workersList = document.getElementById('adminWorkersList');
-    if (workersList) {
-      workersList.classList.remove('hidden');
-      if (workersArray.length === 0) {
-        workersList.innerHTML = '<p>Sistemde henüz kayıtlı işçi yok.</p>';
-      } else {
-        let workersHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">';
-        workersArray.forEach(worker => {
-          const daysStr = worker.availableDays ? worker.availableDays.join(', ') : 'Belirtilmedi';
-          const hoursStr = worker.availableHours ? worker.availableHours.join(', ') : 'Belirtilmedi';
-          const jobsStr = worker.jobs ? worker.jobs.join(', ') : 'Belirtilmedi';
-          const phoneStr = worker.employeePhone || 'Belirtilmedi';
-          workersHtml += `
-            <div class="card" style="padding: 15px; border: 1px solid #ddd; text-align: left; background: #fff;">
-              <h3 style="margin-top:0; color:#1d4ed8;">${worker.employeeName || 'İsimsiz'}</h3>
-              <p style="margin:5px 0;"><strong>Telefon:</strong> ${phoneStr}</p>
-              <p style="margin:5px 0;"><strong>İlçe:</strong> ${worker.employeeDistrict || 'Belirtilmedi'}</p>
-              <p style="margin:5px 0;"><strong>Yapabileceği İşler:</strong> ${jobsStr}</p>
-              <p style="margin:5px 0;"><strong>Müsait Günler:</strong> ${daysStr}</p>
-              <p style="margin:5px 0;"><strong>Müsait Saatler:</strong> ${hoursStr}</p>
-              ${worker.email ? `<button class="btn secondary" style="margin-top: 10px; width: 100%; padding: 6px 10px; font-size: 12px; border-color: #ea580c; color: #ea580c;" onclick="startAdminImpersonationSession('${worker.email}')">🔑 Oturumuna Geç (${worker.email})</button>` : ''}
-            </div>
-          `;
-        });
-        workersHtml += '</div>';
-        workersList.innerHTML = workersHtml;
-      }
-    }
-
   } catch (e) {
     console.error(e);
     list.innerHTML = '<p>Veriler yüklenirken hata oluştu.</p>';
   }
 }
 
+// Also expose as loadAllApplications for backward compat
+async function loadAllApplications() { return loadApplicationsTab(); }
+
+// ───── TAB: RESTORANLAR ─────
+async function loadRestaurantsTab() {
+  const restaurantsList = document.getElementById('adminRestaurantsList');
+  if (!restaurantsList) return;
+  restaurantsList.innerHTML = '<p>Restoranlar yükleniyor...</p>';
+
+  try {
+    const usersRef = window.firebaseFirestore.collection(window.db, 'users');
+    const qRestaurants = window.firebaseFirestore.query(usersRef, window.firebaseFirestore.where('userType', '==', 'restaurant'));
+    const restSnap = await window.firebaseFirestore.getDocs(qRestaurants);
+    let restaurantsArray = [];
+    restSnap.forEach(doc => restaurantsArray.push({ id: doc.id, ...doc.data() }));
+
+    if (restaurantsArray.length === 0) {
+      restaurantsList.innerHTML = '<p>Sistemde henüz kayıtlı restoran yok.</p>';
+      return;
+    }
+
+    let restHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">';
+    restaurantsArray.forEach(rest => {
+      const isSub = rest.isSubscribed === true || String(rest.isSubscribed).toLowerCase() === 'true';
+      const subBadge = isSub
+        ? '<span style="background:#dcfce7; color:#15803d; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">⭐ Vardiyan Aktif</span>'
+        : '<span style="background:#fef2f2; color:#b91c1c; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">❌ Vardiyan Pasif</span>';
+      restHtml += `
+        <div class="card" style="padding: 15px; border: 1px solid #ddd; text-align: left; background: #fff;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
+            <h3 style="margin:0; color:#1064ac;">${rest.businessName || rest.restaurantName || rest.authorizedName || 'İsimsiz Restoran'}</h3>
+            ${subBadge}
+          </div>
+          <p style="margin:4px 0; font-size:13px;"><strong>E-posta:</strong> ${rest.email || 'Belirtilmedi'}</p>
+          <p style="margin:4px 0; font-size:13px;"><strong>Telefon:</strong> ${rest.phone || rest.authorizedPhone || 'Belirtilmedi'}</p>
+          <p style="margin:4px 0; font-size:12px; color:#64748b;"><strong>UID:</strong> <code>${rest.id}</code></p>
+          <div style="margin-top: 12px; display:flex; gap:6px;">
+            ${isSub
+              ? `<button class="btn secondary" style="flex:1; padding: 5px; font-size: 11px; border-color: #dc2626; color: #dc2626;" onclick="toggleVardiyanSubscriptionForUid(false, '${rest.id}')">❌ Devre Dışı Bırak</button>`
+              : `<button class="btn primary" style="flex:1; padding: 5px; font-size: 11px; background-color: #16a34a; border-color: #16a34a;" onclick="toggleVardiyanSubscriptionForUid(true, '${rest.id}')">✅ Vardiyan Özelliğini Aç</button>`
+            }
+            ${rest.email ? `<button class="btn secondary" style="padding: 5px 8px; font-size: 11px; border-color: #ea580c; color: #ea580c;" onclick="startAdminImpersonationSession('${rest.email}')">🔑 Oturum</button>` : ''}
+          </div>
+        </div>
+      `;
+    });
+    restHtml += '</div>';
+    restaurantsList.innerHTML = restHtml;
+  } catch (e) {
+    console.error(e);
+    restaurantsList.innerHTML = '<p>Restoranlar yüklenirken hata oluştu.</p>';
+  }
+}
+
+// ───── TAB: ÇALIŞANLAR ─────
+async function loadWorkersTab() {
+  const workersList = document.getElementById('adminWorkersList');
+  if (!workersList) return;
+  workersList.innerHTML = '<p>Çalışanlar yükleniyor...</p>';
+
+  try {
+    const usersRef = window.firebaseFirestore.collection(window.db, 'users');
+    const qWorkers = window.firebaseFirestore.query(usersRef, window.firebaseFirestore.where('userType', '==', 'worker'));
+    const workersSnap = await window.firebaseFirestore.getDocs(qWorkers);
+    let workersArray = [];
+    workersSnap.forEach(doc => workersArray.push({ id: doc.id, ...doc.data() }));
+
+    if (workersArray.length === 0) {
+      workersList.innerHTML = '<p>Sistemde henüz kayıtlı işçi yok.</p>';
+      return;
+    }
+
+    let workersHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">';
+    workersArray.forEach(worker => {
+      const daysStr = worker.availableDays ? worker.availableDays.join(', ') : 'Belirtilmedi';
+      const hoursStr = worker.availableHours ? worker.availableHours.join(', ') : 'Belirtilmedi';
+      const jobsStr = worker.jobs ? worker.jobs.join(', ') : 'Belirtilmedi';
+      const phoneStr = worker.employeePhone || 'Belirtilmedi';
+      workersHtml += `
+        <div class="card" style="padding: 15px; border: 1px solid #ddd; text-align: left; background: #fff;">
+          <h3 style="margin-top:0; color:#1d4ed8;">${worker.employeeName || 'İsimsiz'}</h3>
+          <p style="margin:5px 0;"><strong>Telefon:</strong> ${phoneStr}</p>
+          <p style="margin:5px 0;"><strong>İlçe:</strong> ${worker.employeeDistrict || 'Belirtilmedi'}</p>
+          <p style="margin:5px 0;"><strong>Yapabileceği İşler:</strong> ${jobsStr}</p>
+          <p style="margin:5px 0;"><strong>Müsait Günler:</strong> ${daysStr}</p>
+          <p style="margin:5px 0;"><strong>Müsait Saatler:</strong> ${hoursStr}</p>
+          ${worker.email ? `<button class="btn secondary" style="margin-top: 10px; width: 100%; padding: 6px 10px; font-size: 12px; border-color: #ea580c; color: #ea580c;" onclick="startAdminImpersonationSession('${worker.email}')">🔑 Oturumuna Geç (${worker.email})</button>` : ''}
+        </div>
+      `;
+    });
+    workersHtml += '</div>';
+    workersList.innerHTML = workersHtml;
+  } catch (e) {
+    console.error(e);
+    workersList.innerHTML = '<p>Çalışanlar yüklenirken hata oluştu.</p>';
+  }
+}
+
 async function updateAppStatus(appId) {
+
   const select = document.getElementById('status_' + appId);
   if (!select) return;
   const newStatus = select.value;
