@@ -536,8 +536,7 @@ function renderCalendar() {
     dayShifts.forEach(shift => {
       const staff = shift.staffId ? staffMembers.find(s => s.id === shift.staffId) : null;
       
-      // Determine if this shift has been clocked in (workerId present means QR clock-in happened)
-      const hasClockIn = shift.workerId && (shift.status === 'active' || shift.status === 'completed');
+      const hasClockIn = Boolean(shift.workerId) && (shift.status === 'active' || shift.status === 'completed');
       
       const shiftEl = document.createElement('div');
       shiftEl.className = 'shift-item';
@@ -557,19 +556,19 @@ function renderCalendar() {
         displayName = shift.workerName || 'Çalışan';
         const statusText = shift.status === 'active' ? 'Devam Ediyor' : 'Tamamlandı';
         
-        // Get actual clock-in time from checkInTime Firestore timestamp
         let realCheckInTimeStr = shift.startTime;
         if (shift.checkInTime && typeof shift.checkInTime.toDate === 'function') {
           realCheckInTimeStr = shift.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
         }
         
-        // Get actual clock-out time if available
         let realCheckOutTimeStr = '';
         if (shift.checkOutTime && typeof shift.checkOutTime.toDate === 'function') {
           realCheckOutTimeStr = ` - ${shift.checkOutTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
         }
         
+        const plannedLabel = shift.startTime && shift.endTime ? `${shift.startTime} - ${shift.endTime}` : 'Belirtilmedi';
         clockInInfo = `<div style="font-size:10px; color:#0ea5e9; font-weight:700; margin-top:2px;">✓ Giriş: ${realCheckInTimeStr}${realCheckOutTimeStr}</div>`;
+        clockInInfo += `<div style="font-size:10px; color:#64748b; margin-top:2px;">🗓 Plan: ${plannedLabel}</div>`;
         
         const plannedInfo = shift.startTime && shift.endTime 
           ? `\nPlanlanan: ${shift.startTime} - ${shift.endTime}` 

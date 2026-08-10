@@ -4,6 +4,13 @@ let dynamicQrInterval = null;
 let html5QrScanner = null;
 let currentActiveShift = null;
 
+function getLocalDateString(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 // --- 1. HAVERSINE DISTANCE CALCULATION (In Meters) ---
 function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
   if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
@@ -421,7 +428,7 @@ async function processClockInOut(scannedToken, workerCoords) {
     );
     const activeShiftSnap = await window.firebaseFirestore.getDocs(q);
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDateString();
     const matchingActiveDoc = activeShiftSnap.docs.find(d => {
       const data = d.data();
       return data.restaurantId === restaurantId && data.date === todayStr;
@@ -440,7 +447,6 @@ async function processClockInOut(scannedToken, workerCoords) {
 
       const nowTimeStr = checkOutDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
-      // Only update endTime if it's not a scheduled shift (i.e., ad-hoc clock-in without planned times)
       const updateData = {
         status: 'completed',
         checkOutTime: window.firebaseFirestore.serverTimestamp(),
@@ -451,9 +457,8 @@ async function processClockInOut(scannedToken, workerCoords) {
           distanceMeters: Math.round(distanceMeters)
         }
       };
-      
-      // Only update endTime if there's no planned shift (no shiftEndTime)
-      if (!shiftData.shiftEndTime) {
+
+      if (!shiftData.endTime || shiftData.endTime === null || shiftData.endTime === '') {
         updateData.endTime = nowTimeStr;
       }
 
@@ -471,13 +476,9 @@ async function processClockInOut(scannedToken, workerCoords) {
       // --- CLOCK-IN ACTION ---
       const nowTimeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
-      // Try to find assigned shift for this worker today
       let assignedShiftInfo = await findAssignedShiftForWorker(restaurantId, workerUser.uid, todayStr);
 
       if (assignedShiftInfo) {
-        // Update the existing assigned shift instead of creating a new one
-        // IMPORTANT: Keep startTime/endTime unchanged (these are planned times)
-        // Only add clock-in info
         await window.firebaseFirestore.updateDoc(
           window.firebaseFirestore.doc(window.db, 'shifts', assignedShiftInfo.shiftDocId),
           {
@@ -487,11 +488,12 @@ async function processClockInOut(scannedToken, workerCoords) {
               lng: workerCoords.lng,
               distanceMeters: Math.round(distanceMeters)
             },
-            workerId: workerUser.uid,  // Add worker info to the shift
+            workerId: workerUser.uid,
             workerName: workerName,
             workerPhone: workerPhone,
-            status: 'active'
-            // NOTE: Do NOT update startTime/endTime - they are the planned shift times
+            status: 'active',
+            startTime: assignedShiftInfo.startTime || nowTimeStr,
+            endTime: assignedShiftInfo.endTime || null
           }
         );
         
