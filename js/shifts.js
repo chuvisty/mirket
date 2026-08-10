@@ -527,23 +527,17 @@ function renderCalendar() {
     header.innerHTML = `${dayNames[i % 7]}<br><span style="font-size:12px;color:#94a3b8;">${d.getDate()}</span>`;
     dayCol.appendChild(header);
     
-    // Shifts for this day - filter only scheduled shifts (with staffId)
-    const dayShifts = currentShifts.filter(s => s.date === dateStr && s.staffId);
-    
-    // Also get clock-in shifts for this day (those without staffId, with workerId)
-    const dayClockInShifts = currentShifts.filter(s => s.date === dateStr && s.workerId && !s.staffId);
+    // Shifts for this day - filter only shifts with restaurantId (both scheduled and clock-in)
+    const dayShifts = currentShifts.filter(s => s.date === dateStr && s.restaurantId);
     
     // Sort by start time
     dayShifts.sort((a, b) => a.startTime.localeCompare(b.startTime));
-    dayClockInShifts.sort((a, b) => a.startTime.localeCompare(b.startTime));
     
     dayShifts.forEach(shift => {
       const staff = shift.staffId ? staffMembers.find(s => s.id === shift.staffId) : null;
       
-      // Check if there's a clock-in record for this scheduled shift
-      const clockInShift = currentShifts.find(s => 
-        s.assignedShiftId === shift.id && s.date === dateStr && s.workerId && (s.status === 'active' || s.status === 'completed')
-      );
+      // Determine if this shift has been clocked in (workerId present means QR clock-in happened)
+      const hasClockIn = shift.workerId && (shift.status === 'active' || shift.status === 'completed');
       
       const shiftEl = document.createElement('div');
       shiftEl.className = 'shift-item';
@@ -552,25 +546,43 @@ function renderCalendar() {
         editShift(shift.id);
       };
       
-      const statusClass = staff ? 'shift-assigned' : 'shift-unassigned';
-      let staffName = staff ? staff.name : 'Atanmadı';
+      const statusClass = staff || hasClockIn ? 'shift-assigned' : 'shift-unassigned';
+      let staffName = staff ? staff.name : (shift.workerName || 'Atanmadı');
       let displayName = staffName;
       let clockInInfo = '';
+      let tooltipText;
       
-      // If there's a clock-in record, show the actual worker and real times
-      if (clockInShift) {
-        displayName = clockInShift.workerName || 'Çalışan';
-        const statusText = clockInShift.status === 'active' ? 'Devam Ediyor' : 'Tamamlandı';
-        clockInInfo = `\nGerçek Giriş: ${clockInShift.startTime}${clockInShift.endTime ? ' - ' + clockInShift.endTime : ''}`;
-        const tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nPlanlanan: ${shift.startTime} - ${shift.endTime}\nPersonel: ${displayName}\nDurum: ${statusText}${clockInInfo}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
-        shiftEl.title = tooltipText;
+      // If there's a clock-in, show the actual worker and real times
+      if (hasClockIn) {
+        displayName = shift.workerName || 'Çalışan';
+        const statusText = shift.status === 'active' ? 'Devam Ediyor' : 'Tamamlandı';
+        
+        // Get actual clock-in time from checkInTime Firestore timestamp
+        let realCheckInTimeStr = shift.startTime;
+        if (shift.checkInTime && typeof shift.checkInTime.toDate === 'function') {
+          realCheckInTimeStr = shift.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Get actual clock-out time if available
+        let realCheckOutTimeStr = '';
+        if (shift.checkOutTime && typeof shift.checkOutTime.toDate === 'function') {
+          realCheckOutTimeStr = ` - ${shift.checkOutTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+        }
+        
+        clockInInfo = `<div style="font-size:10px; color:#0ea5e9; font-weight:700; margin-top:2px;">✓ Giriş: ${realCheckInTimeStr}${realCheckOutTimeStr}</div>`;
+        
+        const plannedInfo = shift.shiftStartTime && shift.shiftEndTime 
+          ? `\nPlanlanan: ${shift.shiftStartTime} - ${shift.shiftEndTime}` 
+          : (shift.startTime && shift.endTime ? `\nSaat: ${shift.startTime} - ${shift.endTime}` : '');
+        tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nGerçek Giriş: ${realCheckInTimeStr}${realCheckOutTimeStr}\nPersonel: ${displayName}\nDurum: ${statusText}${plannedInfo}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
       } else {
-        const tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nPersonel: ${staffName}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
-        shiftEl.title = tooltipText;
+        tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nPersonel: ${staffName}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
       }
       
+      shiftEl.title = tooltipText;
+
       // Color coding
-      if (staff && shift.role) {
+      if ((staff || hasClockIn) && shift.role) {
         const bg = getRoleColor(shift.role);
         if (bg) {
           shiftEl.style.borderLeftColor = 'transparent';
@@ -581,32 +593,7 @@ function renderCalendar() {
         <div class="shift-time">${shift.startTime} - ${shift.endTime}</div>
         <div class="shift-name ${statusClass}">${displayName}</div>
         ${shift.role ? `<div class="shift-role">${shift.role}</div>` : ''}
-        ${clockInShift ? `<div style="font-size:10px; color:#0ea5e9; font-weight:700; margin-top:2px;">✓ Giriş: ${clockInShift.startTime}</div>` : ''}
-      `;
-      
-      dayCol.appendChild(shiftEl);
-    });
-    
-    // Add clock-in shifts (QR scanned, not scheduled)
-    dayClockInShifts.forEach(shift => {
-      const shiftEl = document.createElement('div');
-      shiftEl.className = 'shift-item';
-      shiftEl.style.opacity = '0.8';
-      shiftEl.style.borderLeft = '4px solid #f59e0b';
-      
-      const statusText = shift.status === 'active' ? 'Devam Ediyor' : 'Tamamlandı';
-      const displayName = shift.workerName || 'Çalışan';
-      const plannedInfo = shift.shiftStartTime && shift.shiftEndTime
-        ? `\nPlanlanan: ${shift.shiftStartTime} - ${shift.shiftEndTime}`
-        : '';
-      
-      const tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nGerçek Giriş: ${shift.startTime}${shift.endTime ? ' - ' + shift.endTime : ''}\nPersonel: ${displayName}\nDurum: ${statusText}${plannedInfo}\nNot: QR ile Clock-In`;
-      shiftEl.title = tooltipText;
-      
-      shiftEl.innerHTML = `
-        <div class="shift-time">${shift.startTime}${shift.endTime ? ' - ' + shift.endTime : ' - ??'}</div>
-        <div class="shift-name">${displayName}</div>
-        <div class="shift-role" style="font-size:9px; color:#f59e0b;">🔑 QR Giriş</div>
+        ${clockInInfo}
       `;
       
       dayCol.appendChild(shiftEl);

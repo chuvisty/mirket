@@ -83,6 +83,7 @@ async function findAssignedShiftForWorker(restaurantId, workerId, dateStr) {
     const shiftData = shiftDoc.data();
 
     return {
+      shiftDocId: shiftDoc.id,  // Firestore document ID
       shiftId: shiftDoc.id,
       startTime: shiftData.startTime || null,
       endTime: shiftData.endTime || null,
@@ -393,7 +394,7 @@ async function processClockInOut(scannedToken, workerCoords) {
       workerPhone = wData.employeePhone || wData.authorizedPhone || wData.phone || '';
     }
 
-    // 3. Check if there's an ACTIVE shift for this worker
+    // 3. Check if there's an ACTIVE shift for this worker TODAY
     const q = window.firebaseFirestore.query(
       window.firebaseFirestore.collection(window.db, 'shifts'),
       window.firebaseFirestore.where('workerId', '==', workerUser.uid),
@@ -402,7 +403,10 @@ async function processClockInOut(scannedToken, workerCoords) {
     const activeShiftSnap = await window.firebaseFirestore.getDocs(q);
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const matchingActiveDoc = activeShiftSnap.docs.find(d => d.data().restaurantId === restaurantId);
+    const matchingActiveDoc = activeShiftSnap.docs.find(d => {
+      const data = d.data();
+      return data.restaurantId === restaurantId && data.date === todayStr;
+    });
 
     if (matchingActiveDoc) {
       // --- CLOCK-OUT ACTION ---
@@ -417,19 +421,26 @@ async function processClockInOut(scannedToken, workerCoords) {
 
       const nowTimeStr = checkOutDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
+      // Only update endTime if it's not a scheduled shift (i.e., ad-hoc clock-in without planned times)
+      const updateData = {
+        status: 'completed',
+        checkOutTime: window.firebaseFirestore.serverTimestamp(),
+        totalWorkedMinutes: totalMinutes,
+        checkOutGeo: {
+          lat: workerCoords.lat,
+          lng: workerCoords.lng,
+          distanceMeters: Math.round(distanceMeters)
+        }
+      };
+      
+      // Only update endTime if there's no planned shift (no shiftEndTime)
+      if (!shiftData.shiftEndTime) {
+        updateData.endTime = nowTimeStr;
+      }
+
       await window.firebaseFirestore.updateDoc(
         window.firebaseFirestore.doc(window.db, 'shifts', activeDoc.id),
-        {
-          status: 'completed',
-          checkOutTime: window.firebaseFirestore.serverTimestamp(),
-          endTime: nowTimeStr,
-          totalWorkedMinutes: totalMinutes,
-          checkOutGeo: {
-            lat: workerCoords.lat,
-            lng: workerCoords.lng,
-            distanceMeters: Math.round(distanceMeters)
-          }
-        }
+        updateData
       );
 
       if (msgEl) {
@@ -444,42 +455,63 @@ async function processClockInOut(scannedToken, workerCoords) {
       // Try to find assigned shift for this worker today
       let assignedShiftInfo = await findAssignedShiftForWorker(restaurantId, workerUser.uid, todayStr);
 
-      await window.firebaseFirestore.addDoc(
-        window.firebaseFirestore.collection(window.db, 'shifts'),
-        {
-          restaurantId: restaurantId,
-          restaurantName: restData.businessName || 'Restoran',
-          workerId: workerUser.uid,
-          workerName: workerName,
-          workerPhone: workerPhone,
-          date: todayStr,
-          startTime: nowTimeStr,
-          endTime: null,
-          checkInTime: window.firebaseFirestore.serverTimestamp(),
-          checkOutTime: null,
-          status: 'active',
-          checkInGeo: {
-            lat: workerCoords.lat,
-            lng: workerCoords.lng,
-            distanceMeters: Math.round(distanceMeters)
-          },
-          checkOutGeo: null,
-          totalWorkedMinutes: 0,
-          isManualOverride: false,
-          // Add assigned shift info if found
-          ...(assignedShiftInfo && {
-            shiftStartTime: assignedShiftInfo.startTime,
-            shiftEndTime: assignedShiftInfo.endTime,
-            assignedShiftId: assignedShiftInfo.shiftId,
-            shiftRole: assignedShiftInfo.role || null,
-            shiftNotes: assignedShiftInfo.notes || null
-          })
+      if (assignedShiftInfo) {
+        // Update the existing assigned shift instead of creating a new one
+        // IMPORTANT: Keep startTime/endTime unchanged (these are planned times)
+        // Only add clock-in info
+        await window.firebaseFirestore.updateDoc(
+          window.firebaseFirestore.doc(window.db, 'shifts', assignedShiftInfo.shiftDocId),
+          {
+            checkInTime: window.firebaseFirestore.serverTimestamp(),
+            checkInGeo: {
+              lat: workerCoords.lat,
+              lng: workerCoords.lng,
+              distanceMeters: Math.round(distanceMeters)
+            },
+            workerId: workerUser.uid,  // Add worker info to the shift
+            workerName: workerName,
+            workerPhone: workerPhone,
+            status: 'active'
+            // NOTE: Do NOT update startTime/endTime - they are the planned shift times
+          }
+        );
+        
+        if (msgEl) {
+          const vardiaDuration = assignedShiftInfo.endTime ? ` (${assignedShiftInfo.startTime} - ${assignedShiftInfo.endTime})` : '';
+          msgEl.textContent = `✅ Restorana Giriş Yapıldı! Mesainiz başlatıldı${vardiaDuration}. İyi çalışmalar!`;
+          msgEl.className = 'auth-message success';
         }
-      );
+      } else {
+        // No assigned shift, create a new one
+        await window.firebaseFirestore.addDoc(
+          window.firebaseFirestore.collection(window.db, 'shifts'),
+          {
+            restaurantId: restaurantId,
+            restaurantName: restData.businessName || 'Restoran',
+            workerId: workerUser.uid,
+            workerName: workerName,
+            workerPhone: workerPhone,
+            date: todayStr,
+            startTime: nowTimeStr,
+            endTime: null,
+            checkInTime: window.firebaseFirestore.serverTimestamp(),
+            checkOutTime: null,
+            status: 'active',
+            checkInGeo: {
+              lat: workerCoords.lat,
+              lng: workerCoords.lng,
+              distanceMeters: Math.round(distanceMeters)
+            },
+            checkOutGeo: null,
+            totalWorkedMinutes: 0,
+            isManualOverride: false
+          }
+        );
 
-      if (msgEl) {
-        msgEl.textContent = `✅ Restorana Giriş Yapıldı! Mesainiz başlatıldı (${nowTimeStr}). İyi çalışmalar!`;
-        msgEl.className = 'auth-message success';
+        if (msgEl) {
+          msgEl.textContent = `✅ Restorana Giriş Yapıldı! Mesainiz başlatıldı (${nowTimeStr}). İyi çalışmalar!`;
+          msgEl.className = 'auth-message success';
+        }
       }
     }
 
@@ -629,6 +661,7 @@ function renderAttendanceTable(shifts) {
   }
 
   tableBody.innerHTML = shifts.map(shift => {
+    // Use checkInTime/checkOutTime for actual clock times (or startTime/endTime if planned times don't exist)
     const inTime = shift.checkInTime && typeof shift.checkInTime.toDate === 'function'
       ? shift.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
       : (shift.startTime || '-');
@@ -656,13 +689,9 @@ function renderAttendanceTable(shifts) {
       ? `<button class="btn ghost" style="padding:4px 8px; font-size:11px; color:#ef4444;" onclick="manualOverrideClockOut('${shift.id}')">Manuel Kapat</button>`
       : '';
 
-    // Build scheduled shift time info if available
-    const scheduledTimeStr = (shift.shiftStartTime && shift.shiftEndTime)
-      ? `${shift.shiftStartTime} - ${shift.shiftEndTime}`
-      : (shift.shiftStartTime || '-');
-    
-    const scheduledInfo = shift.shiftStartTime
-      ? `<div style="font-size:10px; color:#94a3b8; margin-top:4px;">📅 Planlanmış: ${scheduledTimeStr}</div>`
+    // Show planned shift time info if available
+    const scheduledInfo = (shift.shiftStartTime && shift.shiftEndTime)
+      ? `<div style="font-size:10px; color:#94a3b8; margin-top:4px;">📅 Planlanan: ${shift.shiftStartTime} - ${shift.shiftEndTime}</div>`
       : '';
 
     return `
