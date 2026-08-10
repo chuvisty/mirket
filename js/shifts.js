@@ -571,9 +571,9 @@ function renderCalendar() {
         
         clockInInfo = `<div style="font-size:10px; color:#0ea5e9; font-weight:700; margin-top:2px;">✓ Giriş: ${realCheckInTimeStr}${realCheckOutTimeStr}</div>`;
         
-        const plannedInfo = shift.shiftStartTime && shift.shiftEndTime 
-          ? `\nPlanlanan: ${shift.shiftStartTime} - ${shift.shiftEndTime}` 
-          : (shift.startTime && shift.endTime ? `\nSaat: ${shift.startTime} - ${shift.endTime}` : '');
+        const plannedInfo = shift.startTime && shift.endTime 
+          ? `\nPlanlanan: ${shift.startTime} - ${shift.endTime}` 
+          : '';
         tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nGerçek Giriş: ${realCheckInTimeStr}${realCheckOutTimeStr}\nPersonel: ${displayName}\nDurum: ${statusText}${plannedInfo}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
       } else {
         tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nPersonel: ${staffName}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;

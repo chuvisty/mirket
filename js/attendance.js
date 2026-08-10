@@ -52,6 +52,10 @@ function parseQrToken(tokenString) {
 // --- 3A. FIND ASSIGNED SHIFT FOR WORKER ---
 async function findAssignedShiftForWorker(restaurantId, workerId, dateStr) {
   try {
+    let staffId = null;
+    let shiftDoc = null;
+    let shiftSnapshot = null;
+
     // Step 1: Find restaurantStaff record with this vardiyanUserId
     const staffQ = window.firebaseFirestore.query(
       window.firebaseFirestore.collection(window.db, 'restaurantStaff'),
@@ -59,27 +63,42 @@ async function findAssignedShiftForWorker(restaurantId, workerId, dateStr) {
       window.firebaseFirestore.where('vardiyanUserId', '==', workerId)
     );
     const staffSnapshot = await window.firebaseFirestore.getDocs(staffQ);
-    
-    if (staffSnapshot.empty) {
-      return null; // No assigned staff record
+    if (!staffSnapshot.empty) {
+      staffId = staffSnapshot.docs[0].id;
     }
 
-    const staffId = staffSnapshot.docs[0].id;
-
     // Step 2: Find shift for this restaurantStaff, restaurant, and date
-    const shiftQ = window.firebaseFirestore.query(
-      window.firebaseFirestore.collection(window.db, 'shifts'),
-      window.firebaseFirestore.where('restaurantId', '==', restaurantId),
-      window.firebaseFirestore.where('staffId', '==', staffId),
-      window.firebaseFirestore.where('date', '==', dateStr)
-    );
-    const shiftSnapshot = await window.firebaseFirestore.getDocs(shiftQ);
+    if (staffId) {
+      const shiftQ = window.firebaseFirestore.query(
+        window.firebaseFirestore.collection(window.db, 'shifts'),
+        window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+        window.firebaseFirestore.where('staffId', '==', staffId),
+        window.firebaseFirestore.where('date', '==', dateStr)
+      );
+      shiftSnapshot = await window.firebaseFirestore.getDocs(shiftQ);
+      if (!shiftSnapshot.empty) {
+        shiftDoc = shiftSnapshot.docs[0];
+      }
+    }
 
-    if (shiftSnapshot.empty) {
+    // Fallback: some shift records may store the worker UID directly in staffId
+    if (!shiftDoc) {
+      const fallbackShiftQ = window.firebaseFirestore.query(
+        window.firebaseFirestore.collection(window.db, 'shifts'),
+        window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+        window.firebaseFirestore.where('staffId', '==', workerId),
+        window.firebaseFirestore.where('date', '==', dateStr)
+      );
+      const fallbackSnapshot = await window.firebaseFirestore.getDocs(fallbackShiftQ);
+      if (!fallbackSnapshot.empty) {
+        shiftDoc = fallbackSnapshot.docs[0];
+      }
+    }
+
+    if (!shiftDoc) {
       return null; // No assigned shift for today
     }
 
-    const shiftDoc = shiftSnapshot.docs[0];
     const shiftData = shiftDoc.data();
 
     return {
