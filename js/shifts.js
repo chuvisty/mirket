@@ -567,7 +567,7 @@ function renderCalendar() {
         }
         
         const plannedLabel = shift.startTime && shift.endTime ? `${shift.startTime} - ${shift.endTime}` : 'Belirtilmedi';
-        clockInInfo = `<div style="font-size:10px; color:#0ea5e9; font-weight:700; margin-top:2px;">✓ Giriş: ${realCheckInTimeStr}${realCheckOutTimeStr}</div>`;
+        clockInInfo = `<div class="shift-clock-info">${realCheckInTimeStr}${realCheckOutTimeStr}</div>`;
         clockInInfo += `<div style="font-size:10px; color:#64748b; margin-top:2px;">🗓 Plan: ${plannedLabel}</div>`;
         
         const plannedInfo = shift.startTime && shift.endTime 
@@ -616,6 +616,112 @@ function renderCalendar() {
   }
 }
 
+async function copyShiftsToDate(sourceDateStr, targetDateStr, label) {
+  const sourceShifts = currentShifts.filter(shift => shift.date === sourceDateStr && shift.restaurantId);
+  if (sourceShifts.length === 0) {
+    alert(`${label} için kopyalanacak vardiya bulunamadı.`);
+    return;
+  }
+
+  let createdCount = 0;
+  for (const shift of sourceShifts) {
+    const existing = currentShifts.find(existing =>
+      existing.date === targetDateStr &&
+      existing.staffId === (shift.staffId || null) &&
+      existing.startTime === shift.startTime &&
+      existing.endTime === shift.endTime &&
+      existing.role === (shift.role || '')
+    );
+
+    if (existing) continue;
+
+    await window.firebaseFirestore.addDoc(
+      window.firebaseFirestore.collection(window.db, 'shifts'),
+      {
+        restaurantId,
+        date: targetDateStr,
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        staffId: shift.staffId || null,
+        role: shift.role || '',
+        notes: shift.notes || ''
+      }
+    );
+    createdCount += 1;
+  }
+
+  if (createdCount > 0) {
+    await loadShiftsForCurrentWeek();
+    alert(`${createdCount} vardiya ${label} kopyalandı.`);
+  } else {
+    alert(`Seçilen tarihe ${label} kopyalanacak yeni vardiya bulunamadı.`);
+  }
+}
+
+async function copyPreviousDayShifts(targetDateStr) {
+  const targetDate = new Date(`${targetDateStr}T00:00:00`);
+  const sourceDate = new Date(targetDate);
+  sourceDate.setDate(sourceDate.getDate() - 1);
+  await copyShiftsToDate(formatDateForDB(sourceDate), targetDateStr, 'önceki güne');
+}
+
+async function copyPreviousWeekShifts(targetDateStr) {
+  const targetDate = new Date(`${targetDateStr}T00:00:00`);
+  const weekStart = getStartOfWeek(targetDate);
+  const previousWeekStart = new Date(weekStart);
+  previousWeekStart.setDate(previousWeekStart.getDate() - 7);
+
+  const sourceShifts = currentShifts.filter(shift => {
+    const shiftDate = new Date(`${shift.date}T00:00:00`);
+    return shiftDate >= previousWeekStart && shiftDate < new Date(previousWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000) && shift.restaurantId;
+  });
+
+  if (sourceShifts.length === 0) {
+    alert('Önceki hafta için kopyalanacak vardiya bulunamadı.');
+    return;
+  }
+
+  let createdCount = 0;
+  for (const shift of sourceShifts) {
+    const shiftDate = new Date(`${shift.date}T00:00:00`);
+    const dayOffset = Math.round((shiftDate - previousWeekStart) / (24 * 60 * 60 * 1000));
+    const targetDateObj = new Date(weekStart);
+    targetDateObj.setDate(weekStart.getDate() + dayOffset);
+    const targetDateValue = formatDateForDB(targetDateObj);
+
+    const existing = currentShifts.find(existing =>
+      existing.date === targetDateValue &&
+      existing.staffId === (shift.staffId || null) &&
+      existing.startTime === shift.startTime &&
+      existing.endTime === shift.endTime &&
+      existing.role === (shift.role || '')
+    );
+
+    if (existing) continue;
+
+    await window.firebaseFirestore.addDoc(
+      window.firebaseFirestore.collection(window.db, 'shifts'),
+      {
+        restaurantId,
+        date: targetDateValue,
+        startTime: shift.startTime,
+        endTime: shift.endTime,
+        staffId: shift.staffId || null,
+        role: shift.role || '',
+        notes: shift.notes || ''
+      }
+    );
+    createdCount += 1;
+  }
+
+  if (createdCount > 0) {
+    await loadShiftsForCurrentWeek();
+    alert(`${createdCount} vardiya önceki haftadan kopyalandı.`);
+  } else {
+    alert('Seçilen haftaya kopyalanacak yeni vardiya bulunamadı.');
+  }
+}
+
 function openDayActionMenu(dateStr, dayCol) {
   closeDayActionMenu();
   let menu = document.getElementById('dayActionMenu');
@@ -625,6 +731,8 @@ function openDayActionMenu(dateStr, dayCol) {
     menu.className = 'day-action-menu hidden';
   }
   menu.innerHTML = `
+    <button type="button" onclick="copyPreviousDayShifts('${dateStr}'); closeDayActionMenu();">← Önceki Günü Kopyala</button>
+    <button type="button" onclick="copyPreviousWeekShifts('${dateStr}'); closeDayActionMenu();">↺ Önceki Haftayı Kopyala</button>
     <button type="button" onclick="openShiftModal('${dateStr}'); closeDayActionMenu();">+ Vardiya</button>
     <button type="button" onclick="openDayDetail('${dateStr}'); closeDayActionMenu();">Günlük Detay</button>
   `;
