@@ -527,14 +527,24 @@ function renderCalendar() {
     header.innerHTML = `${dayNames[i % 7]}<br><span style="font-size:12px;color:#94a3b8;">${d.getDate()}</span>`;
     dayCol.appendChild(header);
     
-    // Shifts for this day
-    const dayShifts = currentShifts.filter(s => s.date === dateStr);
+    // Shifts for this day - filter only scheduled shifts (with staffId)
+    const dayShifts = currentShifts.filter(s => s.date === dateStr && s.staffId);
+    
+    // Also get clock-in shifts for this day (those without staffId, with workerId)
+    const dayClockInShifts = currentShifts.filter(s => s.date === dateStr && s.workerId && !s.staffId);
     
     // Sort by start time
     dayShifts.sort((a, b) => a.startTime.localeCompare(b.startTime));
+    dayClockInShifts.sort((a, b) => a.startTime.localeCompare(b.startTime));
     
     dayShifts.forEach(shift => {
       const staff = shift.staffId ? staffMembers.find(s => s.id === shift.staffId) : null;
+      
+      // Check if there's a clock-in record for this scheduled shift
+      const clockInShift = currentShifts.find(s => 
+        s.assignedShiftId === shift.id && s.date === dateStr && s.workerId && (s.status === 'active' || s.status === 'completed')
+      );
+      
       const shiftEl = document.createElement('div');
       shiftEl.className = 'shift-item';
       shiftEl.onclick = (event) => {
@@ -543,24 +553,60 @@ function renderCalendar() {
       };
       
       const statusClass = staff ? 'shift-assigned' : 'shift-unassigned';
-      const staffName = staff ? staff.name : 'Atanmadı';
+      let staffName = staff ? staff.name : 'Atanmadı';
+      let displayName = staffName;
+      let clockInInfo = '';
       
-      const tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nPersonel: ${staffName}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
-      shiftEl.title = tooltipText; // Use native title to avoid overflow:hidden clipping
-
+      // If there's a clock-in record, show the actual worker and real times
+      if (clockInShift) {
+        displayName = clockInShift.workerName || 'Çalışan';
+        const statusText = clockInShift.status === 'active' ? 'Devam Ediyor' : 'Tamamlandı';
+        clockInInfo = `\nGerçek Giriş: ${clockInShift.startTime}${clockInShift.endTime ? ' - ' + clockInShift.endTime : ''}`;
+        const tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nPlanlanan: ${shift.startTime} - ${shift.endTime}\nPersonel: ${displayName}\nDurum: ${statusText}${clockInInfo}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
+        shiftEl.title = tooltipText;
+      } else {
+        const tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nPersonel: ${staffName}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
+        shiftEl.title = tooltipText;
+      }
+      
       // Color coding
       if (staff && shift.role) {
         const bg = getRoleColor(shift.role);
         if (bg) {
-          shiftEl.style.borderLeftColor = 'transparent'; // Let background handle it or keep default
-          // We can use the bg color for the border if we parse it, but let's just keep border default and use a color bar
+          shiftEl.style.borderLeftColor = 'transparent';
         }
       }
       
       shiftEl.innerHTML = `
         <div class="shift-time">${shift.startTime} - ${shift.endTime}</div>
-        <div class="shift-name ${statusClass}">${staffName}</div>
+        <div class="shift-name ${statusClass}">${displayName}</div>
         ${shift.role ? `<div class="shift-role">${shift.role}</div>` : ''}
+        ${clockInShift ? `<div style="font-size:10px; color:#0ea5e9; font-weight:700; margin-top:2px;">✓ Giriş: ${clockInShift.startTime}</div>` : ''}
+      `;
+      
+      dayCol.appendChild(shiftEl);
+    });
+    
+    // Add clock-in shifts (QR scanned, not scheduled)
+    dayClockInShifts.forEach(shift => {
+      const shiftEl = document.createElement('div');
+      shiftEl.className = 'shift-item';
+      shiftEl.style.opacity = '0.8';
+      shiftEl.style.borderLeft = '4px solid #f59e0b';
+      
+      const statusText = shift.status === 'active' ? 'Devam Ediyor' : 'Tamamlandı';
+      const displayName = shift.workerName || 'Çalışan';
+      const plannedInfo = shift.shiftStartTime && shift.shiftEndTime
+        ? `\nPlanlanan: ${shift.shiftStartTime} - ${shift.shiftEndTime}`
+        : '';
+      
+      const tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nGerçek Giriş: ${shift.startTime}${shift.endTime ? ' - ' + shift.endTime : ''}\nPersonel: ${displayName}\nDurum: ${statusText}${plannedInfo}\nNot: QR ile Clock-In`;
+      shiftEl.title = tooltipText;
+      
+      shiftEl.innerHTML = `
+        <div class="shift-time">${shift.startTime}${shift.endTime ? ' - ' + shift.endTime : ' - ??'}</div>
+        <div class="shift-name">${displayName}</div>
+        <div class="shift-role" style="font-size:9px; color:#f59e0b;">🔑 QR Giriş</div>
       `;
       
       dayCol.appendChild(shiftEl);
@@ -643,8 +689,18 @@ function openDayDetail(dateStr) {
 
   const uniqueStaff = new Map();
   dayShifts.forEach(shift => {
-    const staff = shift.staffId ? staffMembers.find(s => s.id === shift.staffId) : null;
-    const staffName = staff ? staff.name : 'Atanmadı';
+    // For scheduled shifts: use staff name
+    // For clock-in shifts: use worker name
+    let staffName;
+    if (shift.staffId) {
+      const staff = staffMembers.find(s => s.id === shift.staffId);
+      staffName = staff ? staff.name : 'Atanmadı';
+    } else if (shift.workerId) {
+      staffName = shift.workerName || 'Çalışan';
+    } else {
+      staffName = 'Atanmadı';
+    }
+    
     if (!uniqueStaff.has(staffName)) {
       uniqueStaff.set(staffName, []);
     }

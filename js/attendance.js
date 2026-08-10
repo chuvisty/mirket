@@ -49,6 +49,52 @@ function parseQrToken(tokenString) {
   return { valid: true, restaurantId };
 }
 
+// --- 3A. FIND ASSIGNED SHIFT FOR WORKER ---
+async function findAssignedShiftForWorker(restaurantId, workerId, dateStr) {
+  try {
+    // Step 1: Find restaurantStaff record with this vardiyanUserId
+    const staffQ = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'restaurantStaff'),
+      window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+      window.firebaseFirestore.where('vardiyanUserId', '==', workerId)
+    );
+    const staffSnapshot = await window.firebaseFirestore.getDocs(staffQ);
+    
+    if (staffSnapshot.empty) {
+      return null; // No assigned staff record
+    }
+
+    const staffId = staffSnapshot.docs[0].id;
+
+    // Step 2: Find shift for this restaurantStaff, restaurant, and date
+    const shiftQ = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'shifts'),
+      window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+      window.firebaseFirestore.where('staffId', '==', staffId),
+      window.firebaseFirestore.where('date', '==', dateStr)
+    );
+    const shiftSnapshot = await window.firebaseFirestore.getDocs(shiftQ);
+
+    if (shiftSnapshot.empty) {
+      return null; // No assigned shift for today
+    }
+
+    const shiftDoc = shiftSnapshot.docs[0];
+    const shiftData = shiftDoc.data();
+
+    return {
+      shiftId: shiftDoc.id,
+      startTime: shiftData.startTime || null,
+      endTime: shiftData.endTime || null,
+      role: shiftData.role || null,
+      notes: shiftData.notes || null
+    };
+  } catch (error) {
+    console.error("Error finding assigned shift for worker:", error);
+    return null;
+  }
+}
+
 // --- 3. DYNAMIC QR DISPLAY (RESTAURANT TABLET / SCREEN MODE) ---
 function startDynamicQrStream(restaurantId, containerId = 'qrcode') {
   const container = document.getElementById(containerId);
@@ -395,6 +441,9 @@ async function processClockInOut(scannedToken, workerCoords) {
       // --- CLOCK-IN ACTION ---
       const nowTimeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
+      // Try to find assigned shift for this worker today
+      let assignedShiftInfo = await findAssignedShiftForWorker(restaurantId, workerUser.uid, todayStr);
+
       await window.firebaseFirestore.addDoc(
         window.firebaseFirestore.collection(window.db, 'shifts'),
         {
@@ -416,7 +465,15 @@ async function processClockInOut(scannedToken, workerCoords) {
           },
           checkOutGeo: null,
           totalWorkedMinutes: 0,
-          isManualOverride: false
+          isManualOverride: false,
+          // Add assigned shift info if found
+          ...(assignedShiftInfo && {
+            shiftStartTime: assignedShiftInfo.startTime,
+            shiftEndTime: assignedShiftInfo.endTime,
+            assignedShiftId: assignedShiftInfo.shiftId,
+            shiftRole: assignedShiftInfo.role || null,
+            shiftNotes: assignedShiftInfo.notes || null
+          })
         }
       );
 
@@ -567,7 +624,7 @@ function renderAttendanceTable(shifts) {
   if (!tableBody) return;
 
   if (shifts.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#94a3b8;">Seçilen dönemde mesai kaydı bulunamadı.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">Seçilen dönemde mesai kaydı bulunamadı.</td></tr>';
     return;
   }
 
@@ -599,9 +656,22 @@ function renderAttendanceTable(shifts) {
       ? `<button class="btn ghost" style="padding:4px 8px; font-size:11px; color:#ef4444;" onclick="manualOverrideClockOut('${shift.id}')">Manuel Kapat</button>`
       : '';
 
+    // Build scheduled shift time info if available
+    const scheduledTimeStr = (shift.shiftStartTime && shift.shiftEndTime)
+      ? `${shift.shiftStartTime} - ${shift.shiftEndTime}`
+      : (shift.shiftStartTime || '-');
+    
+    const scheduledInfo = shift.shiftStartTime
+      ? `<div style="font-size:10px; color:#94a3b8; margin-top:4px;">📅 Planlanmış: ${scheduledTimeStr}</div>`
+      : '';
+
     return `
       <tr>
-        <td><strong>${shift.workerName || 'Çalışan'}</strong><br><span style="font-size:11px; color:#64748b;">${shift.workerPhone || ''}</span></td>
+        <td>
+          <strong>${shift.workerName || 'Çalışan'}</strong><br>
+          <span style="font-size:11px; color:#64748b;">${shift.workerPhone || ''}</span>
+          ${scheduledInfo}
+        </td>
         <td>${shift.date}</td>
         <td>${inTime}</td>
         <td>${outTime}</td>
@@ -649,7 +719,7 @@ function exportAttendanceToCSV() {
     return;
   }
 
-  const headers = ["Çalışan Adı", "Telefon", "Tarih", "Giriş Saati", "Çıkış Saati", "Toplam Dakika", "Durum", "GPS Doğrulama"];
+  const headers = ["Çalışan Adı", "Telefon", "Tarih", "Giriş Saati", "Çıkış Saati", "Planlanmış Vardiya", "Toplam Dakika", "Durum", "GPS Doğrulama"];
   const rows = loadedAttendanceShifts.map(s => {
     const inTime = s.checkInTime && typeof s.checkInTime.toDate === 'function'
       ? s.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
@@ -657,6 +727,10 @@ function exportAttendanceToCSV() {
     const outTime = s.checkOutTime && typeof s.checkOutTime.toDate === 'function'
       ? s.checkOutTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
       : (s.endTime || '');
+    
+    const scheduledTime = (s.shiftStartTime && s.shiftEndTime)
+      ? `${s.shiftStartTime} - ${s.shiftEndTime}`
+      : (s.shiftStartTime || '');
 
     return [
       `"${s.workerName || ''}"`,
@@ -664,6 +738,7 @@ function exportAttendanceToCSV() {
       `"${s.date || ''}"`,
       `"${inTime}"`,
       `"${outTime}"`,
+      `"${scheduledTime}"`,
       `"${s.totalWorkedMinutes || 0}"`,
       `"${s.status === 'active' ? 'Aktif' : 'Tamamlandı'}"`,
       `"${s.checkInGeo ? 'GPS Doğrulandı (' + s.checkInGeo.distanceMeters + 'm)' : 'Manuel'}"`
