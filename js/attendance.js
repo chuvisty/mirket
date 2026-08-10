@@ -59,67 +59,110 @@ function parseQrToken(tokenString) {
 // --- 3A. FIND ASSIGNED SHIFT FOR WORKER ---
 async function findAssignedShiftForWorker(restaurantId, workerId, dateStr) {
   try {
-    let staffId = null;
-    let shiftDoc = null;
-    let shiftSnapshot = null;
+    const workerDocRef = window.firebaseFirestore.doc(window.db, 'users', workerId);
+    const workerSnap = await window.firebaseFirestore.getDoc(workerDocRef);
+    let workerPhone = '';
+    let workerName = '';
+    if (workerSnap.exists()) {
+      const wData = workerSnap.data();
+      workerPhone = wData.employeePhone || wData.phone || '';
+      workerName = wData.employeeName || wData.authorizedName || '';
+    }
 
-    // Step 1: Find restaurantStaff record with this vardiyanUserId
+    const staffRef = window.firebaseFirestore.collection(window.db, 'restaurantStaff');
+    const staffCandidates = [];
+
     const staffQ = window.firebaseFirestore.query(
-      window.firebaseFirestore.collection(window.db, 'restaurantStaff'),
+      staffRef,
       window.firebaseFirestore.where('restaurantId', '==', restaurantId),
       window.firebaseFirestore.where('vardiyanUserId', '==', workerId)
     );
     const staffSnapshot = await window.firebaseFirestore.getDocs(staffQ);
-    if (!staffSnapshot.empty) {
-      staffId = staffSnapshot.docs[0].id;
-    }
+    staffSnapshot.forEach(doc => staffCandidates.push({ id: doc.id, ...doc.data() }));
 
-    // Step 2: Find shift for this restaurantStaff, restaurant, and date
-    if (staffId) {
-      const shiftQ = window.firebaseFirestore.query(
-        window.firebaseFirestore.collection(window.db, 'shifts'),
-        window.firebaseFirestore.where('restaurantId', '==', restaurantId),
-        window.firebaseFirestore.where('staffId', '==', staffId),
-        window.firebaseFirestore.where('date', '==', dateStr)
+    if (workerPhone) {
+      const phoneQ = window.firebaseFirestore.query(
+        staffRef,
+        window.firebaseFirestore.where('restaurantId', '==', restaurantId)
       );
-      shiftSnapshot = await window.firebaseFirestore.getDocs(shiftQ);
-      if (!shiftSnapshot.empty) {
-        shiftDoc = shiftSnapshot.docs[0];
-      }
+      const phoneSnapshot = await window.firebaseFirestore.getDocs(phoneQ);
+      phoneSnapshot.forEach(doc => {
+        const data = doc.data();
+        const normalizedStaffPhone = typeof window.normalizePhone === 'function'
+          ? window.normalizePhone(data.phone)
+          : '';
+        const normalizedWorkerPhone = typeof window.normalizePhone === 'function'
+          ? window.normalizePhone(workerPhone)
+          : '';
+        if (normalizedStaffPhone && normalizedWorkerPhone && normalizedStaffPhone === normalizedWorkerPhone) {
+          if (!staffCandidates.some(candidate => candidate.id === doc.id)) {
+            staffCandidates.push({ id: doc.id, ...data });
+          }
+        }
+      });
     }
 
-    // Fallback: some shift records may store the worker UID directly in staffId
-    if (!shiftDoc) {
-      const fallbackShiftQ = window.firebaseFirestore.query(
-        window.firebaseFirestore.collection(window.db, 'shifts'),
-        window.firebaseFirestore.where('restaurantId', '==', restaurantId),
-        window.firebaseFirestore.where('staffId', '==', workerId),
-        window.firebaseFirestore.where('date', '==', dateStr)
-      );
-      const fallbackSnapshot = await window.firebaseFirestore.getDocs(fallbackShiftQ);
-      if (!fallbackSnapshot.empty) {
-        shiftDoc = fallbackSnapshot.docs[0];
-      }
+    const preferredStaffIds = new Set(staffCandidates.map(candidate => candidate.id));
+
+    const shiftQ = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'shifts'),
+      window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+      window.firebaseFirestore.where('date', '==', dateStr)
+    );
+    const shiftSnapshot = await window.firebaseFirestore.getDocs(shiftQ);
+
+    if (shiftSnapshot.empty) {
+      return null;
     }
 
-    if (!shiftDoc) {
-      return null; // No assigned shift for today
+    const shiftsForDay = shiftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    const directMatch = shiftsForDay.find(shift => preferredStaffIds.has(shift.staffId));
+    if (directMatch) {
+      console.info('[QR Shift Match]', 'direct', { dateStr, workerId, shiftId: directMatch.id, staffId: directMatch.staffId, startTime: directMatch.startTime, endTime: directMatch.endTime });
+      return formatShiftMatch(directMatch);
     }
 
-    const shiftData = shiftDoc.data();
+    const workerMatch = shiftsForDay.find(shift => shift.workerId === workerId);
+    if (workerMatch) {
+      console.info('[QR Shift Match]', 'workerId', { dateStr, workerId, shiftId: workerMatch.id, staffId: workerMatch.staffId, startTime: workerMatch.startTime, endTime: workerMatch.endTime });
+      return formatShiftMatch(workerMatch);
+    }
 
-    return {
-      shiftDocId: shiftDoc.id,  // Firestore document ID
-      shiftId: shiftDoc.id,
-      startTime: shiftData.startTime || null,
-      endTime: shiftData.endTime || null,
-      role: shiftData.role || null,
-      notes: shiftData.notes || null
-    };
+    const nameMatch = shiftsForDay.find(shift => shift.workerName === workerName);
+    if (nameMatch) {
+      console.info('[QR Shift Match]', 'workerName', { dateStr, workerId, shiftId: nameMatch.id, staffId: nameMatch.staffId, startTime: nameMatch.startTime, endTime: nameMatch.endTime });
+      return formatShiftMatch(nameMatch);
+    }
+
+    const unassignedMatch = shiftsForDay.find(shift => !shift.workerId && !shift.workerName && !shift.checkInTime && !shift.checkOutTime);
+    if (unassignedMatch) {
+      console.info('[QR Shift Match]', 'unassigned', { dateStr, workerId, shiftId: unassignedMatch.id, staffId: unassignedMatch.staffId, startTime: unassignedMatch.startTime, endTime: unassignedMatch.endTime });
+      return formatShiftMatch(unassignedMatch);
+    }
+
+    const singleShift = shiftsForDay.length === 1 ? shiftsForDay[0] : null;
+    if (singleShift) {
+      console.info('[QR Shift Match]', 'single', { dateStr, workerId, shiftId: singleShift.id, staffId: singleShift.staffId, startTime: singleShift.startTime, endTime: singleShift.endTime });
+      return formatShiftMatch(singleShift);
+    }
+
+    return null;
   } catch (error) {
     console.error("Error finding assigned shift for worker:", error);
     return null;
   }
+}
+
+function formatShiftMatch(shiftData) {
+  return {
+    shiftDocId: shiftData.id,
+    shiftId: shiftData.id,
+    startTime: shiftData.startTime || null,
+    endTime: shiftData.endTime || null,
+    role: shiftData.role || null,
+    notes: shiftData.notes || null
+  };
 }
 
 // --- 3. DYNAMIC QR DISPLAY (RESTAURANT TABLET / SCREEN MODE) ---
@@ -503,7 +546,14 @@ async function processClockInOut(scannedToken, workerCoords) {
           msgEl.className = 'auth-message success';
         }
       } else {
-        // No assigned shift, create a new one
+        console.warn('No assigned shift matched for QR clock-in; creating new shift card', {
+          restaurantId,
+          workerId: workerUser.uid,
+          workerName,
+          workerPhone,
+          date: todayStr,
+          reason: 'planned shift could not be matched by staff linkage or phone fallback'
+        });
         await window.firebaseFirestore.addDoc(
           window.firebaseFirestore.collection(window.db, 'shifts'),
           {
