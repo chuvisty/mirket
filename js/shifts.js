@@ -566,9 +566,8 @@ function renderCalendar() {
           realCheckOutTimeStr = ` - ${shift.checkOutTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
         }
         
-        const plannedLabel = shift.startTime && shift.endTime ? `${shift.startTime} - ${shift.endTime}` : 'Belirtilmedi';
+        const plannedLabel = shift.startTime && shift.endTime ? `${shift.startTime} - ${shift.endTime}` : '';
         clockInInfo = `<div class="shift-clock-info">${realCheckInTimeStr}${realCheckOutTimeStr}</div>`;
-        clockInInfo += `<div style="font-size:10px; color:#64748b; margin-top:2px;">🗓 Plan: ${plannedLabel}</div>`;
         
         const plannedInfo = shift.startTime && shift.endTime 
           ? `\nPlanlanan: ${shift.startTime} - ${shift.endTime}` 
@@ -589,10 +588,9 @@ function renderCalendar() {
       }
       
       shiftEl.innerHTML = `
-        <div class="shift-time">${shift.startTime} - ${shift.endTime}</div>
-        <div class="shift-name ${statusClass}">${displayName}</div>
-        ${shift.role ? `<div class="shift-role">${shift.role}</div>` : ''}
+        <div class="shift-time">${shift.startTime || ''} - ${shift.endTime || ''}</div>
         ${clockInInfo}
+        <div class="shift-name ${statusClass}">${displayName}</div>
       `;
       
       dayCol.appendChild(shiftEl);
