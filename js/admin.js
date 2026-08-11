@@ -202,8 +202,8 @@ async function loadRestaurantsTab() {
     restaurantsArray.forEach(rest => {
       const isSub = rest.isSubscribed === true || String(rest.isSubscribed).toLowerCase() === 'true';
       const subBadge = isSub
-        ? '<span style="background:#dcfce7; color:#15803d; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">⭐ Vardiyan Aktif</span>'
-        : '<span style="background:#fef2f2; color:#b91c1c; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">❌ Vardiyan Pasif</span>';
+        ? '<span style="background:#dcfce7; color:#15803d; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">⭐ Mirket Aktif</span>'
+        : '<span style="background:#fef2f2; color:#b91c1c; font-size:12px; font-weight:bold; padding:3px 8px; border-radius:12px;">❌ Mirket Pasif</span>';
       restHtml += `
         <div class="card" style="padding: 15px; border: 1px solid #ddd; text-align: left; background: #fff;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 8px;">
@@ -216,7 +216,7 @@ async function loadRestaurantsTab() {
           <div style="margin-top: 12px; display:flex; gap:6px;">
             ${isSub
               ? `<button class="btn secondary" style="flex:1; padding: 5px; font-size: 11px; border-color: #dc2626; color: #dc2626;" onclick="toggleVardiyanSubscriptionForUid(false, '${rest.id}')">❌ Devre Dışı Bırak</button>`
-              : `<button class="btn primary" style="flex:1; padding: 5px; font-size: 11px; background-color: #16a34a; border-color: #16a34a;" onclick="toggleVardiyanSubscriptionForUid(true, '${rest.id}')">✅ Vardiyan Özelliğini Aç</button>`
+              : `<button class="btn primary" style="flex:1; padding: 5px; font-size: 11px; background-color: #16a34a; border-color: #16a34a;" onclick="toggleVardiyanSubscriptionForUid(true, '${rest.id}')">✅ Mirket Özelliğini Aç</button>`
             }
             ${rest.email ? `<button class="btn secondary" style="padding: 5px 8px; font-size: 11px; border-color: #ea580c; color: #ea580c;" onclick="startAdminImpersonationSession('${rest.email}')">🔑 Oturum</button>` : ''}
           </div>
@@ -470,7 +470,7 @@ async function toggleVardiyanSubscriptionForUid(status, directUid = null) {
   }
 
   if (statusEl) {
-    statusEl.textContent = `UID: '${uid}' için Vardiyan özelliği güncelleniyor...`;
+    statusEl.textContent = `UID: '${uid}' için Mirket özelliği güncelleniyor...`;
     statusEl.className = 'auth-message info';
     statusEl.classList.remove('hidden');
   }
@@ -492,7 +492,7 @@ async function toggleVardiyanSubscriptionForUid(status, directUid = null) {
     const userName = userData.businessName || userData.restaurantName || userData.employeeName || userData.email || uid;
 
     if (statusEl) {
-      statusEl.innerHTML = `🎉 <strong>${userName}</strong> (${uid}) kullanıcısının Vardiyan (Vardiya / Gözcü) özelliği <strong>${status ? 'AKTİFLEŞTİRİLDİ' : 'DEVRE DIŞI BIRAKILDI'}</strong>!`;
+      statusEl.innerHTML = `🎉 <strong>${userName}</strong> (${uid}) kullanıcısının Mirket (Vardiya / Gözcü) özelliği <strong>${status ? 'AKTİFLEŞTİRİLDİ' : 'DEVRE DIŞI BIRAKILDI'}</strong>!`;
       statusEl.className = 'auth-message success';
     }
 

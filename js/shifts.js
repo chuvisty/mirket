@@ -171,7 +171,7 @@ function renderStaffList() {
     
     // Check if vardiyanUserId exists to show a badge
     const vardiyanBadge = staff.vardiyanUserId 
-      ? `<span style="font-size: 10px; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Vardiyan'e Bağlı</span>` 
+      ? `<span style="font-size: 10px; background: #dbeafe; color: #1e40af; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">Mirket'e Bağlı</span>` 
       : '';
       
     // Calculate weekly hours
@@ -214,7 +214,7 @@ function renderStaffList() {
 function updateStaffSelectDropdown() {
   const select = document.getElementById('shiftStaffSelect');
   // Keep the first default option
-  select.innerHTML = '<option value="">Vardiyan ile doldur</option>';
+  select.innerHTML = '<option value="">Mirket ile doldur</option>';
   
   staffMembers.forEach(staff => {
     const option = document.createElement('option');
@@ -911,7 +911,7 @@ function editShift(shiftId) {
     document.getElementById('deleteShiftBtn').classList.remove('hidden');
     document.getElementById('shiftModalMessage').classList.add('hidden');
     
-    checkShiftStaffSelect(); // To show/hide Vardiyan'le button
+    checkShiftStaffSelect(); // To show/hide Mirket'le button
     
     document.getElementById('shiftModal').classList.remove('hidden');
   }
@@ -1047,7 +1047,7 @@ function redirectToPersonelBul() {
 
   if (!date || !start || !end) {
     const msgEl = document.getElementById('shiftModalMessage');
-    msgEl.textContent = 'Lütfen Vardiyan ile personel aramadan önce Tarih, Başlangıç ve Bitiş saatlerini doldurunuz. Bu bilgiler ilanınıza yansıtılacaktır.';
+    msgEl.textContent = 'Lütfen Mirket ile personel aramadan önce Tarih, Başlangıç ve Bitiş saatlerini doldurunuz. Bu bilgiler ilanınıza yansıtılacaktır.';
     msgEl.className = 'auth-message warning';
     msgEl.classList.remove('hidden');
     return;

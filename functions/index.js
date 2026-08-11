@@ -238,7 +238,7 @@ exports.setVardiyanSubscription = functions.region('europe-west3').https.onCall(
 
     return {
         success: true,
-        message: `Vardiyan özelliği '${targetUid}' kullanıcısı için ${newSubStatus ? 'AKTİFLEŞTİRİLDİ' : 'DEVRE DIŞI BIRAKILDI'}.`,
+        message: `Mirket özelliği '${targetUid}' kullanıcısı için ${newSubStatus ? 'AKTİFLEŞTİRİLDİ' : 'DEVRE DIŞI BIRAKILDI'}.`,
         targetUid,
         isSubscribed: newSubStatus
     };

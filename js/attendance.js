@@ -413,7 +413,7 @@ async function processClockInOut(scannedToken, workerCoords) {
     // 1. Token validation
     const parsed = parseQrToken(scannedToken);
     if (!parsed) {
-      throw new Error('Geçersiz QR Kod. Lütfen Vardiyan Restoran QR kodunu okutunuz.');
+      throw new Error('Geçersiz QR Kod. Lütfen Mirket Restoran QR kodunu okutunuz.');
     }
     if (!parsed.valid) {
       throw new Error(parsed.error);
@@ -851,7 +851,7 @@ function exportAttendanceToCSV() {
   
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `vardiyan_mesai_raporu_${new Date().toISOString().split('T')[0]}.csv`);
+  link.setAttribute('download', `mirket_mesai_raporu_${new Date().toISOString().split('T')[0]}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
