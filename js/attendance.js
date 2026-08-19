@@ -238,6 +238,63 @@ function closeRestaurantQrModal() {
 window.openRestaurantQrModal = openRestaurantQrModal;
 window.closeRestaurantQrModal = closeRestaurantQrModal;
 
+// --- AUTO-END SHIFT LOGIC FOR EXPIRED SHIFTS ---
+async function autoCloseExpiredShifts(restaurantId) {
+  if (!restaurantId) return;
+
+  try {
+    const userSnap = await window.firebaseFirestore.getDoc(
+      window.firebaseFirestore.doc(window.db, 'users', restaurantId)
+    );
+    if (!userSnap.exists()) return;
+    const userData = userSnap.data();
+
+    // Check if feature flag autoEndShiftAtScheduledTime is enabled for restaurant
+    if (!userData.autoEndShiftAtScheduledTime) return;
+
+    const q = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'shifts'),
+      window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+      window.firebaseFirestore.where('status', '==', 'active')
+    );
+    const snap = await window.firebaseFirestore.getDocs(q);
+    if (snap.empty) return;
+
+    const now = new Date();
+    const todayStr = getLocalDateString(now);
+    const currentHourMin = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    const expiredShifts = [];
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (!data.date || !data.endTime) return;
+
+      // Auto close if shift date is in the past OR shift date is today and current time >= endTime
+      if (data.date < todayStr || (data.date === todayStr && currentHourMin >= data.endTime)) {
+        expiredShifts.push({ id: docSnap.id, ...data });
+      }
+    });
+
+    if (expiredShifts.length > 0) {
+      const batch = window.firebaseFirestore.writeBatch(window.db);
+      expiredShifts.forEach(shift => {
+        const ref = window.firebaseFirestore.doc(window.db, 'shifts', shift.id);
+        batch.update(ref, {
+          status: 'completed',
+          checkOutTime: shift.endTime,
+          autoEnded: true
+        });
+      });
+      await batch.commit();
+      console.info(`[Auto-End Shift] Automatically completed ${expiredShifts.length} expired shift(s).`);
+    }
+  } catch (err) {
+    console.error("Error auto closing expired shifts:", err);
+  }
+}
+
+window.autoCloseExpiredShifts = autoCloseExpiredShifts;
+
 // --- 4. WORKER ACTIVE SHIFT CHECK & UI UPDATE ---
 async function checkWorkerActiveShift(workerUid) {
   const statusContainer = document.getElementById('workerShiftStatus');
@@ -253,7 +310,19 @@ async function checkWorkerActiveShift(workerUid) {
     
     if (!snapshot.empty) {
       const docSnap = snapshot.docs[0];
-      currentActiveShift = { id: docSnap.id, ...docSnap.data() };
+      const shiftData = docSnap.data();
+
+      // Check auto-end rule for this shift's restaurant
+      if (shiftData.restaurantId) {
+        await autoCloseExpiredShifts(shiftData.restaurantId);
+        // Re-check doc state after potential auto-close
+        const freshSnap = await window.firebaseFirestore.getDoc(docSnap.ref);
+        if (freshSnap.exists() && freshSnap.data().status === 'completed') {
+          return checkWorkerActiveShift(workerUid); // refresh UI for completed state
+        }
+      }
+
+      currentActiveShift = { id: docSnap.id, ...shiftData };
       
       const checkInTimeStr = currentActiveShift.checkInTime && typeof currentActiveShift.checkInTime.toDate === 'function'
         ? currentActiveShift.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
@@ -294,20 +363,75 @@ async function checkWorkerActiveShift(workerUid) {
   }
 }
 
-// --- 5. WORKER QR SCANNER & CLOCK-IN / OUT LOGIC ---
-function openQrScanModal() {
+// --- 5. WORKER QR SCANNER & LOCATION PERMISSION MODALS ---
+function openLocationPermissionModal() {
+  const modal = document.getElementById('locationPermissionModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeLocationPermissionModal() {
+  const modal = document.getElementById('locationPermissionModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function openLocationGuideModal(os = null) {
+  const modal = document.getElementById('locationGuideModal');
+  if (!modal) return;
+
+  if (!os) {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    os = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream ? 'ios' : 'android';
+  }
+
+  switchLocationGuideTab(os);
+  modal.classList.remove('hidden');
+}
+
+function closeLocationGuideModal() {
+  const modal = document.getElementById('locationGuideModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function switchLocationGuideTab(os) {
+  const iosBtn = document.getElementById('tabIosBtn');
+  const androidBtn = document.getElementById('tabAndroidBtn');
+  const iosContent = document.getElementById('guideIosContent');
+  const androidContent = document.getElementById('guideAndroidContent');
+
+  if (!iosBtn || !androidBtn || !iosContent || !androidContent) return;
+
+  if (os === 'ios') {
+    iosBtn.className = 'btn secondary';
+    androidBtn.className = 'btn ghost';
+    iosContent.classList.remove('hidden');
+    androidContent.classList.add('hidden');
+  } else {
+    androidBtn.className = 'btn secondary';
+    iosBtn.className = 'btn ghost';
+    androidContent.classList.remove('hidden');
+    iosContent.classList.add('hidden');
+  }
+}
+
+function retryLocationPermission() {
+  closeLocationGuideModal();
+  proceedWithLocationAndCamera();
+}
+
+function proceedWithLocationAndCamera() {
+  closeLocationPermissionModal();
   const modal = document.getElementById('qrScanModal');
   const msgEl = document.getElementById('qrScanMessage');
-  if (!modal) return;
-  
-  modal.classList.remove('hidden');
+  if (modal) modal.classList.remove('hidden');
   if (msgEl) {
     msgEl.textContent = 'Konumunuz alınıyor ve kamera hazırlanıyor...';
     msgEl.className = 'auth-message info';
   }
-  
-  // Start Geolocation & Camera Scan
   startQrCameraScanner();
+}
+
+function openQrScanModal() {
+  openLocationPermissionModal();
 }
 
 function closeQrScanModal() {
@@ -316,6 +440,13 @@ function closeQrScanModal() {
   stopQrCameraScanner();
 }
 
+window.openLocationPermissionModal = openLocationPermissionModal;
+window.closeLocationPermissionModal = closeLocationPermissionModal;
+window.openLocationGuideModal = openLocationGuideModal;
+window.closeLocationGuideModal = closeLocationGuideModal;
+window.switchLocationGuideTab = switchLocationGuideTab;
+window.retryLocationPermission = retryLocationPermission;
+window.proceedWithLocationAndCamera = proceedWithLocationAndCamera;
 window.openQrScanModal = openQrScanModal;
 window.closeQrScanModal = closeQrScanModal;
 
@@ -335,10 +466,8 @@ function startQrCameraScanner() {
   const msgEl = document.getElementById('qrScanMessage');
 
   if (!navigator.geolocation) {
-    if (msgEl) {
-      msgEl.textContent = 'Cihazınızda / Tarayıcınızda konum servisi desteklenmiyor.';
-      msgEl.className = 'auth-message error';
-    }
+    closeQrScanModal();
+    openLocationGuideModal();
     return;
   }
 
@@ -396,10 +525,8 @@ function startQrCameraScanner() {
     },
     (geoError) => {
       console.error("Geolocation error:", geoError);
-      if (msgEl) {
-        msgEl.textContent = 'Konumunuz alınamadı. Lütfen tarayıcınızın konum iznini kontrol edin.';
-        msgEl.className = 'auth-message error';
-      }
+      closeQrScanModal();
+      openLocationGuideModal();
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
@@ -680,6 +807,8 @@ async function loadAttendanceLogs(restaurantId, filterPeriod = 'today') {
   tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b;">Mesai kayıtları yükleniyor...</td></tr>';
 
   try {
+    await autoCloseExpiredShifts(restaurantId);
+
     let q = window.firebaseFirestore.query(
       window.firebaseFirestore.collection(window.db, 'shifts'),
       window.firebaseFirestore.where('restaurantId', '==', restaurantId)

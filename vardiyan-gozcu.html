@@ -450,10 +450,11 @@
       <section class="card" style="max-width: 100%; margin-bottom: 20px;">
         <div class="calendar-header">
           <h2>Haftalık Vardiya Takvimi</h2>
-          <div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <button class="btn ghost" onclick="changeWeek(-1)">&#8592; Önceki Hafta</button>
-            <span id="currentWeekLabel" style="margin: 0 15px; font-weight: 600;">Bu Hafta</span>
+            <span id="currentWeekLabel" style="margin: 0 10px; font-weight: 600;">Bu Hafta</span>
             <button class="btn ghost" onclick="changeWeek(1)">Sonraki Hafta &#8594;</button>
+            <button class="btn ghost" onclick="clearWeekShifts()" style="color: #ef4444; border-color: #fca5a5; margin-left: 6px;">🗑️ Tüm Haftayı Sil</button>
           </div>
         </div>
         <div id="calendarGrid" class="calendar-grid">
@@ -544,8 +545,39 @@
             </button>
           </div>
         </div>
+
+        <!-- Auto-End Shift Feature Toggle -->
+        <div style="margin-top: 18px; padding-top: 14px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" id="autoEndShiftToggle" onchange="saveRestaurantSettings()" style="width: 18px; height: 18px; cursor: pointer;">
+          <label for="autoEndShiftToggle" style="font-size: 14px; color: #1e293b; cursor: pointer; font-weight: 500;">
+            🤖 Vardiya saatinde otomatik çıkış yap (Çalışanlar için bitiş saatinde QR okutma zorunluluğu olmasın)
+          </label>
+        </div>
         
         <div id="locationSaveMessage" class="auth-message hidden" style="margin-top: 15px;"></div>
+
+        <!-- Custom Shift Templates Manager -->
+        <div style="margin-top: 20px; padding-top: 18px; border-top: 1px solid #e2e8f0;">
+          <h3 style="font-size: 15px; color: #1e293b; margin-bottom: 6px;">⏱️ Özel Vardiya Şablonları</h3>
+          <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Vardiya yazarken hızlıca seçebileceğiniz restorana özel vardiya saat aralıkları ekleyin (Örn: Öğle Yoğunluğu 11:30 - 15:30).</p>
+          
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px;">
+            <input type="text" id="newTemplateName" placeholder="Şablon Adı (Örn: Öğle Yoğunluğu)" style="flex: 2; min-width: 170px; padding: 6px 10px; font-size: 13px; height: 38px; border-radius: 8px; border: 1px solid #cbd5e1;">
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <span style="font-size: 12px; color: #64748b;">Başlangıç:</span>
+              <input type="time" id="newTemplateStart" style="padding: 6px 8px; font-size: 13px; height: 38px; border-radius: 8px; border: 1px solid #cbd5e1;">
+            </div>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <span style="font-size: 12px; color: #64748b;">Bitiş:</span>
+              <input type="time" id="newTemplateEnd" style="padding: 6px 8px; font-size: 13px; height: 38px; border-radius: 8px; border: 1px solid #cbd5e1;">
+            </div>
+            <button type="button" class="btn secondary" onclick="addCustomShiftTemplate()" style="padding: 6px 14px; font-size: 13px; height: 38px; white-space: nowrap;">+ Şablon Ekle</button>
+          </div>
+
+          <div id="customShiftTemplatesList" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <span style="font-size: 12px; color: #94a3b8;">Henüz özel vardiya şablonu eklenmedi.</span>
+          </div>
+        </div>
       </section>
 
     </div>
@@ -622,7 +654,7 @@
       
       <div class="input-group">
         <span>Hızlı Şablonlar</span>
-        <div class="shift-templates">
+        <div class="shift-templates" id="shiftTemplatesContainer">
           <button type="button" class="shift-template-btn" onclick="applyShiftTemplate('08:00', '16:00')">Sabah (08:00-16:00)</button>
           <button type="button" class="shift-template-btn" onclick="applyShiftTemplate('16:00', '00:00')">Akşam (16:00-00:00)</button>
           <button type="button" class="shift-template-btn" onclick="applyShiftTemplate('08:00', '20:00')">Tam Gün (08:00-20:00)</button>
@@ -690,6 +722,60 @@
       <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block;"></span>
       <span>Canlı QR Akışı Aktif</span>
     </div>
+  </div>
+</div>
+
+<!-- Geolocation Permission Pre-Notification Modal -->
+<div id="locationPermissionModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 420px; text-align: center; padding: 30px 24px;">
+    <span class="close-modal" onclick="closeLocationPermissionModal()">&times;</span>
+    <div style="font-size: 44px; margin-bottom: 12px;">📍</div>
+    <h2 style="font-size: 20px; color: #0f172a; margin-bottom: 8px;">Konum Doğrulaması Gereklidir</h2>
+    <p style="font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 24px;">
+      Mirket Vardiyan sisteminde mesai başlatabilmek veya bitirebilmek için işletme sınırları içerisinde olduğunuzun doğrulanması gerekmektedir.
+    </p>
+    <button type="button" class="btn primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 600;" onclick="proceedWithLocationAndCamera()">
+      📍 Konumumu Doğrula & Kamerayı Aç
+    </button>
+  </div>
+</div>
+
+<!-- Geolocation Troubleshooting Guide Modal -->
+<div id="locationGuideModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 480px; padding: 26px 22px;">
+    <span class="close-modal" onclick="closeLocationGuideModal()">&times;</span>
+    <h2 style="font-size: 19px; color: #0f172a; margin-bottom: 6px;">⚙️ Konum İzni Nasıl Açılır?</h2>
+    <p style="font-size: 12px; color: #64748b; margin-bottom: 16px;">Konumunuz alınamadı veya engellendi. Lütfen aşağıdaki cihaz adımlarını takip ederek konuma izin veriniz:</p>
+    
+    <!-- Tab switcher -->
+    <div style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+      <button type="button" id="tabIosBtn" class="btn secondary" style="flex: 1; font-size: 13px; font-weight: 600; padding: 6px;" onclick="switchLocationGuideTab('ios')">📱 iPhone / Safari</button>
+      <button type="button" id="tabAndroidBtn" class="btn ghost" style="flex: 1; font-size: 13px; font-weight: 600; padding: 6px;" onclick="switchLocationGuideTab('android')">🤖 Android / Chrome</button>
+    </div>
+
+    <!-- iOS Guide -->
+    <div id="guideIosContent" style="font-size: 13px; color: #334155; line-height: 1.6;">
+      <ol style="padding-left: 20px; margin: 0 0 16px 0;">
+        <li style="margin-bottom: 8px;">Telefonunuzun <strong>Ayarlar</strong> uygulamasını açın.</li>
+        <li style="margin-bottom: 8px;"><strong>Gizlilik ve Güvenlik</strong> &gt; <strong>Konum Servisleri</strong> adımlarına gidin.</li>
+        <li style="margin-bottom: 8px;">Listeden <strong>Safari Web Siteleri</strong> seçeneğini bulun.</li>
+        <li style="margin-bottom: 8px;">Erişime <strong>"Uygulamayı Kullanırken"</strong> izin verin ve "Tam Konum" anahtarını açın.</li>
+      </ol>
+    </div>
+
+    <!-- Android Guide -->
+    <div id="guideAndroidContent" class="hidden" style="font-size: 13px; color: #334155; line-height: 1.6;">
+      <ol style="padding-left: 20px; margin: 0 0 16px 0;">
+        <li style="margin-bottom: 8px;">Chrome tarayıcısında sol üstteki/adres çubuğundaki <strong>Kilit / Ayar</strong> ikonuna dokunun.</li>
+        <li style="margin-bottom: 8px;"><strong>İzinler</strong> &gt; <strong>Konum</strong> seçeneğine tıklayın.</li>
+        <li style="margin-bottom: 8px;">Konum iznini <strong>"İzin Ver"</strong> (Allow) olarak değiştirin.</li>
+        <li style="margin-bottom: 8px;">Telefonunuzun üst menüsünden cihaz GPS/Konum servisinin açık olduğundan emin olun.</li>
+      </ol>
+    </div>
+
+    <button type="button" class="btn primary" style="width: 100%; margin-top: 10px;" onclick="retryLocationPermission()">
+      🔄 İzni Tekrar Kontrol Et & Tara
+    </button>
   </div>
 </div>
 

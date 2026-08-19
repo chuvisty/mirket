@@ -7,6 +7,8 @@ let currentShifts = [];
 let restaurantId = null;
 let restaurantOpeningHour = 6;
 let restaurantClosingHour = 23;
+let customShiftTemplates = [];
+let autoEndShiftAtScheduledTime = false;
 
 function initGozcuPage() {
   if (window.firebaseAuth?.onAuthStateChanged && window.auth) {
@@ -47,8 +49,12 @@ async function loadRestaurantSettings() {
       const data = userDoc.data();
       restaurantOpeningHour = data.openingHour || 6;
       restaurantClosingHour = data.closingHour || 23;
+      customShiftTemplates = data.shiftTemplates || [];
+      autoEndShiftAtScheduledTime = !!data.autoEndShiftAtScheduledTime;
+      
       if (document.getElementById('restaurantOpeningHour')) document.getElementById('restaurantOpeningHour').value = restaurantOpeningHour;
       if (document.getElementById('restaurantClosingHour')) document.getElementById('restaurantClosingHour').value = restaurantClosingHour;
+      if (document.getElementById('autoEndShiftToggle')) document.getElementById('autoEndShiftToggle').checked = autoEndShiftAtScheduledTime;
       
       if (data.location) {
         if (document.getElementById('restaurantGeofenceRadius')) {
@@ -61,6 +67,9 @@ async function loadRestaurantSettings() {
           msgEl.classList.remove('hidden');
         }
       }
+
+      renderCustomShiftTemplatesList();
+      renderShiftTemplatesUI();
     }
   } catch (error) {
     console.error("Error loading restaurant settings:", error);
@@ -90,7 +99,8 @@ function closeRestaurantQrModal() {
 async function saveRestaurantSettings() {
   const opening = parseInt(document.getElementById('restaurantOpeningHour').value);
   const closing = parseInt(document.getElementById('restaurantClosingHour').value);
-  
+  const autoEndVal = document.getElementById('autoEndShiftToggle') ? document.getElementById('autoEndShiftToggle').checked : false;
+
   if (opening >= closing) {
     alert('Açılış saati kapatılış saatinden önce olmalıdır.');
     return;
@@ -101,16 +111,120 @@ async function saveRestaurantSettings() {
       window.firebaseFirestore.doc(window.db, 'users', restaurantId),
       {
         openingHour: opening,
-        closingHour: closing
+        closingHour: closing,
+        autoEndShiftAtScheduledTime: autoEndVal
       }
     );
     restaurantOpeningHour = opening;
     restaurantClosingHour = closing;
-    alert('Açılış saatleri kaydedildi.');
+    autoEndShiftAtScheduledTime = autoEndVal;
+    alert('İşletme ayarları kaydedildi.');
     renderCalendar();
   } catch (error) {
     console.error("Error saving restaurant settings:", error);
     alert('Ayarlar kaydedilemedi.');
+  }
+}
+
+// --- CUSTOM SHIFT TEMPLATES MANAGEMENT ---
+function renderCustomShiftTemplatesList() {
+  const listContainer = document.getElementById('customShiftTemplatesList');
+  if (!listContainer) return;
+  
+  if (!customShiftTemplates || customShiftTemplates.length === 0) {
+    listContainer.innerHTML = '<span style="font-size: 12px; color: #94a3b8;">Henüz özel vardiya şablonu eklenmedi.</span>';
+    return;
+  }
+
+  listContainer.innerHTML = customShiftTemplates.map((t, idx) => `
+    <div style="display: inline-flex; align-items: center; gap: 8px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 20px; padding: 5px 12px; font-size: 13px; color: #1e293b;">
+      <span style="font-weight: 600;">${t.name}</span>
+      <span style="color: #64748b; font-size: 12px;">(${t.startTime} - ${t.endTime})</span>
+      <button type="button" onclick="deleteCustomShiftTemplate(${idx})" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; font-weight: bold; padding: 0 2px;">&times;</button>
+    </div>
+  `).join('');
+}
+
+function renderShiftTemplatesUI() {
+  const container = document.getElementById('shiftTemplatesContainer');
+  if (!container) return;
+
+  const defaultTemplates = [
+    { name: 'Sabah', startTime: '08:00', endTime: '16:00' },
+    { name: 'Akşam', startTime: '16:00', endTime: '00:00' },
+    { name: 'Tam Gün', startTime: '08:00', endTime: '20:00' }
+  ];
+
+  const allTemplates = customShiftTemplates.length > 0 ? customShiftTemplates : defaultTemplates;
+
+  container.innerHTML = allTemplates.map(t => `
+    <button type="button" class="shift-template-btn" onclick="applyShiftTemplate('${t.startTime}', '${t.endTime}')">
+      ${t.name} (${t.startTime}-${t.endTime})
+    </button>
+  `).join('');
+
+  // If custom templates exist, also add a reset/default option if needed
+  if (customShiftTemplates.length > 0) {
+    container.innerHTML += `
+      <button type="button" class="shift-template-btn" style="border-style: dashed; opacity: 0.8;" onclick="applyShiftTemplate('08:00', '16:00')">Sabah (08-16)</button>
+      <button type="button" class="shift-template-btn" style="border-style: dashed; opacity: 0.8;" onclick="applyShiftTemplate('16:00', '00:00')">Akşam (16-00)</button>
+    `;
+  }
+}
+
+async function addCustomShiftTemplate() {
+  const nameInput = document.getElementById('newTemplateName');
+  const startInput = document.getElementById('newTemplateStart');
+  const endInput = document.getElementById('newTemplateEnd');
+
+  if (!nameInput || !startInput || !endInput) return;
+
+  const name = nameInput.value.trim();
+  const startTime = startInput.value;
+  const endTime = endInput.value;
+
+  if (!name || !startTime || !endTime) {
+    alert('Lütfen şablon adı, başlangıç ve bitiş saatini eksiksiz giriniz.');
+    return;
+  }
+
+  const newTemplate = { id: Date.now().toString(), name, startTime, endTime };
+  customShiftTemplates.push(newTemplate);
+
+  try {
+    await window.firebaseFirestore.updateDoc(
+      window.firebaseFirestore.doc(window.db, 'users', restaurantId),
+      { shiftTemplates: customShiftTemplates }
+    );
+
+    nameInput.value = '';
+    startInput.value = '';
+    endInput.value = '';
+
+    renderCustomShiftTemplatesList();
+    renderShiftTemplatesUI();
+    alert('Yeni şablon eklendi.');
+  } catch (error) {
+    console.error("Error adding custom shift template:", error);
+    alert('Şablon eklenirken hata oluştu.');
+  }
+}
+
+async function deleteCustomShiftTemplate(index) {
+  if (index < 0 || index >= customShiftTemplates.length) return;
+  customShiftTemplates.splice(index, 1);
+
+  try {
+    await window.firebaseFirestore.updateDoc(
+      window.firebaseFirestore.doc(window.db, 'users', restaurantId),
+      { shiftTemplates: customShiftTemplates }
+    );
+
+    renderCustomShiftTemplatesList();
+    renderShiftTemplatesUI();
+  } catch (error) {
+    console.error("Error deleting custom shift template:", error);
+    alert('Şablon silinirken hata oluştu.');
   }
 }
 
@@ -720,6 +834,70 @@ async function copyPreviousWeekShifts(targetDateStr) {
   }
 }
 
+async function clearDayShifts(dateStr) {
+  if (!confirm(`${dateStr} tarihindeki tüm vardiyalar silinecektir. Bu işlem geri alınamaz! Emin misiniz?`)) return;
+
+  try {
+    const q = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'shifts'),
+      window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+      window.firebaseFirestore.where('date', '==', dateStr)
+    );
+    const snap = await window.firebaseFirestore.getDocs(q);
+    if (snap.empty) {
+      alert('Bu günde silinecek vardiya bulunamadı.');
+      return;
+    }
+
+    const batch = window.firebaseFirestore.writeBatch(window.db);
+    snap.forEach(docSnap => {
+      batch.delete(docSnap.ref);
+    });
+    await batch.commit();
+
+    await loadShiftsForCurrentWeek();
+    alert(`${dateStr} tarihindeki ${snap.size} vardiya başarıyla temizlendi.`);
+  } catch (err) {
+    console.error("Error clearing day shifts:", err);
+    alert("Vardiyalar silinirken bir hata oluştu.");
+  }
+}
+
+async function clearWeekShifts() {
+  const startStr = getLocalDateString(currentWeekStart);
+  const endDate = new Date(currentWeekStart);
+  endDate.setDate(endDate.getDate() + 6);
+  const endStr = getLocalDateString(endDate);
+
+  if (!confirm(`${startStr} ile ${endStr} tarihleri arasındaki TÜM vardiyalar silinecektir. Bu işlem geri alınamaz! Emin misiniz?`)) return;
+
+  try {
+    const q = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'shifts'),
+      window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+      window.firebaseFirestore.where('date', '>=', startStr),
+      window.firebaseFirestore.where('date', '<=', endStr)
+    );
+    const snap = await window.firebaseFirestore.getDocs(q);
+    if (snap.empty) {
+      alert('Bu haftada silinecek vardiya bulunamadı.');
+      return;
+    }
+
+    const batch = window.firebaseFirestore.writeBatch(window.db);
+    snap.forEach(docSnap => {
+      batch.delete(docSnap.ref);
+    });
+    await batch.commit();
+
+    await loadShiftsForCurrentWeek();
+    alert(`Seçilen haftadaki ${snap.size} vardiya başarıyla temizlendi.`);
+  } catch (err) {
+    console.error("Error clearing week shifts:", err);
+    alert("Haftalık vardiyalar silinirken bir hata oluştu.");
+  }
+}
+
 function openDayActionMenu(dateStr, dayCol) {
   closeDayActionMenu();
   let menu = document.getElementById('dayActionMenu');
@@ -733,6 +911,7 @@ function openDayActionMenu(dateStr, dayCol) {
     <button type="button" onclick="copyPreviousWeekShifts('${dateStr}'); closeDayActionMenu();">↺ Önceki Haftayı Kopyala</button>
     <button type="button" onclick="openShiftModal('${dateStr}'); closeDayActionMenu();">+ Vardiya</button>
     <button type="button" onclick="openDayDetail('${dateStr}'); closeDayActionMenu();">Günlük Detay</button>
+    <button type="button" style="color: #ef4444;" onclick="clearDayShifts('${dateStr}'); closeDayActionMenu();">🗑️ Günü Temizle</button>
   `;
   menu.classList.remove('hidden');
   dayCol.appendChild(menu);
