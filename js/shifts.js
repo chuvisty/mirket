@@ -657,7 +657,7 @@ function renderCalendar() {
         <div>
           ${dayNames[i % 7]}<br><span style="font-size:12px;color:#94a3b8;">${d.getDate()}</span>
         </div>
-        <button type="button" title="Günü Temizle (Tüm Vardiyaları Sil)" onclick="event.stopPropagation(); clearDayShifts('${dateStr}')" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:12px; padding:2px 4px; opacity:0.7;" onmouseover="this.style.color='#ef4444'; this.style.opacity='1'" onmouseout="this.style.color='#94a3b8'; this.style.opacity='0.7'">🗑️</button>
+        <button type="button" title="Günü Temizle (Tüm Vardiyaları Sil)" onclick="event.stopPropagation(); clearDayShifts('${dateStr}')" style="background:#fef2f2; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:3px 6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:2px;">🗑️ Sil</button>
       </div>
     `;
     dayCol.appendChild(header);
@@ -738,12 +738,14 @@ function renderCalendar() {
       openDayActionMenu(dateStr, dayCol);
     };
     
-    // Add button
-    const addBtn = document.createElement('div');
-    addBtn.className = 'add-shift-btn';
-    addBtn.innerHTML = '+ Vardiya';
-    addBtn.onclick = () => openShiftModal(dateStr);
-    dayCol.appendChild(addBtn);
+    // Day Footer Action Buttons (+ Vardiya & 🗑️ Günü Sil)
+    const dayFooter = document.createElement('div');
+    dayFooter.style.cssText = 'display: flex; gap: 4px; margin-top: auto; padding-top: 6px;';
+    dayFooter.innerHTML = `
+      <div class="add-shift-btn" style="flex: 1; margin: 0;" onclick="openShiftModal('${dateStr}')">+ Vardiya</div>
+      <button type="button" title="Günü Temizle (Tüm Vardiyaları Sil)" onclick="event.stopPropagation(); clearDayShifts('${dateStr}')" style="background: #fef2f2; border: 1px solid #fecaca; color: #ef4444; border-radius: 8px; padding: 4px 8px; font-size: 12px; cursor: pointer; font-weight: 600;">🗑️</button>
+    `;
+    dayCol.appendChild(dayFooter);
     
     grid.appendChild(dayCol);
   }
