@@ -450,6 +450,76 @@ window.proceedWithLocationAndCamera = proceedWithLocationAndCamera;
 window.openQrScanModal = openQrScanModal;
 window.closeQrScanModal = closeQrScanModal;
 
+async function toggleChecklistItem(shiftId, taskId, isCompleted) {
+  try {
+    const shiftRef = window.firebaseFirestore.doc(window.db, 'shifts', shiftId);
+    const snap = await window.firebaseFirestore.getDoc(shiftRef);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    if (!data.checklist) return;
+
+    const updatedChecklist = data.checklist.map(item => {
+      if (item.id === taskId) {
+        return { ...item, completed: isCompleted, completedAt: isCompleted ? new Date().toISOString() : null };
+      }
+      return item;
+    });
+
+    await window.firebaseFirestore.updateDoc(shiftRef, { checklist: updatedChecklist });
+    
+    // Update local state if active
+    if (currentActiveShift && currentActiveShift.id === shiftId) {
+      currentActiveShift.checklist = updatedChecklist;
+      const workerUid = window.auth?.currentUser?.uid;
+      if (workerUid) checkWorkerActiveShift(workerUid);
+    }
+  } catch (err) {
+    console.error("Error toggling checklist item:", err);
+  }
+}
+window.toggleChecklistItem = toggleChecklistItem;
+
+// --- CHECKLIST DETAIL MODAL FOR REPORTING ---
+function openShiftChecklistDetailModal(shiftId) {
+  const modal = document.getElementById('shiftChecklistDetailModal');
+  const subtitle = document.getElementById('checklistDetailSubtitle');
+  const content = document.getElementById('checklistDetailContent');
+  if (!modal || !content) return;
+
+  const allShifts = loadedAttendanceShifts && loadedAttendanceShifts.length > 0 ? loadedAttendanceShifts : (window.currentShifts || []);
+  const shift = allShifts.find(s => s.id === shiftId);
+  if (!shift || !shift.checklist || shift.checklist.length === 0) {
+    alert("Bu vardiyaya ait görev bulunamadı.");
+    return;
+  }
+
+  if (subtitle) {
+    subtitle.textContent = `${shift.workerName || 'Çalışan'} - ${shift.date} (${shift.startTime || ''}-${shift.endTime || ''})`;
+  }
+
+  content.innerHTML = shift.checklist.map((item, idx) => `
+    <div style="display: flex; align-items: center; justify-content: space-between; background: ${item.completed ? '#f0fdf4' : '#f8fafc'}; border: 1px solid ${item.completed ? '#bbf7d0' : '#e2e8f0'}; border-radius: 8px; padding: 10px 12px; font-size: 13px;">
+      <span style="color: ${item.completed ? '#166534' : '#334155'}; font-weight: 500;">
+        ${item.completed ? '✅' : '⏳'} ${idx + 1}. ${item.task}
+      </span>
+      <span style="font-size: 11px; color: ${item.completed ? '#15803d' : '#94a3b8'};">
+        ${item.completed ? 'Tamamlandı' : 'Bekliyor'}
+      </span>
+    </div>
+  `).join('');
+
+  modal.classList.remove('hidden');
+}
+
+function closeShiftChecklistDetailModal() {
+  const modal = document.getElementById('shiftChecklistDetailModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+window.openShiftChecklistDetailModal = openShiftChecklistDetailModal;
+window.closeShiftChecklistDetailModal = closeShiftChecklistDetailModal;
+
 function stopQrCameraScanner() {
   if (html5QrScanner) {
     html5QrScanner.stop().then(() => {
@@ -804,7 +874,7 @@ async function loadAttendanceLogs(restaurantId, filterPeriod = 'today') {
   const tableBody = document.getElementById('attendanceLogsTableBody');
   if (!tableBody) return;
 
-  tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#64748b;">Mesai kayıtları yükleniyor...</td></tr>';
+  tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#64748b;">Mesai kayıtları yükleniyor...</td></tr>';
 
   try {
     await autoCloseExpiredShifts(restaurantId);
@@ -830,7 +900,7 @@ async function loadAttendanceLogs(restaurantId, filterPeriod = 'today') {
       shifts = shifts.filter(s => s.date >= weekAgoStr);
     } else if (filterPeriod === 'month') {
       const monthAgo = new Date();
-      monthAgo.setMonth(now.getMonth() - 1);
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
       const monthAgoStr = monthAgo.toISOString().split('T')[0];
       shifts = shifts.filter(s => s.date >= monthAgoStr);
     }
@@ -847,7 +917,7 @@ async function loadAttendanceLogs(restaurantId, filterPeriod = 'today') {
 
   } catch (error) {
     console.error("Error loading attendance logs:", error);
-    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#ef4444;">Kayıtlar yüklenirken hata oluştu.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#ef4444;">Kayıtlar yüklenirken hata oluştu.</td></tr>';
   }
 }
 
@@ -856,29 +926,90 @@ function renderAttendanceTable(shifts) {
   if (!tableBody) return;
 
   if (shifts.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px; color:#94a3b8;">Seçilen dönemde mesai kaydı bulunamadı.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#94a3b8;">Seçilen dönemde mesai kaydı bulunamadı.</td></tr>';
     return;
   }
 
-  tableBody.innerHTML = shifts.map(shift => {
-    // Use checkInTime/checkOutTime for actual clock times (or startTime/endTime if planned times don't exist)
-    const inTime = shift.checkInTime && typeof shift.checkInTime.toDate === 'function'
-      ? shift.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+  const staffList = window.staffMembers || [];
+  let totalWorkedHoursPeriod = 0;
+  let totalPayrollPeriod = 0;
+
+  const rowsHtml = shifts.map(shift => {
+    // 1. Clock times
+    const checkInDate = shift.checkInTime && typeof shift.checkInTime.toDate === 'function' ? shift.checkInTime.toDate() : null;
+    const checkOutDate = shift.checkOutTime && typeof shift.checkOutTime.toDate === 'function' ? shift.checkOutTime.toDate() : null;
+
+    const inTime = checkInDate
+      ? checkInDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
       : (shift.startTime || '-');
 
-    const outTime = shift.checkOutTime && typeof shift.checkOutTime.toDate === 'function'
-      ? shift.checkOutTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+    const outTime = checkOutDate
+      ? checkOutDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
       : (shift.status === 'active' ? '<span style="color:#eab308; font-weight:700;">Devam Ediyor</span>' : (shift.endTime || '-'));
 
-    let totalDuration = '-';
+    // 2. Worked Hours & Wage Calculation
+    let workedHours = 0;
     if (shift.totalWorkedMinutes) {
-      const hrs = Math.floor(shift.totalWorkedMinutes / 60);
-      const mins = shift.totalWorkedMinutes % 60;
-      totalDuration = `${hrs}sa ${mins}dk`;
+      workedHours = shift.totalWorkedMinutes / 60;
+    } else if (checkInDate && checkOutDate) {
+      workedHours = (checkOutDate - checkInDate) / 3600000;
+    } else if (shift.startTime && shift.endTime && shift.status === 'completed') {
+      const [sh, sm] = shift.startTime.split(':').map(Number);
+      const [eh, em] = shift.endTime.split(':').map(Number);
+      let mins = (eh * 60 + em) - (sh * 60 + sm);
+      if (mins <= 0) mins += 24 * 60;
+      workedHours = mins / 60;
+    }
+
+    totalWorkedHoursPeriod += workedHours;
+
+    // Find staff wage info
+    const staff = shift.staffId ? staffList.find(s => s.id === shift.staffId) : null;
+    let earnings = 0;
+    let wageLabel = '-';
+
+    if (staff && staff.wageAmount) {
+      if (staff.wageType === 'daily') {
+        earnings = staff.wageAmount;
+        wageLabel = `${earnings.toLocaleString('tr-TR')} ₺ (Günlük)`;
+      } else {
+        earnings = workedHours * staff.wageAmount;
+        wageLabel = `${Math.round(earnings).toLocaleString('tr-TR')} ₺ (${staff.wageAmount} TL/s)`;
+      }
+    }
+    totalPayrollPeriod += earnings;
+
+    // 3. Punctuality status badge
+    let punctualityBadge = '';
+    if (checkInDate && shift.startTime) {
+      const actualMins = checkInDate.getHours() * 60 + checkInDate.getMinutes();
+      const [sh, sm] = shift.startTime.split(':').map(Number);
+      const schedMins = sh * 60 + sm;
+      const diff = actualMins - schedMins;
+
+      if (diff <= 5) {
+        punctualityBadge = `<span style="background:#22c55e; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600;">🟢 Zamanında</span>`;
+      } else {
+        punctualityBadge = `<span style="background:#ef4444; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600;">🔴 +${diff} dk Geç</span>`;
+      }
+    }
+
+    // 4. Checklist status badge
+    let checklistBadge = '<span style="color:#94a3b8;">-</span>';
+    if (shift.checklist && shift.checklist.length > 0) {
+      const done = shift.checklist.filter(c => c.completed).length;
+      const total = shift.checklist.length;
+      const pct = Math.round((done / total) * 100);
+      const isAllDone = done === total;
+      checklistBadge = `
+        <button type="button" class="btn ghost" style="padding:2px 8px; font-size:11px; border:1px solid ${isAllDone ? '#bbf7d0' : '#cbd5e1'}; background:${isAllDone ? '#f0fdf4' : '#f8fafc'}; color:${isAllDone ? '#15803d' : '#334155'}; font-weight:600;" onclick="openShiftChecklistDetailModal('${shift.id}')">
+          📋 %${pct} (${done}/${total})
+        </button>
+      `;
     }
 
     const geoBadge = shift.checkInGeo
-      ? `<span style="font-size:11px; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px;" title="GPS ile doğrulandı (${shift.checkInGeo.distanceMeters}m)">✓ GPS Doğrulandı</span>`
+      ? `<span style="font-size:11px; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px;" title="GPS ile doğrulandı (${shift.checkInGeo.distanceMeters}m)">✓ GPS</span>`
       : `<span style="font-size:11px; background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px;">Manuel</span>`;
 
     const statusBadge = shift.status === 'active'
@@ -886,29 +1017,42 @@ function renderAttendanceTable(shifts) {
       : `<span style="background:#10b981; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">Tamamlandı</span>`;
 
     const overrideBtn = shift.status === 'active'
-      ? `<button class="btn ghost" style="padding:4px 8px; font-size:11px; color:#ef4444;" onclick="manualOverrideClockOut('${shift.id}')">Manuel Kapat</button>`
+      ? `<button class="btn ghost" style="padding:4px 8px; font-size:11px; color:#ef4444;" onclick="manualOverrideClockOut('${shift.id}')">Kapat</button>`
       : '';
 
-    // Show planned shift time info if available
-    const scheduledInfo = (shift.shiftStartTime && shift.shiftEndTime)
-      ? `<div style="font-size:10px; color:#94a3b8; margin-top:4px;">📅 Planlanan: ${shift.shiftStartTime} - ${shift.shiftEndTime}</div>`
+    const scheduledInfo = (shift.startTime && shift.endTime)
+      ? `<div style="font-size:10px; color:#94a3b8; margin-top:2px;">📅 Plan: ${shift.startTime} - ${shift.endTime}</div>`
       : '';
 
     return `
       <tr>
         <td>
-          <strong>${shift.workerName || 'Çalışan'}</strong><br>
-          <span style="font-size:11px; color:#64748b;">${shift.workerPhone || ''}</span>
+          <strong>${shift.workerName || (staff ? staff.name : 'Çalışan')}</strong><br>
+          <span style="font-size:11px; color:#64748b;">${shift.workerPhone || (staff ? staff.phone : '') || ''}</span>
           ${scheduledInfo}
         </td>
         <td>${shift.date}</td>
         <td>${inTime}</td>
         <td>${outTime}</td>
-        <td>${totalDuration}</td>
-        <td>${statusBadge} ${geoBadge} ${overrideBtn}</td>
+        <td><strong>${workedHours > 0 ? workedHours.toFixed(1) + ' Sa' : '-'}</strong></td>
+        <td><strong style="color: #047857;">${wageLabel}</strong></td>
+        <td>${checklistBadge}</td>
+        <td>${punctualityBadge} ${statusBadge} ${geoBadge} ${overrideBtn}</td>
       </tr>
     `;
   }).join('');
+
+  // Add summary footer row
+  const footerRow = `
+    <tr style="background: #f8fafc; font-weight: 700; border-top: 2px solid #e2e8f0;">
+      <td colspan="4" style="text-align: right; padding: 12px 10px;">TOPLAM (DÖNEM):</td>
+      <td style="padding: 12px 10px; color: #0f172a;">${totalWorkedHoursPeriod.toFixed(1)} Saat</td>
+      <td style="padding: 12px 10px; color: #047857;">${Math.round(totalPayrollPeriod).toLocaleString('tr-TR')} ₺</td>
+      <td colspan="2"></td>
+    </tr>
+  `;
+
+  tableBody.innerHTML = rowsHtml + footerRow;
 }
 
 async function manualOverrideClockOut(shiftId) {
@@ -948,7 +1092,9 @@ function exportAttendanceToCSV() {
     return;
   }
 
-  const headers = ["Çalışan Adı", "Telefon", "Tarih", "Giriş Saati", "Çıkış Saati", "Planlanmış Vardiya", "Toplam Dakika", "Durum", "GPS Doğrulama"];
+  const staffList = window.staffMembers || [];
+
+  const headers = ["Çalışan Adı", "Telefon", "Tarih", "Giriş Saati", "Çıkış Saati", "Çalışılan Saat", "Hakediş Tutarı (TL)", "Görev Tamamlama", "Zamanındalık", "Durum"];
   const rows = loadedAttendanceShifts.map(s => {
     const inTime = s.checkInTime && typeof s.checkInTime.toDate === 'function'
       ? s.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
@@ -956,21 +1102,40 @@ function exportAttendanceToCSV() {
     const outTime = s.checkOutTime && typeof s.checkOutTime.toDate === 'function'
       ? s.checkOutTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
       : (s.endTime || '');
-    
-    const scheduledTime = (s.shiftStartTime && s.shiftEndTime)
-      ? `${s.shiftStartTime} - ${s.shiftEndTime}`
-      : (s.shiftStartTime || '');
+
+    let workedHours = s.totalWorkedMinutes ? (s.totalWorkedMinutes / 60) : 0;
+    const staff = s.staffId ? staffList.find(st => st.id === s.staffId) : null;
+    let earnings = 0;
+    if (staff && staff.wageAmount) {
+      earnings = staff.wageType === 'daily' ? staff.wageAmount : (workedHours * staff.wageAmount);
+    }
+
+    let checklistStr = '-';
+    if (s.checklist && s.checklist.length > 0) {
+      const done = s.checklist.filter(c => c.completed).length;
+      checklistStr = `${done}/${s.checklist.length} (%${Math.round((done/s.checklist.length)*100)})`;
+    }
+
+    let punctualityStr = 'Belirtilmedi';
+    if (s.checkInTime && s.startTime) {
+      const cDate = typeof s.checkInTime.toDate === 'function' ? s.checkInTime.toDate() : new Date(s.checkInTime);
+      const actualMins = cDate.getHours() * 60 + cDate.getMinutes();
+      const [sh, sm] = s.startTime.split(':').map(Number);
+      const diff = actualMins - (sh * 60 + sm);
+      punctualityStr = diff <= 5 ? 'Zamanında' : `+${diff} dk Geç`;
+    }
 
     return [
-      `"${s.workerName || ''}"`,
-      `"${s.workerPhone || ''}"`,
+      `"${s.workerName || (staff ? staff.name : '')}"`,
+      `"${s.workerPhone || (staff ? staff.phone : '') || ''}"`,
       `"${s.date || ''}"`,
       `"${inTime}"`,
       `"${outTime}"`,
-      `"${scheduledTime}"`,
-      `"${s.totalWorkedMinutes || 0}"`,
-      `"${s.status === 'active' ? 'Aktif' : 'Tamamlandı'}"`,
-      `"${s.checkInGeo ? 'GPS Doğrulandı (' + s.checkInGeo.distanceMeters + 'm)' : 'Manuel'}"`
+      `"${workedHours.toFixed(1)}"`,
+      `"${Math.round(earnings)}"`,
+      `"${checklistStr}"`,
+      `"${punctualityStr}"`,
+      `"${s.status === 'active' ? 'Aktif' : 'Tamamlandı'}"`
     ].join(',');
   });
 

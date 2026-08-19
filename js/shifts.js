@@ -311,9 +311,15 @@ function renderStaffList() {
       hoursBadge = `<span style="font-size: 11px; background: #f1f5f9; color: #475569; padding: 2px 6px; border-radius: 4px; margin-left: 8px;">1. Hafta: ${week1Hours.toFixed(1)}s | 2. Hafta: ${week2Hours.toFixed(1)}s</span>`;
     }
 
+    let wageBadge = '';
+    if (staff.wageAmount) {
+      const label = staff.wageType === 'daily' ? 'TL/Gün' : 'TL/Saat';
+      wageBadge = `<span style="font-size: 11px; background: #ecfdf5; color: #047857; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 6px;">💰 ${staff.wageAmount} ${label}</span>`;
+    }
+
     item.innerHTML = `
       <div class="staff-info">
-        <span class="staff-name">${staff.name} ${vardiyanBadge} ${hoursBadge}</span>
+        <span class="staff-name">${staff.name} ${vardiyanBadge} ${wageBadge} ${hoursBadge}</span>
         <span class="staff-role">${staff.role} | ${staff.phone || 'Telefon yok'}</span>
       </div>
       <div class="staff-actions">
@@ -343,6 +349,8 @@ function openStaffModal() {
   if (document.getElementById('quickWorkerCode')) document.getElementById('quickWorkerCode').value = '';
   if (document.getElementById('quickCodeStatus')) document.getElementById('quickCodeStatus').classList.add('hidden');
   document.getElementById('staffId').value = '';
+  if (document.getElementById('staffWageType')) document.getElementById('staffWageType').value = 'hourly';
+  if (document.getElementById('staffWageAmount')) document.getElementById('staffWageAmount').value = '';
   document.getElementById('staffModalTitle').textContent = 'Personel Ekle';
   document.getElementById('staffModalMessage').classList.add('hidden');
   document.getElementById('staffModal').classList.remove('hidden');
@@ -427,6 +435,8 @@ function editStaff(staffId) {
     document.getElementById('staffRole').value = staff.role;
     document.getElementById('staffPhone').value = staff.phone || '';
     document.getElementById('staffEmail').value = staff.email || '';
+    if (document.getElementById('staffWageType')) document.getElementById('staffWageType').value = staff.wageType || 'hourly';
+    if (document.getElementById('staffWageAmount')) document.getElementById('staffWageAmount').value = staff.wageAmount || '';
     
     document.getElementById('staffModalTitle').textContent = 'Personel Düzenle';
     document.getElementById('staffModalMessage').classList.add('hidden');
@@ -441,7 +451,9 @@ async function handleStaffSubmit(e) {
   const role = document.getElementById('staffRole').value.trim();
   const phone = document.getElementById('staffPhone').value.trim();
   const email = document.getElementById('staffEmail').value.trim();
-  
+  const wageType = document.getElementById('staffWageType') ? document.getElementById('staffWageType').value : 'hourly';
+  const wageAmount = document.getElementById('staffWageAmount') ? parseFloat(document.getElementById('staffWageAmount').value) || 0 : 0;
+
   const submitBtn = e.target.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
   submitBtn.textContent = 'Kaydediliyor...';
@@ -476,6 +488,8 @@ async function handleStaffSubmit(e) {
       role,
       phone,
       email,
+      wageType,
+      wageAmount,
       vardiyanUserId
     };
     
@@ -1058,12 +1072,59 @@ function closeDayDetail() {
   document.getElementById('dayDetailSection').classList.add('hidden');
 }
 
+let currentModalChecklist = [];
+
+function addShiftTaskItem() {
+  const input = document.getElementById('shiftTaskInput');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  currentModalChecklist.push({
+    id: Date.now().toString(),
+    task: text,
+    completed: false
+  });
+
+  input.value = '';
+  renderModalChecklistUI();
+}
+
+function removeShiftTaskItem(taskId) {
+  currentModalChecklist = currentModalChecklist.filter(t => t.id !== taskId);
+  renderModalChecklistUI();
+}
+
+function renderModalChecklistUI() {
+  const listEl = document.getElementById('shiftTaskList');
+  if (!listEl) return;
+
+  if (!currentModalChecklist || currentModalChecklist.length === 0) {
+    listEl.innerHTML = '<span style="font-size: 11px; color: #94a3b8;">Görev eklenmedi.</span>';
+    return;
+  }
+
+  listEl.innerHTML = currentModalChecklist.map((item, idx) => `
+    <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px 8px; font-size: 12px; color: #334155;">
+      <span>${idx + 1}. ${item.task}</span>
+      <button type="button" onclick="removeShiftTaskItem('${item.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; font-weight: bold; padding: 0 4px;">&times;</button>
+    </div>
+  `).join('');
+}
+
+window.addShiftTaskItem = addShiftTaskItem;
+window.removeShiftTaskItem = removeShiftTaskItem;
+
 function openShiftModal(dateStr = '') {
   document.getElementById('shiftForm').reset();
   document.getElementById('shiftId').value = '';
   if (dateStr) {
     document.getElementById('shiftDate').value = dateStr;
   }
+  currentModalChecklist = [];
+  if (document.getElementById('shiftTaskInput')) document.getElementById('shiftTaskInput').value = '';
+  renderModalChecklistUI();
+
   document.getElementById('shiftModalTitle').textContent = 'Vardiya Ekle';
   document.getElementById('deleteShiftBtn').classList.add('hidden');
   document.getElementById('vardiyanlePromo').classList.add('hidden');
@@ -1085,6 +1146,10 @@ function editShift(shiftId) {
     document.getElementById('shiftStaffSelect').value = shift.staffId || '';
     document.getElementById('shiftRole').value = shift.role || '';
     document.getElementById('shiftNotes').value = shift.notes || '';
+    
+    currentModalChecklist = shift.checklist && Array.isArray(shift.checklist) ? JSON.parse(JSON.stringify(shift.checklist)) : [];
+    if (document.getElementById('shiftTaskInput')) document.getElementById('shiftTaskInput').value = '';
+    renderModalChecklistUI();
     
     document.getElementById('shiftModalTitle').textContent = 'Vardiya Düzenle';
     document.getElementById('deleteShiftBtn').classList.remove('hidden');
@@ -1169,7 +1234,8 @@ async function handleShiftSubmit(e) {
     endTime,
     staffId,
     role,
-    notes
+    notes,
+    checklist: currentModalChecklist
   };
   
   try {
