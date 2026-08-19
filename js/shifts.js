@@ -652,7 +652,14 @@ function renderCalendar() {
     
     const header = document.createElement('div');
     header.className = 'calendar-day-header';
-    header.innerHTML = `${dayNames[i % 7]}<br><span style="font-size:12px;color:#94a3b8;">${d.getDate()}</span>`;
+    header.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <div>
+          ${dayNames[i % 7]}<br><span style="font-size:12px;color:#94a3b8;">${d.getDate()}</span>
+        </div>
+        <button type="button" title="Günü Temizle (Tüm Vardiyaları Sil)" onclick="event.stopPropagation(); clearDayShifts('${dateStr}')" style="background:none; border:none; color:#94a3b8; cursor:pointer; font-size:12px; padding:2px 4px; opacity:0.7;" onmouseover="this.style.color='#ef4444'; this.style.opacity='1'" onmouseout="this.style.color='#94a3b8'; this.style.opacity='0.7'">🗑️</button>
+      </div>
+    `;
     dayCol.appendChild(header);
     
     // Shifts for this day - filter only shifts with restaurantId (both scheduled and clock-in)
@@ -937,6 +944,13 @@ function closeDayActionMenu() {
     menu.classList.add('hidden');
   }
 }
+
+window.clearDayShifts = clearDayShifts;
+window.clearWeekShifts = clearWeekShifts;
+window.copyPreviousDayShifts = copyPreviousDayShifts;
+window.copyPreviousWeekShifts = copyPreviousWeekShifts;
+window.openDayActionMenu = openDayActionMenu;
+window.closeDayActionMenu = closeDayActionMenu;
 
 function openDayDetail(dateStr) {
   const title = document.getElementById('dayDetailTitle');
