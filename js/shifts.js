@@ -652,14 +652,7 @@ function renderCalendar() {
     
     const header = document.createElement('div');
     header.className = 'calendar-day-header';
-    header.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <div>
-          ${dayNames[i % 7]}<br><span style="font-size:12px;color:#94a3b8;">${d.getDate()}</span>
-        </div>
-        <button type="button" title="Günü Temizle (Tüm Vardiyaları Sil)" onclick="event.stopPropagation(); clearDayShifts('${dateStr}')" style="background:#fef2f2; border:1px solid #fecaca; color:#ef4444; border-radius:6px; padding:3px 6px; font-size:11px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:2px;">🗑️ Sil</button>
-      </div>
-    `;
+    header.innerHTML = `${dayNames[i % 7]}<br><span style="font-size:12px;color:#94a3b8;">${d.getDate()}</span>`;
     dayCol.appendChild(header);
     
     // Shifts for this day - filter only shifts with restaurantId (both scheduled and clock-in)
@@ -738,14 +731,12 @@ function renderCalendar() {
       openDayActionMenu(dateStr, dayCol);
     };
     
-    // Day Footer Action Buttons (+ Vardiya & 🗑️ Günü Sil)
-    const dayFooter = document.createElement('div');
-    dayFooter.style.cssText = 'display: flex; gap: 4px; margin-top: auto; padding-top: 6px;';
-    dayFooter.innerHTML = `
-      <div class="add-shift-btn" style="flex: 1; margin: 0;" onclick="openShiftModal('${dateStr}')">+ Vardiya</div>
-      <button type="button" title="Günü Temizle (Tüm Vardiyaları Sil)" onclick="event.stopPropagation(); clearDayShifts('${dateStr}')" style="background: #fef2f2; border: 1px solid #fecaca; color: #ef4444; border-radius: 8px; padding: 4px 8px; font-size: 12px; cursor: pointer; font-weight: 600;">🗑️</button>
-    `;
-    dayCol.appendChild(dayFooter);
+    // Add button
+    const addBtn = document.createElement('div');
+    addBtn.className = 'add-shift-btn';
+    addBtn.innerHTML = '+ Vardiya';
+    addBtn.onclick = () => openShiftModal(dateStr);
+    dayCol.appendChild(addBtn);
     
     grid.appendChild(dayCol);
   }
