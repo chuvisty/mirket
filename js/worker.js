@@ -461,6 +461,16 @@ function filterMyShifts(filterType) {
         <p style="margin: 4px 0; font-size: 14px; color: #334155;"><strong>🏬 İşletme:</strong> ${restName}</p>
         <p style="margin: 4px 0; font-size: 14px; color: #334155;"><strong>👔 Görev:</strong> ${roleStr}</p>
         ${notesStr ? '<p style="margin: 6px 0 0 0; font-size: 13px; color: #64748b; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border-left: 3px solid #cbd5e1;"><strong>📝 Not:</strong> ' + notesStr + '</p>' : ''}
+        ${(() => {
+          if (shift.checklist && shift.checklist.length > 0) {
+            const done = shift.checklist.filter(c => c.completed).length;
+            const total = shift.checklist.length;
+            const pct = Math.round((done / total) * 100);
+            const isAllDone = done === total;
+            return '<div style="margin-top: 10px;"><button type="button" onclick="openShiftChecklistDetailModal(\'' + shift.id + '\')" style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-size:13px; font-weight:600; border-radius:8px; border:1px solid ' + (isAllDone ? '#bbf7d0' : '#cbd5e1') + '; background:' + (isAllDone ? '#f0fdf4' : '#f8fafc') + '; color:' + (isAllDone ? '#15803d' : '#334155') + '; cursor:pointer;">📋 Görevleri Görüntüle (' + done + '/' + total + ' - %' + pct + ')</button></div>';
+          }
+          return '';
+        })()}
       </div>
     `;
   });
