@@ -989,8 +989,10 @@ function renderAttendanceTable(shifts) {
 
       if (diff <= 5) {
         punctualityBadge = `<span style="background:#22c55e; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600;">🟢 Zamanında</span>`;
+      } else if (diff <= 15) {
+        punctualityBadge = `<span style="background:#f59e0b; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600;">🟡 +${diff} dk</span>`;
       } else {
-        punctualityBadge = `<span style="background:#ef4444; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600;">🔴 +${diff} dk Geç</span>`;
+        punctualityBadge = `<span style="background:#ef4444; color:white; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:600;">🔴 +${diff} dk</span>`;
       }
     }
 
