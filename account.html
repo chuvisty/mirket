@@ -68,6 +68,55 @@
     </div>
   </div>
 
+  <!-- Location Permission Modal -->
+  <div id="locationPermissionModal" class="modal hidden">
+    <div class="modal-content" style="max-width: 420px; text-align: center;">
+      <span class="close-modal" onclick="closeLocationPermissionModal()">&times;</span>
+      <div style="font-size: 48px; margin-bottom: 12px;">📍</div>
+      <h2 style="font-size: 20px; color: #1e293b; margin-bottom: 8px;">Konum İzni Gerekiyor</h2>
+      <p style="font-size: 14px; color: #64748b; margin-bottom: 20px;">
+        QR kod ile giriş/çıkış yapabilmek için uygulamamızın konumunuza erişmesi gerekmektedir. Bu sayede restoranda olduğunuz doğrulanacaktır.
+      </p>
+      <button class="btn primary" onclick="proceedWithLocationAndCamera()" style="width: 100%; margin-bottom: 10px;">
+        📍 Konuma İzin Ver ve Devam Et
+      </button>
+      <button class="btn ghost" onclick="openLocationGuideModal()" style="width: 100%; font-size: 13px; color: #64748b;">
+        Konum izni nasıl verilir?
+      </button>
+    </div>
+  </div>
+
+  <!-- Location Guide Modal -->
+  <div id="locationGuideModal" class="modal hidden">
+    <div class="modal-content" style="max-width: 480px;">
+      <span class="close-modal" onclick="closeLocationGuideModal()">&times;</span>
+      <h2 style="font-size: 18px; color: #1e293b; margin-bottom: 12px;">📱 Konum İzni Nasıl Verilir?</h2>
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <button id="tabIosBtn" class="btn ghost" onclick="switchLocationGuideTab('ios')" style="flex:1;">🍎 iPhone / iPad</button>
+        <button id="tabAndroidBtn" class="btn ghost" onclick="switchLocationGuideTab('android')" style="flex:1;">🤖 Android</button>
+      </div>
+      <div id="guideIosContent" class="hidden" style="font-size: 14px; color: #334155; line-height: 1.7;">
+        <ol style="padding-left: 20px; margin: 0;">
+          <li>iPhone <strong>Ayarlar</strong> uygulamasını açın.</li>
+          <li><strong>Gizlilik ve Güvenlik → Konum Servisleri</strong>'ne gidin.</li>
+          <li>Tarayıcınızı bulun (Safari / Chrome) ve <strong>"Uygulamayı Kullanırken"</strong> seçeneğini seçin.</li>
+          <li>Sayfaya geri dönüp tekrar deneyin.</li>
+        </ol>
+      </div>
+      <div id="guideAndroidContent" class="hidden" style="font-size: 14px; color: #334155; line-height: 1.7;">
+        <ol style="padding-left: 20px; margin: 0;">
+          <li>Tarayıcı adres çubuğundaki <strong>kilit / bilgi simgesine</strong> dokunun.</li>
+          <li><strong>Site Ayarları → Konum</strong> seçeneğini açın.</li>
+          <li><strong>"İzin Ver"</strong> seçeneğini seçin.</li>
+          <li>Sayfayı yenileyin ve tekrar deneyin.</li>
+        </ol>
+      </div>
+      <button class="btn primary" onclick="retryLocationPermission()" style="width: 100%; margin-top: 20px;">
+        🔄 Tekrar Dene
+      </button>
+    </div>
+  </div>
+
   <div id="footerContainer"></div>
 
   <!-- QR Generator & Scanner CDNs -->
