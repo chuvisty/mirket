@@ -756,3 +756,139 @@ nav a:hover {
   color: #1d4ed8;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
+/* Ürünler ve Fiyatlandirma Stilleri */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-bottom: 60px;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.feature-card {
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+.feature-icon {
+  font-size: 40px;
+  margin-bottom: 20px;
+}
+.feature-card h3 {
+  font-size: 22px;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+.feature-card p {
+  color: #64748b;
+  line-height: 1.6;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+  margin-bottom: 60px;
+  align-items: stretch;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.pricing-card {
+  background: #ffffff;
+  padding: 40px 30px;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  position: relative;
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+.pricing-card:hover {
+  transform: translateY(-5px);
+}
+.pricing-card.popular {
+  border: 2px solid #3b82f6;
+  box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+}
+.popular-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3b82f6;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.pricing-title {
+  font-size: 24px;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+.pricing-desc {
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 24px;
+  min-height: 40px;
+}
+.pricing-price {
+  font-size: 48px;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-bottom: 30px;
+}
+.pricing-currency {
+  font-size: 24px;
+  font-weight: 600;
+}
+.pricing-period {
+  font-size: 16px;
+  color: #64748b;
+  font-weight: 400;
+}
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 30px 0;
+  flex-grow: 1;
+}
+.pricing-features li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: #334155;
+  font-size: 15px;
+}
+.pricing-features li.disabled {
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+.check-icon {
+  color: #10b981;
+  font-weight: bold;
+}
+.cross-icon {
+  color: #cbd5e1;
+}
+.btn-pricing {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: auto;
+}
