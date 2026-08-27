@@ -36,7 +36,11 @@ function openShiftChecklistDetailModal(shiftId) {
   const content = document.getElementById('checklistDetailContent');
   if (!modal || !content) return;
 
-  const allShifts = loadedAttendanceShifts && loadedAttendanceShifts.length > 0 ? loadedAttendanceShifts : (window.currentShifts || []);
+  const allShifts = [
+    ...(typeof loadedAttendanceShifts !== 'undefined' ? loadedAttendanceShifts : []),
+    ...(window.currentShifts || []),
+    ...(window.allMyShiftsData || [])
+  ];
   const shift = allShifts.find(s => s.id === shiftId);
   if (!shift || !shift.checklist || shift.checklist.length === 0) {
     alert("Bu vardiyaya ait görev bulunamadı.");

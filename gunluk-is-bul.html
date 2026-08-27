@@ -67,11 +67,23 @@
   </section>
 </main>
 
+<!-- Shift Checklist Detail Modal -->
+<div id="shiftChecklistDetailModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 440px; padding: 26px 22px;">
+    <span class="close-modal" onclick="closeShiftChecklistDetailModal()">&times;</span>
+    <h2 style="font-size: 19px; color: #0f172a; margin-bottom: 6px;">📋 Vardiya Görev Detayları</h2>
+    <p id="checklistDetailSubtitle" style="font-size: 12px; color: #64748b; margin-bottom: 16px;">Vardiyaya özel tamamlanan ve bekleyen görevler:</p>
+    <div id="checklistDetailContent" style="display: flex; flex-direction: column; gap: 8px;"></div>
+  </div>
+</div>
+
 <div id="footerContainer"></div>
 
 <script src="firebase.js"></script>
 <script src="js/core.js"></script>
 <script src="js/auth-ui.js"></script>
+<script src="js/attendance/utils.js"></script>
+<script src="js/attendance/checklist.js"></script>
 <script src="js/account.js"></script>
 <script src="js/restaurant.js"></script>
 <script src="js/worker.js"></script>
