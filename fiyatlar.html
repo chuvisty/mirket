@@ -1,0 +1,291 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ürünler ve Fiyatlar - Mirket</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <style>
+    /* Fiyatlandırma Sayfası Özel Stilleri */
+    .hero-section {
+      text-align: center;
+      padding: 60px 20px;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-radius: 24px;
+      margin-bottom: 40px;
+    }
+    .hero-section h1 {
+      font-size: 36px;
+      color: #0f172a;
+      margin-bottom: 16px;
+    }
+    .hero-section p {
+      font-size: 18px;
+      color: #475569;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-bottom: 60px;
+    }
+    .feature-card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    .feature-icon {
+      font-size: 40px;
+      margin-bottom: 20px;
+    }
+    .feature-card h3 {
+      font-size: 22px;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+    .feature-card p {
+      color: #64748b;
+      line-height: 1.6;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 30px;
+      margin-bottom: 60px;
+      align-items: start;
+    }
+    .pricing-card {
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 24px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      position: relative;
+      transition: transform 0.3s ease;
+    }
+    .pricing-card:hover {
+      transform: translateY(-5px);
+    }
+    .pricing-card.popular {
+      border: 2px solid #3b82f6;
+      box-shadow: 0 20px 40px rgba(59, 130, 246, 0.15);
+    }
+    .popular-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #3b82f6;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .pricing-title {
+      font-size: 24px;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .pricing-desc {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 24px;
+      min-height: 40px;
+    }
+    .pricing-price {
+      font-size: 48px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      margin-bottom: 30px;
+    }
+    .pricing-currency {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    .pricing-period {
+      font-size: 16px;
+      color: #64748b;
+      font-weight: 400;
+    }
+    .pricing-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 30px 0;
+    }
+    .pricing-features li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      color: #334155;
+    }
+    .pricing-features li.disabled {
+      color: #94a3b8;
+      text-decoration: line-through;
+    }
+    .check-icon {
+      color: #10b981;
+      font-weight: bold;
+    }
+    .cross-icon {
+      color: #cbd5e1;
+    }
+    .btn-pricing {
+      width: 100%;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .faq-section {
+      max-width: 800px;
+      margin: 0 auto 60px auto;
+    }
+    .faq-title {
+      text-align: center;
+      font-size: 28px;
+      margin-bottom: 40px;
+    }
+    .faq-item {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .faq-q {
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .faq-a {
+      color: #475569;
+      line-height: 1.5;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="headerContainer"></div>
+
+<main class="container">
+  
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <h1>İşletmenizi Dijitalleştirmeye Hazır Mısınız?</h1>
+    <p>Pahalı donanımlara, karmaşık parmak izi okuyucularına son. Restoran ve kafeler için tasarlanmış yeni nesil mesai ve vardiya yönetim sistemiyle tanışın.</p>
+  </section>
+
+  <!-- Ürün Özellikleri -->
+  <div style="text-align: center; margin-bottom: 40px;">
+    <h2>İhtiyacınıza Uygun İki Güçlü Çözüm</h2>
+  </div>
+  
+  <section class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⏱️</div>
+      <h3>Mirket Temel (Mesai Takibi)</h3>
+      <p>Çalışanlarınızın işe giriş ve çıkışlarını tamamen dijital hale getirin. Tablet veya bilgisayarınızda saniyede bir değişen Dinamik QR kod üretilir. Çalışanlar kendi telefonlarından bu QR kodu okutarak mesaiye başlar. Ay sonunda puantaj ve maaş hesaplamaları saniyeler sürer.</p>
+    </div>
+    
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <h3>Mirket Pro (Vardiya + Görevler)</h3>
+      <p>Mesai takibine ek olarak, işletmenizin tüm haftalık vardiya takvimini dijitalde oluşturun. Hangi saatte hangi çalışanın geleceğini planlayın. Çalışanlar "Günlük İş Bul" panellerinden vardiyalarını görsün. Ayrıca her vardiyaya özel Görev Listeleri (Checklist) atayarak operasyon kalitenizi artırın.</p>
+    </div>
+  </section>
+
+  <!-- Fiyatlandırma -->
+  <section class="pricing-grid">
+    <!-- Başlangıç Paketi -->
+    <div class="pricing-card">
+      <h3 class="pricing-title">Başlangıç Paketi</h3>
+      <p class="pricing-desc">Küçük işletmeler ve sadece mesai takibi yapmak isteyenler için.</p>
+      <div class="pricing-price">
+        <span class="pricing-currency">₺</span>499<span class="pricing-period">/ ay</span>
+      </div>
+      <p style="font-size: 12px; color: #94a3b8; margin-top:-20px; margin-bottom:20px;">* Şube başına fiyatlandırılır</p>
+      
+      <ul class="pricing-features">
+        <li><span class="check-icon">✓</span> 30 Çalışana Kadar Destek</li>
+        <li><span class="check-icon">✓</span> Dinamik QR ile Giriş/Çıkış</li>
+        <li><span class="check-icon">✓</span> Konum (GPS) Doğrulaması</li>
+        <li><span class="check-icon">✓</span> Detaylı Mesai Raporları (Puantaj)</li>
+        <li><span class="check-icon">✓</span> Excel/CSV Dışa Aktarma</li>
+        <li class="disabled"><span class="cross-icon">✗</span> Vardiya Takvimi Planlama</li>
+        <li class="disabled"><span class="cross-icon">✗</span> Görev ve Checklist Yönetimi</li>
+        <li class="disabled"><span class="cross-icon">✗</span> Çalışan Mobil Uygulama Paneli</li>
+      </ul>
+      <button class="btn secondary btn-pricing" onclick="window.location.href='index.html'">Ücretsiz Denemeye Başla</button>
+    </div>
+
+    <!-- Pro Paket -->
+    <div class="pricing-card popular">
+      <div class="popular-badge">EN ÇOK TERCİH EDİLEN</div>
+      <h3 class="pricing-title">Pro Paket</h3>
+      <p class="pricing-desc">Vardiyalı çalışan ve operasyonu uçtan uca yönetmek isteyen işletmeler için.</p>
+      <div class="pricing-price">
+        <span class="pricing-currency">₺</span>999<span class="pricing-period">/ ay</span>
+      </div>
+      <p style="font-size: 12px; color: #94a3b8; margin-top:-20px; margin-bottom:20px;">* Şube başına fiyatlandırılır</p>
+      
+      <ul class="pricing-features">
+        <li><span class="check-icon">✓</span> <strong>Sınırsız</strong> Çalışan Desteği</li>
+        <li><span class="check-icon">✓</span> Dinamik QR ile Giriş/Çıkış</li>
+        <li><span class="check-icon">✓</span> Konum (GPS) Doğrulaması</li>
+        <li><span class="check-icon">✓</span> Hızlı Excel/CSV Raporlama</li>
+        <li><span class="check-icon">✓</span> <strong>Sürükle-Bırak Vardiya Planlama</strong></li>
+        <li><span class="check-icon">✓</span> <strong>Görev ve Checklist Yönetimi</strong></li>
+        <li><span class="check-icon">✓</span> <strong>Çalışan Paneli Entegrasyonu</strong></li>
+      </ul>
+      <button class="btn primary btn-pricing" onclick="window.location.href='index.html'">Pro Paket İle Başla</button>
+    </div>
+  </section>
+
+  <!-- SSS -->
+  <section class="faq-section">
+    <h2 class="faq-title">Sıkça Sorulan Sorular</h2>
+    
+    <div class="faq-item">
+      <div class="faq-q">Sistemi kullanmak için donanım satın almam gerekiyor mu?</div>
+      <div class="faq-a">Hayır, kesinlikle gerekmiyor. İşletmenizdeki mevcut bir tableti veya bilgisayarı "Mirket Gözcü" ekranı olarak kullanabilirsiniz. Çalışanlar ise kendi akıllı telefonlarından bu ekranı okutarak giriş yaparlar.</div>
+    </div>
+    
+    <div class="faq-item">
+      <div class="faq-q">Çalışanların mağaza dışında QR okutup giriş yapmasını nasıl engelliyorsunuz?</div>
+      <div class="faq-a">Sistemimiz çifte doğrulama kullanır. Birincisi, QR kod her 10 saniyede bir güncellenir (Dinamik QR), bu yüzden ekran görüntüsü alıp başkasına göndermek işe yaramaz. İkincisi, çalışan QR kodu okuturken GPS konum doğrulaması yapılır; restoranın dışında olan işlemler reddedilir.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">Fiyatlandırma çalışana göre mi şubeye göre mi?</div>
+      <div class="faq-a">Maliyetlerinizi öngörebilmeniz için fiyatlandırmamız <strong>Şube Başına</strong> sabit ücret şeklindedir. Çalışan devir oranının yüksek olduğu HORECA sektöründe her çalışan eklendiğinde sürpriz faturayla karşılaşmazsınız.</div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q">İstediğim zaman paket değiştirebilir veya iptal edebilir miyim?</div>
+      <div class="faq-a">Evet. Mirket abonelik tabanlıdır. İhtiyacınıza göre Başlangıç paketinden Pro pakete geçebilir veya dilediğiniz ay aboneliğinizi herhangi bir cayma bedeli ödemeden iptal edebilirsiniz.</div>
+    </div>
+  </section>
+
+</main>
+
+<div id="footerContainer"></div>
+
+<script src="js/core.js"></script>
+</body>
+</html>
