@@ -495,7 +495,9 @@ function openShiftChecklistDetailModal(shiftId) {
   }
 
   if (subtitle) {
-    subtitle.textContent = `${shift.workerName || 'Çalışan'} - ${shift.date} (${shift.startTime || ''}-${shift.endTime || ''})`;
+    const staffList = window.staffMembers || [];
+    const staff = shift.staffId ? staffList.find(s => s.id === shift.staffId) : null;
+    subtitle.textContent = `${(staff ? staff.name : null) || shift.workerName || 'Çalışan'} - ${shift.date} (${shift.startTime || ''}-${shift.endTime || ''})`;
   }
 
   content.innerHTML = shift.checklist.map((item, idx) => `
@@ -1029,8 +1031,8 @@ function renderAttendanceTable(shifts) {
     return `
       <tr>
         <td>
-          <strong>${shift.workerName || (staff ? staff.name : 'Çalışan')}</strong><br>
-          <span style="font-size:11px; color:#64748b;">${shift.workerPhone || (staff ? staff.phone : '') || ''}</span>
+          <strong>${(staff ? staff.name : null) || shift.workerName || 'Çalışan'}</strong><br>
+          <span style="font-size:11px; color:#64748b;">${(staff ? staff.phone : null) || shift.workerPhone || ''}</span>
           ${scheduledInfo}
         </td>
         <td>${shift.date}</td>
@@ -1128,8 +1130,8 @@ function exportAttendanceToCSV() {
     }
 
     return [
-      `"${s.workerName || (staff ? staff.name : '')}"`,
-      `"${s.workerPhone || (staff ? staff.phone : '') || ''}"`,
+      `"${(staff ? staff.name : '') || s.workerName || ''}"`,
+      `"${(staff ? staff.phone : '') || s.workerPhone || ''}"`,
       `"${s.date || ''}"`,
       `"${inTime}"`,
       `"${outTime}"`,
