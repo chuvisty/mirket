@@ -485,7 +485,7 @@ async function toggleVardiyanSubscriptionForUid(status, directUid = null) {
 
     await window.firebaseFirestore.updateDoc(userRef, {
       isSubscribed: Boolean(status),
-      updatedAt: window.firebaseFirestore.Timestamp.now()
+      updatedAt: window.firebaseFirestore.serverTimestamp()
     });
 
     const userData = userSnap.data();
