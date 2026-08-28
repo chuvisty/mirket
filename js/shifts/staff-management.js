@@ -7,6 +7,7 @@ async function loadStaff() {
     );
     const snapshot = await window.firebaseFirestore.getDocs(q);
     staffMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    window.staffMembers = staffMembers;
     renderStaffList();
     updateStaffSelectDropdown();
   } catch (error) {
