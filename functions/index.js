@@ -244,3 +244,105 @@ exports.setVardiyanSubscription = functions.region('europe-west3').https.onCall(
     };
 });
 
+/**
+ * Trigger to automatically send a WhatsApp notification when a new shift is assigned to a worker.
+ */
+exports.onShiftAssigned = functions.region('europe-west3').firestore.document('shifts/{shiftId}').onWrite(async (change, context) => {
+    const afterData = change.after.data();
+    const beforeData = change.before ? change.before.data() : null;
+
+    if (!change.after.exists || !afterData) return null; // Shift was deleted
+
+    const oldStaffId = beforeData ? beforeData.staffId : null;
+    const newStaffId = afterData.staffId;
+
+    // Only trigger if staffId was newly assigned
+    if (!newStaffId || oldStaffId === newStaffId) return null;
+
+    const restaurantId = afterData.restaurantId;
+    if (!restaurantId) return null;
+
+    try {
+        // Check if restaurant has toggle ON
+        const restaurantRef = admin.firestore().collection('users').doc(restaurantId);
+        const restaurantSnap = await restaurantRef.get();
+        if (!restaurantSnap.exists) return null;
+        
+        const restaurantData = restaurantSnap.data();
+        if (restaurantData.whatsappShiftNotifications !== true) {
+            console.log(`WhatsApp notifications disabled for restaurant ${restaurantId}`);
+            return null;
+        }
+        
+        const restaurantName = restaurantData.businessName || "İşletme";
+
+        // Get staff phone
+        const staffRef = admin.firestore().collection('restaurantStaff').doc(newStaffId);
+        const staffSnap = await staffRef.get();
+        if (!staffSnap.exists) return null;
+
+        const staffData = staffSnap.data();
+        const phone = staffData.phone;
+        if (!phone) {
+            console.log(`Staff ${newStaffId} has no phone number.`);
+            return null;
+        }
+
+        // Format phone
+        let formattedPhone = phone.replace(/\D/g, "");
+        if (formattedPhone.length === 10 && formattedPhone.startsWith("5")) {
+            formattedPhone = "90" + formattedPhone;
+        } else if (formattedPhone.startsWith("0")) {
+            formattedPhone = "90" + formattedPhone.substring(1);
+        }
+
+        const staffName = staffData.name || "Çalışan";
+        const date = afterData.date || ""; 
+        const startTime = afterData.startTime || "";
+        const endTime = afterData.endTime || "";
+
+        // Send WhatsApp Push
+        const META_ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
+        const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
+        const TEMPLATE_NAME = process.env.TEMPLATE_NAME;
+
+        await axios.post(
+            `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`,
+            {
+                messaging_product: "whatsapp",
+                to: formattedPhone,
+                type: "template",
+                template: {
+                    name: TEMPLATE_NAME,
+                    language: {
+                        code: "tr"
+                    },
+                    components: [
+                        {
+                            type: "body",
+                            parameters: [
+                                { type: "text", text: staffName },
+                                { type: "text", text: date },
+                                { type: "text", text: startTime },
+                                { type: "text", text: endTime },
+                                { type: "text", text: restaurantName }
+                            ]
+                        }
+                    ]
+                }
+            },
+            {
+                headers: {
+                    "Authorization": `Bearer ${META_ACCESS_TOKEN}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+        console.log(`Sent WhatsApp shift notification to ${formattedPhone}`);
+    } catch (error) {
+        console.error("WhatsApp error in onShiftAssigned:", error.response?.data || error.message);
+    }
+    
+    return null;
+});
+

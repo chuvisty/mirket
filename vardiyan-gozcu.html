@@ -557,6 +557,14 @@
             🤖 Vardiya saatinde otomatik çıkış yap (Çalışanlar için bitiş saatinde QR okutma zorunluluğu olmasın)
           </label>
         </div>
+
+        <!-- WhatsApp Notification Feature Toggle -->
+        <div style="margin-top: 10px; padding-top: 10px; display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" id="whatsappShiftNotificationToggle" onchange="saveRestaurantSettings()" style="width: 18px; height: 18px; cursor: pointer;">
+          <label for="whatsappShiftNotificationToggle" style="font-size: 14px; color: #1e293b; cursor: pointer; font-weight: 500;">
+            📱 Personellere vardiya atandığında WhatsApp üzerinden otomatik bildirim gönder
+          </label>
+        </div>
         
         <div id="locationSaveMessage" class="auth-message hidden" style="margin-top: 15px;"></div>
 

@@ -10,6 +10,7 @@ let restaurantOpeningHour = 6;
 let restaurantClosingHour = 23;
 let customShiftTemplates = [];
 let autoEndShiftAtScheduledTime = false;
+let whatsappShiftNotifications = false;
 
 function initGozcuPage() {
   if (window.firebaseAuth?.onAuthStateChanged && window.auth) {
@@ -52,10 +53,12 @@ async function loadRestaurantSettings() {
       restaurantClosingHour = data.closingHour || 23;
       customShiftTemplates = data.shiftTemplates || [];
       autoEndShiftAtScheduledTime = !!data.autoEndShiftAtScheduledTime;
+      whatsappShiftNotifications = !!data.whatsappShiftNotifications;
       
       if (document.getElementById('restaurantOpeningHour')) document.getElementById('restaurantOpeningHour').value = restaurantOpeningHour;
       if (document.getElementById('restaurantClosingHour')) document.getElementById('restaurantClosingHour').value = restaurantClosingHour;
       if (document.getElementById('autoEndShiftToggle')) document.getElementById('autoEndShiftToggle').checked = autoEndShiftAtScheduledTime;
+      if (document.getElementById('whatsappShiftNotificationToggle')) document.getElementById('whatsappShiftNotificationToggle').checked = whatsappShiftNotifications;
       
       if (data.location) {
         if (document.getElementById('restaurantGeofenceRadius')) {

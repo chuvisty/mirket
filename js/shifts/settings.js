@@ -23,6 +23,7 @@ async function saveRestaurantSettings() {
   const opening = parseInt(document.getElementById('restaurantOpeningHour').value);
   const closing = parseInt(document.getElementById('restaurantClosingHour').value);
   const autoEndVal = document.getElementById('autoEndShiftToggle') ? document.getElementById('autoEndShiftToggle').checked : false;
+  const whatsappNotifyVal = document.getElementById('whatsappShiftNotificationToggle') ? document.getElementById('whatsappShiftNotificationToggle').checked : false;
 
   if (opening >= closing) {
     alert('Açılış saati kapatılış saatinden önce olmalıdır.');
@@ -35,12 +36,14 @@ async function saveRestaurantSettings() {
       {
         openingHour: opening,
         closingHour: closing,
-        autoEndShiftAtScheduledTime: autoEndVal
+        autoEndShiftAtScheduledTime: autoEndVal,
+        whatsappShiftNotifications: whatsappNotifyVal
       }
     );
     restaurantOpeningHour = opening;
     restaurantClosingHour = closing;
     autoEndShiftAtScheduledTime = autoEndVal;
+    whatsappShiftNotifications = whatsappNotifyVal;
     alert('İşletme ayarları kaydedildi.');
     renderCalendar();
   } catch (error) {
