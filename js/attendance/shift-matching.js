@@ -59,7 +59,10 @@ async function findAssignedShiftForWorker(restaurantId, workerId, dateStr) {
 
     const shiftsForDay = shiftSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    const directMatch = shiftsForDay.find(shift => preferredStaffIds.has(shift.staffId));
+    const directMatch = shiftsForDay.find(shift => 
+      preferredStaffIds.has(shift.staffId) && 
+      (!shift.workerId || shift.workerId === workerId)
+    );
     if (directMatch) {
       console.info('[QR Shift Match]', 'direct', { dateStr, workerId, shiftId: directMatch.id, staffId: directMatch.staffId, startTime: directMatch.startTime, endTime: directMatch.endTime });
       return formatShiftMatch(directMatch);
@@ -71,7 +74,11 @@ async function findAssignedShiftForWorker(restaurantId, workerId, dateStr) {
       return formatShiftMatch(workerMatch);
     }
 
-    const nameMatch = shiftsForDay.find(shift => shift.workerName === workerName);
+    const nameMatch = shiftsForDay.find(shift => 
+      shift.workerName === workerName && 
+      shift.workerName !== 'Çalışan' && // avoid matching defaults
+      (!shift.workerId || shift.workerId === workerId)
+    );
     if (nameMatch) {
       console.info('[QR Shift Match]', 'workerName', { dateStr, workerId, shiftId: nameMatch.id, staffId: nameMatch.staffId, startTime: nameMatch.startTime, endTime: nameMatch.endTime });
       return formatShiftMatch(nameMatch);
@@ -84,9 +91,13 @@ async function findAssignedShiftForWorker(restaurantId, workerId, dateStr) {
     }
 
     const singleShift = shiftsForDay.length === 1 ? shiftsForDay[0] : null;
-    if (singleShift) {
-      console.info('[QR Shift Match]', 'single', { dateStr, workerId, shiftId: singleShift.id, staffId: singleShift.staffId, startTime: singleShift.startTime, endTime: singleShift.endTime });
-      return formatShiftMatch(singleShift);
+    if (singleShift && (!singleShift.workerId || singleShift.workerId === workerId)) {
+      // Also ensure we don't steal a shift explicitly assigned to another staff member
+      const isAssignedToOtherStaff = singleShift.staffId && !preferredStaffIds.has(singleShift.staffId);
+      if (!isAssignedToOtherStaff) {
+        console.info('[QR Shift Match]', 'single', { dateStr, workerId, shiftId: singleShift.id, staffId: singleShift.staffId, startTime: singleShift.startTime, endTime: singleShift.endTime });
+        return formatShiftMatch(singleShift);
+      }
     }
 
     return null;

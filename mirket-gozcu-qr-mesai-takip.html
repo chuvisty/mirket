@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Meta Tags -->
+  <title>Mirket Gözcü | QR Kod ile Mesai Takibi ve Vardiya Planlama</title>
+  <meta name="description" content="Mirket Gözcü ile restoran ve işletmeniz için QR kodlu giriş-çıkış, dijital puantaj, personel devam kontrol sistemi (PDKS) ve akıllı vardiya planlaması çözümleri.">
+  <meta name="keywords" content="qr ile mesai takibi, vardiya planlama, qr kod ile giriş çıkış, personel devam kontrol sistemi, pdks, dijital puantaj, restoran vardiya programı, işçi takip sistemi, akıllı vardiya, qr personel takibi, online mesai programı, mirket gözcü">
+  <meta name="robots" content="index, follow">
+  
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+
+  <!-- Header Placeholder -->
+  <div id="headerContainer"></div>
+
+  <main class="container" style="max-width: 900px; padding: 40px 20px;">
+    
+    <header style="text-align: center; margin-bottom: 40px;">
+      <h1 style="color: #1d4ed8; font-size: 32px; margin-bottom: 15px;">Mirket Gözcü: QR Kod ile Mesai Takibi ve Vardiya Planlaması</h1>
+      <p style="color: #475569; font-size: 18px; line-height: 1.6;">Personel giriş-çıkış saatlerini saniyeler içinde kaydedin, vardiya planlamanızı dijitalleştirin ve ay sonu hesaplamalarını tek tıkla bitirin.</p>
+    </header>
+
+    <section class="card" style="margin-bottom: 30px;">
+      <h2 style="color: #0f172a; margin-bottom: 15px;">📱 QR Kod ile Hızlı ve Güvenilir Mesai Takibi (PDKS)</h2>
+      <p style="color: #334155; line-height: 1.6; margin-bottom: 15px;">
+        Geleneksel parmak izi okuyucuları veya kartlı sistemleri unutun. <strong>QR kod ile personel giriş çıkış takibi</strong> sayesinde, çalışanlarınız sadece cep telefonlarının kamerasını kullanarak mesailerini başlatabilir ve bitirebilirler.
+      </p>
+      <ul style="color: #334155; line-height: 1.6; padding-left: 20px; margin-bottom: 15px;">
+        <li style="margin-bottom: 8px;"><strong>Konum Doğrulama (GPS):</strong> Çalışanların sadece işletme sınırları (belirlenen yarıçap) içerisinde QR kod okutabilmesini sağlayarak güvenliği artırın.</li>
+        <li style="margin-bottom: 8px;"><strong>Temassız ve Hijyenik:</strong> Cihaz maliyeti olmadan, tamamen dijital ve temassız <em>Personel Devam Kontrol Sistemi (PDKS)</em>.</li>
+        <li style="margin-bottom: 8px;"><strong>Anlık Raporlama:</strong> "Kim ne zaman geldi?", "Ne kadar mesai yaptı?" sorularının cevabını anında görün. Dijital puantaj raporunuz her zaman hazır.</li>
+      </ul>
+      <p style="color: #334155; line-height: 1.6;">En popüler aramalar: <em style="color: #64748b;">qr ile mesai takip, qr pdks, personel giriş çıkış programı, qr kod okutarak işe başlama.</em></p>
+    </section>
+
+    <section class="card" style="margin-bottom: 30px;">
+      <h2 style="color: #0f172a; margin-bottom: 15px;">📅 Gözcü ile Akıllı Vardiya Planlaması</h2>
+      <p style="color: #334155; line-height: 1.6; margin-bottom: 15px;">
+        Restoran, kafe veya işletmenizdeki karmaşık çalışma saatlerini yönetmek artık çok kolay. <strong>Mirket Gözcü vardiya programı</strong> ile haftalık ve aylık takvimlerinizi dakikalar içinde oluşturun.
+      </p>
+      <ul style="color: #334155; line-height: 1.6; padding-left: 20px; margin-bottom: 15px;">
+        <li style="margin-bottom: 8px;"><strong>Kolay Sürükle Bırak:</strong> Vardiyaları kopyalayın, taşıyın ve tüm ekibe tek tıkla atayın.</li>
+        <li style="margin-bottom: 8px;"><strong>Çakışma Kontrolü:</strong> Aynı personele yanlışlıkla çakışan saatlerde vardiya yazılmasını sistem otomatik olarak engeller.</li>
+        <li style="margin-bottom: 8px;"><strong>Rol ve Görev Dağılımı:</strong> Garson, komi, aşçı gibi rolleri belirleyin ve kimin nerede görevli olduğunu netleştirin.</li>
+      </ul>
+      <p style="color: #334155; line-height: 1.6;">Sık aranan kelimeler: <em style="color: #64748b;">restoran vardiya programı, işçi çalışma saatleri planlama, online vardiya çizelgesi, personel planlama yazılımı.</em></p>
+    </section>
+
+    <section class="card" style="margin-bottom: 30px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0;">
+      <h3 style="color: #1e293b; margin-bottom: 10px;">İşletmenizi Dijitalleştirmeye Başlayın</h3>
+      <p style="color: #475569; margin-bottom: 20px;">Personel takibi ve vardiya yönetimindeki tüm zorlukları Mirket Gözcü ile aşın. Cihaz kurulumu gerektirmeyen yeni nesil çözüme bugün geçiş yapın.</p>
+      <button class="btn primary" onclick="window.location.href='index.html#pricing-section'">Hemen Başla / Paketleri İncele</button>
+    </section>
+
+  </main>
+
+  <!-- Footer Placeholder -->
+  <div id="footerContainer"></div>
+
+  <!-- Firebase & App Scripts -->
+  <script type="module" src="firebase.js"></script>
+  <script>
+    // Load Header & Footer
+    document.addEventListener("DOMContentLoaded", () => {
+      fetch('header.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('headerContainer').innerHTML = data;
+        });
+
+      fetch('footer.html')
+        .then(response => response.text())
+        .then(data => {
+          document.getElementById('footerContainer').innerHTML = data;
+        });
+    });
+  </script>
+</body>
+</html>
