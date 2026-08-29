@@ -91,12 +91,12 @@ function renderCalendar() {
         
         let realCheckInTimeStr = shift.startTime;
         if (shift.checkInTime && typeof shift.checkInTime.toDate === 'function') {
-          realCheckInTimeStr = shift.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+          realCheckInTimeStr = shift.checkInTime.toDate().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
         }
         
         let realCheckOutTimeStr = '';
         if (shift.checkOutTime && typeof shift.checkOutTime.toDate === 'function') {
-          realCheckOutTimeStr = ` - ${shift.checkOutTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}`;
+          realCheckOutTimeStr = ` - ${shift.checkOutTime.toDate().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' })}`;
         }
         
         const plannedLabel = shift.startTime && shift.endTime ? `${shift.startTime} - ${shift.endTime}` : '';

@@ -23,7 +23,7 @@ async function autoCloseExpiredShifts(restaurantId) {
 
     const now = new Date();
     const todayStr = getLocalDateString(now);
-    const currentHourMin = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const currentHourMin = now.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit', hour12: false });
 
     const expiredShifts = [];
     snap.forEach(docSnap => {
@@ -86,7 +86,7 @@ async function checkWorkerActiveShift(workerUid) {
       currentActiveShift = { id: docSnap.id, ...shiftData };
       
       const checkInTimeStr = currentActiveShift.checkInTime && typeof currentActiveShift.checkInTime.toDate === 'function'
-        ? currentActiveShift.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+        ? currentActiveShift.checkInTime.toDate().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' })
         : 'Belirtilmedi';
         
       statusContainer.innerHTML = `
@@ -208,7 +208,7 @@ async function processClockInOut(scannedToken, workerCoords) {
       const checkOutDate = new Date();
       const totalMinutes = Math.max(1, Math.round((checkOutDate - checkInDate) / 60000));
 
-      const nowTimeStr = checkOutDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      const nowTimeStr = checkOutDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
 
       const updateData = {
         status: 'completed',
@@ -237,7 +237,7 @@ async function processClockInOut(scannedToken, workerCoords) {
 
     } else {
       // --- CLOCK-IN ACTION ---
-      const nowTimeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      const nowTimeStr = new Date().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
 
       let assignedShiftInfo = await findAssignedShiftForWorker(restaurantId, workerUser.uid, todayStr);
 

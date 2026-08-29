@@ -70,11 +70,11 @@ function renderAttendanceTable(shifts) {
     const checkOutDate = shift.checkOutTime && typeof shift.checkOutTime.toDate === 'function' ? shift.checkOutTime.toDate() : null;
 
     const inTime = checkInDate
-      ? checkInDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+      ? checkInDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' })
       : (shift.startTime || '-');
 
     const outTime = checkOutDate
-      ? checkOutDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+      ? checkOutDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' })
       : (shift.status === 'active' ? '<span style="color:#eab308; font-weight:700;">Devam Ediyor</span>' : (shift.endTime || '-'));
 
     // 2. Worked Hours & Wage Calculation
@@ -112,7 +112,9 @@ function renderAttendanceTable(shifts) {
     // 3. Punctuality status badge
     let punctualityBadge = '';
     if (checkInDate && shift.startTime) {
-      const actualMins = checkInDate.getHours() * 60 + checkInDate.getMinutes();
+      const inTimeStr = checkInDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
+      const [actualHr, actualMn] = inTimeStr.split(':').map(Number);
+      const actualMins = actualHr * 60 + actualMn;
       const [sh, sm] = shift.startTime.split(':').map(Number);
       const schedMins = sh * 60 + sm;
       const diff = actualMins - schedMins;
@@ -204,7 +206,7 @@ async function manualOverrideClockOut(shiftId) {
     await window.firebaseFirestore.updateDoc(shiftRef, {
       status: 'completed',
       checkOutTime: window.firebaseFirestore.serverTimestamp(),
-      endTime: checkOutDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+      endTime: checkOutDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' }),
       totalWorkedMinutes: totalMinutes,
       isManualOverride: true
     });
@@ -231,10 +233,10 @@ function exportAttendanceToCSV() {
   const headers = ["Çalışan Adı", "Telefon", "Tarih", "Giriş Saati", "Çıkış Saati", "Çalışılan Saat", "Hakediş Tutarı (TL)", "Görev Tamamlama", "Zamanındalık", "Durum"];
   const rows = loadedAttendanceShifts.map(s => {
     const inTime = s.checkInTime && typeof s.checkInTime.toDate === 'function'
-      ? s.checkInTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+      ? s.checkInTime.toDate().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' })
       : (s.startTime || '');
     const outTime = s.checkOutTime && typeof s.checkOutTime.toDate === 'function'
-      ? s.checkOutTime.toDate().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+      ? s.checkOutTime.toDate().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' })
       : (s.endTime || '');
 
     let workedHours = s.totalWorkedMinutes ? (s.totalWorkedMinutes / 60) : 0;
@@ -253,7 +255,9 @@ function exportAttendanceToCSV() {
     let punctualityStr = 'Belirtilmedi';
     if (s.checkInTime && s.startTime) {
       const cDate = typeof s.checkInTime.toDate === 'function' ? s.checkInTime.toDate() : new Date(s.checkInTime);
-      const actualMins = cDate.getHours() * 60 + cDate.getMinutes();
+      const inTimeStr = cDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
+      const [actualHr, actualMn] = inTimeStr.split(':').map(Number);
+      const actualMins = actualHr * 60 + actualMn;
       const [sh, sm] = s.startTime.split(':').map(Number);
       const diff = actualMins - (sh * 60 + sm);
       punctualityStr = diff <= 5 ? 'Zamanında' : `+${diff} dk Geç`;
