@@ -81,7 +81,7 @@ exports.sendWhatsAppPush = functions.region('europe-west3').https.onCall(async (
                 template: {
                     name: TEMPLATE_NAME,
                     language: {
-                        code: "tr"
+                        code: process.env.TEMPLATE_LANGUAGE || "en"
                     },
                     components: [
                         {
@@ -315,7 +315,7 @@ exports.onShiftAssigned = functions.region('europe-west3').firestore.document('s
                 template: {
                     name: TEMPLATE_NAME,
                     language: {
-                        code: "tr"
+                        code: process.env.TEMPLATE_LANGUAGE || "en"
                     },
                     components: [
                         {
