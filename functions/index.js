@@ -319,6 +319,15 @@ exports.onShiftAssigned = functions.region('europe-west3').firestore.document('s
                     },
                     components: [
                         {
+                            type: "header",
+                            parameters: [
+                                {
+                                    type: "text",
+                                    text: "Vardiya Bilgilendirmesi"
+                                }
+                            ]
+                        },
+                        {
                             type: "body",
                             parameters: [
                                 { type: "text", text: staffName },
