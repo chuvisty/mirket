@@ -54,6 +54,7 @@ async function loadRestaurantSettings() {
       customShiftTemplates = data.shiftTemplates || [];
       autoEndShiftAtScheduledTime = !!data.autoEndShiftAtScheduledTime;
       whatsappShiftNotifications = !!data.whatsappShiftNotifications;
+      window.restaurantPin = data.pinCode || '0068';
       
       if (document.getElementById('restaurantOpeningHour')) document.getElementById('restaurantOpeningHour').value = restaurantOpeningHour;
       if (document.getElementById('restaurantClosingHour')) document.getElementById('restaurantClosingHour').value = restaurantClosingHour;

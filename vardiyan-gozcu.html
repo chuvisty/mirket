@@ -426,18 +426,7 @@
     </div>
 
     <div id="gozcuContent" class="gozcu-content">
-      <!-- Top Action Bar for Live QR Code -->
-      <section class="card" style="max-width: 100%; margin-bottom: 20px; background: #ffffff; border: 1px solid #e2e8f0; border-left: 5px solid #f68709;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-          <div>
-            <h2 style="color: #1e293b; margin: 0 0 5px 0; font-size: 20px;">📱 Vardiya QR Kod Ekranı</h2>
-            <p style="color: #64748b; font-size: 13px; margin: 0;">Restoran kasasındaki veya tabletinizdeki ekranda bu QR kodu açın. Çalışanlar konum doğrulamasıyla taratarak mesai başlatıp bitirebilir.</p>
-          </div>
-          <button class="btn primary" onclick="openRestaurantQrModal()" type="button" style="display: inline-flex; align-items: center; gap: 8px; font-size: 15px; padding: 12px 22px;">
-            <span>▶ Canlı QR Ekranını Aç</span>
-          </button>
-        </div>
-      </section>
+
 
       <!-- Daily Detail Section (Hidden by default) -->
       <section id="dayDetailSection" class="card hidden" style="max-width: 100%; margin-bottom: 20px;">
@@ -464,6 +453,18 @@
         </div>
       </section>
 
+      <!-- PIN Protection Section -->
+      <section id="pinEntrySection" class="card" style="max-width: 100%; margin-bottom: 20px; text-align: center; padding: 40px;">
+        <h2 style="margin-bottom: 15px;">🔒 Yönetim Paneli</h2>
+        <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Personel listesi ve raporları görmek için 4 haneli restoran kodunuzu giriniz.</p>
+        <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;">
+          <input type="password" id="restaurantPinInput" maxlength="4" style="width: 100px; text-align: center; font-size: 24px; padding: 10px; letter-spacing: 5px; border-radius: 8px; border: 1px solid #cbd5e1;">
+        </div>
+        <button class="btn primary" onclick="unlockProtectedSections()" style="padding: 10px 30px;">Kilidi Aç</button>
+        <p id="pinErrorMessage" style="color: #ef4444; font-size: 13px; margin-top: 10px; display: none;">Hatalı kod girdiniz.</p>
+      </section>
+
+      <div id="protectedSections" style="display: none;">
       <!-- Attendance Logs & Reporting Section -->
       <section class="card" style="max-width: 100%; margin-bottom: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
@@ -519,6 +520,7 @@
           <p style="text-align: center; color: #94a3b8;">Henüz personel eklenmedi.</p>
         </div>
       </section>
+      </div>
 
       <!-- Business Hours & Location Settings Section -->
       <section class="card" style="max-width: 100%; padding: 20px 30px; margin-bottom: 20px;">
@@ -746,19 +748,6 @@
   </div>
 </div>
 
-<!-- Restaurant Live QR Modal -->
-<div id="restaurantQrModal" class="modal hidden">
-  <div class="modal-content" style="max-width: 460px; text-align: center; padding: 35px 25px;">
-    <span class="close-modal" onclick="closeRestaurantQrModal()">&times;</span>
-    <h2 style="font-size: 22px; color: #1e293b; margin-bottom: 8px;">📱 Canlı Vardiya QR Kodu</h2>
-    <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; line-height: 1.5;">Çalışanlar kendi telefonlarından bu kodu okutarak mesai başlatır veya bitirir. Kopyalanmayı önlemek için kod 60 saniyede bir otomatik yenilenir.</p>
-    <div id="qrcodeContainer" style="display: inline-flex; align-items: center; justify-content: center; padding: 20px; background: #ffffff; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.06); margin-bottom: 15px; min-width: 240px; min-height: 240px;"></div>
-    <div style="display: inline-flex; align-items: center; gap: 6px; background: #f0fdf4; color: #166534; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #bbf7d0;">
-      <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block;"></span>
-      <span>Canlı QR Akışı Aktif</span>
-    </div>
-  </div>
-</div>
 
 <!-- Geolocation Permission Pre-Notification Modal -->
 <div id="locationPermissionModal" class="modal hidden">

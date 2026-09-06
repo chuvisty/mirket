@@ -173,12 +173,24 @@ async function logoutUser() {
   }
 }
 
-function updateAuthStateUI(user) {
+async function updateAuthStateUI(user) {
   const logoutButton = document.getElementById('logoutButton');
   const authSubmit = document.getElementById('authSubmit');
   const toggleAuth = document.getElementById('toggleAuthMode');
   const authHeaderLink = document.getElementById('authHeaderLink');
   const userEmail = user?.email || null;
+  
+  const navPersonelBul = document.getElementById('navPersonelBul');
+  const navMirketGozcu = document.getElementById('navMirketGozcu');
+  const navGunlukIsBul = document.getElementById('navGunlukIsBul');
+
+  const navCanliQr = document.getElementById('navCanliQr');
+
+  // Reset visibility
+  if (navPersonelBul) navPersonelBul.style.display = '';
+  if (navMirketGozcu) navMirketGozcu.style.display = '';
+  if (navCanliQr) navCanliQr.style.display = '';
+  if (navGunlukIsBul) navGunlukIsBul.style.display = '';
 
   // Keep the signup flow visible during step 2 even if Firebase auth state reports the user as signed in.
   if (user && window.authMode === 'signup' && window.signupStep === 2 && !window.accountPageActive) {
@@ -196,6 +208,23 @@ function updateAuthStateUI(user) {
       authHeaderLink.href = 'account.html';
     }
     showAuthMessage('Zaten giriş yaptınız: ' + userEmail + '. Çıkış yapmak için butona tıklayın.', 'success');
+    
+    try {
+      const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        if (userData.userType === 'restaurant') {
+          if (navGunlukIsBul) navGunlukIsBul.style.display = 'none';
+        } else if (userData.userType === 'worker') {
+          if (navPersonelBul) navPersonelBul.style.display = 'none';
+          if (navMirketGozcu) navMirketGozcu.style.display = 'none';
+          if (navCanliQr) navCanliQr.style.display = 'none';
+        }
+      }
+    } catch(err) {
+      console.error('Failed to fetch user type for nav visibility', err);
+    }
+    
     if (window.accountPageActive && typeof window.renderAccountPage === 'function') {
       window.renderAccountPage(user);
     }

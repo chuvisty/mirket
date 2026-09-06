@@ -1,21 +1,16 @@
 // --- SETTINGS: Restaurant settings save, shift templates & QR modal ---
-function openRestaurantQrModal() {
-  const modal = document.getElementById('restaurantQrModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    if (typeof startDynamicQrStream === 'function' && restaurantId) {
-      startDynamicQrStream(restaurantId, 'qrcodeContainer');
-    }
-  }
-}
 
-function closeRestaurantQrModal() {
-  const modal = document.getElementById('restaurantQrModal');
-  if (modal) {
-    modal.classList.add('hidden');
-    if (typeof stopDynamicQrStream === 'function') {
-      stopDynamicQrStream();
-    }
+
+function unlockProtectedSections() {
+  const input = document.getElementById('restaurantPinInput').value;
+  const errorMsg = document.getElementById('pinErrorMessage');
+  const targetPin = window.restaurantPin || '0068';
+  
+  if (input === targetPin) {
+    document.getElementById('pinEntrySection').style.display = 'none';
+    document.getElementById('protectedSections').style.display = 'block';
+  } else {
+    errorMsg.style.display = 'block';
   }
 }
 

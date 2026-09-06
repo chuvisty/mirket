@@ -483,10 +483,24 @@ async function toggleVardiyanSubscriptionForUid(status, directUid = null) {
       throw new Error(`'${uid}' ID'li kullanıcı veritabanında bulunamadı.`);
     }
 
-    await window.firebaseFirestore.updateDoc(userRef, {
+    let updateData = {
       isSubscribed: Boolean(status),
       updatedAt: window.firebaseFirestore.serverTimestamp()
-    });
+    };
+    
+    if (status) {
+      const pin = prompt("Bu restoran için 4 haneli Gözcü PIN kodunu giriniz (Varsayılan: 0068):", "0068");
+      if (pin === null) {
+        if (statusEl) {
+          statusEl.textContent = 'İşlem iptal edildi.';
+          statusEl.className = 'auth-message warning';
+        }
+        return; // User cancelled
+      }
+      updateData.pinCode = String(pin).padStart(4, '0').slice(0, 4);
+    }
+
+    await window.firebaseFirestore.updateDoc(userRef, updateData);
 
     const userData = userSnap.data();
     const userName = userData.businessName || userData.restaurantName || userData.employeeName || userData.email || uid;

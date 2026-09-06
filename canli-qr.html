@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="158e607a-0804-4181-b1d8-c2982f3c8310" type="text/javascript"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirket | Canlı QR Okutma</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+<div id="headerContainer"></div>
+
+<main class="container">
+  
+  <div class="gozcu-container w-100" style="width: 100%; max-width: 1000px; margin: 0 auto;">
+    
+    <div id="gozcuContent" class="gozcu-content">
+      <!-- Top Action Bar for Live QR Code -->
+      <section class="card" style="max-width: 100%; margin-top: 40px; margin-bottom: 20px; background: #ffffff; border: 1px solid #e2e8f0; border-left: 5px solid #f68709;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div>
+            <h2 style="color: #1e293b; margin: 0 0 5px 0; font-size: 20px;">📱 Vardiya QR Kod Ekranı</h2>
+            <p style="color: #64748b; font-size: 13px; margin: 0;">Restoran kasasındaki veya tabletinizdeki ekranda bu QR kodu açın. Çalışanlar konum doğrulamasıyla taratarak mesai başlatıp bitirebilir.</p>
+          </div>
+          <button class="btn primary" onclick="openRestaurantQrModal()" type="button" style="display: inline-flex; align-items: center; gap: 8px; font-size: 15px; padding: 12px 22px;">
+            <span>▶ Canlı QR Ekranını Aç</span>
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+</main>
+
+<!-- Restaurant Live QR Modal -->
+<div id="restaurantQrModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 460px; text-align: center; padding: 35px 25px;">
+    <span class="close-modal" onclick="closeRestaurantQrModal()">&times;</span>
+    <h2 style="font-size: 22px; color: #1e293b; margin-bottom: 8px;">📱 Canlı Vardiya QR Kodu</h2>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; line-height: 1.5;">Çalışanlar kendi telefonlarından bu kodu okutarak mesai başlatır veya bitirir. Kopyalanmayı önlemek için kod 60 saniyede bir otomatik yenilenir.</p>
+    <div id="qrcodeContainer" style="display: inline-flex; align-items: center; justify-content: center; padding: 20px; background: #ffffff; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.06); margin-bottom: 15px; min-width: 240px; min-height: 240px;"></div>
+    <div style="display: inline-flex; align-items: center; gap: 6px; background: #f0fdf4; color: #166534; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #bbf7d0;">
+      <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block;"></span>
+      <span>Canlı QR Akışı Aktif</span>
+    </div>
+  </div>
+</div>
+
+<script src="firebase.js?v=2"></script>
+<script src="js/core.js?v=2"></script>
+<script src="js/auth-ui.js?v=2"></script>
+<script src="js/attendance/qr-core.js?v=2"></script>
+<script src="js/shifts/settings.js?v=2"></script>
+
+<script>
+  window.dynamicQrInterval = null;
+  // Initialize the specific page logic if needed, but core.js does most.
+</script>
+
+</body>
+</html>
