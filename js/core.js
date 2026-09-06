@@ -1,5 +1,6 @@
 async function includeHTML(file, elementId) {
-    const response = await fetch(file);
+    const timestamp = new Date().getTime();
+    const response = await fetch(`${file}?v=${timestamp}`, { cache: "no-store" });
     const text = await response.text();
     document.getElementById(elementId).innerHTML = text;
 }
