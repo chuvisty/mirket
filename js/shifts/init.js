@@ -28,6 +28,9 @@ function initGozcuPage() {
         // Load data
         await loadRestaurantSettings();
         await loadStaff();
+        if (typeof loadSlotBlueprints === 'function') {
+          await loadSlotBlueprints();
+        }
         await loadShiftsForCurrentWeek();
         if (typeof loadAttendanceLogs === 'function') {
           await loadAttendanceLogs(restaurantId, 'today');
