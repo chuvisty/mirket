@@ -73,3 +73,37 @@ function normalizePhone(rawPhone) {
   }
   return digits;
 }
+
+const TURKEY_CITIES = {
+  "İstanbul": ["Kadıköy", "Beşiktaş", "Şişli", "Üsküdar", "Bakırköy", "Beyoğlu", "Maltepe", "Ataşehir", "Sarıyer", "Fatih", "Ümraniye", "Pendik", "Kartal", "Beylikdüzü", "Esenyurt", "Başakşehir", "Diğer"],
+  "Ankara": ["Çankaya", "Keçiören", "Yenimahalle", "Mamak", "Etimesgut", "Sincan", "Altındağ", "Gölbaşı", "Pursaklar", "Diğer"],
+  "İzmir": ["Konak", "Karşıyaka", "Bornova", "Buca", "Bayraklı", "Çiğli", "Gaziemir", "Balçova", "Narlıdere", "Karabağlar", "Torbalı", "Menemen", "Urla", "Çeşme", "Diğer"],
+  "Bursa": ["Nilüfer", "Osmangazi", "Yıldırım", "Mudanya", "Gemlik", "İnegöl", "Gürsu", "Kestel", "Diğer"],
+  "Antalya": ["Muratpaşa", "Konyaaltı", "Kepez", "Alanya", "Manavgat", "Serik", "Kemer", "Kaş", "Diğer"],
+  "Adana": ["Seyhan", "Çukurova", "Yüreğir", "Sarıçam", "Ceyhan", "Kozan", "Diğer"],
+  "Konya": ["Selçuklu", "Meram", "Karatay", "Ereğli", "Akşehir", "Beyşehir", "Diğer"],
+  "Şanlıurfa": ["Haliliye", "Eyyübiye", "Karaköprü", "Siverek", "Viranşehir", "Birecik", "Suruç", "Diğer"],
+  "Gaziantep": ["Şahinbey", "Şehitkamil", "Nizip", "İslahiye", "Oğuzeli", "Nurdağı", "Araban", "Diğer"],
+  "Kocaeli": ["İzmit", "Gebze", "Darıca", "Körfez", "Gölcük", "Derince", "Çayırova", "Kartepe", "Başiskele", "Karamürsel", "Kandıra", "Dilovası", "Diğer"],
+  "Aksaray": ["Merkez", "Ağaçören", "Eskil", "Gülağaç", "Güzelyurt", "Ortaköy", "Sarıyahşi", "Sultanhanı", "Diğer"]
+};
+
+function populateCitySelect(citySelectEl, defaultCity = '') {
+  if (!citySelectEl) return;
+  citySelectEl.innerHTML = '<option value="">İl Seçiniz</option>' + 
+    Object.keys(TURKEY_CITIES).map(c => `<option value="${escapeHTML(c)}" ${c === defaultCity ? 'selected' : ''}>${escapeHTML(c)}</option>`).join('');
+}
+
+function updateDistrictSelect(city, districtSelectEl, defaultDistrict = '') {
+  if (!districtSelectEl) return;
+  districtSelectEl.innerHTML = '<option value="">İlçe Seçiniz</option>';
+  if (!city || !TURKEY_CITIES[city]) return;
+  TURKEY_CITIES[city].forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d;
+    if (d === defaultDistrict) opt.selected = true;
+    districtSelectEl.appendChild(opt);
+  });
+}
+

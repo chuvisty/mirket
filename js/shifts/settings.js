@@ -20,8 +20,13 @@ async function saveRestaurantSettings() {
   const autoEndVal = document.getElementById('autoEndShiftToggle') ? document.getElementById('autoEndShiftToggle').checked : false;
   const whatsappNotifyVal = document.getElementById('whatsappShiftNotificationToggle') ? document.getElementById('whatsappShiftNotificationToggle').checked : false;
 
-  if (opening >= closing) {
-    alert('Açılış saati kapatılış saatinden önce olmalıdır.');
+  if (isNaN(opening) || isNaN(closing)) {
+    alert('Lütfen geçerli açılış ve kapanış saatleri giriniz.');
+    return;
+  }
+
+  if (opening === closing) {
+    alert('Açılış saati ile kapanış saati aynı olamaz.');
     return;
   }
   

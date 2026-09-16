@@ -212,6 +212,7 @@ async function loadRestaurantsTab() {
           </div>
           <p style="margin:4px 0; font-size:13px;"><strong>E-posta:</strong> ${rest.email || 'Belirtilmedi'}</p>
           <p style="margin:4px 0; font-size:13px;"><strong>Telefon:</strong> ${rest.phone || rest.authorizedPhone || 'Belirtilmedi'}</p>
+          <p style="margin:4px 0; font-size:13px;"><strong>Konum:</strong> ${(rest.businessCity || '')} ${(rest.businessDistrict ? '/ ' + rest.businessDistrict : '')}</p>
           <p style="margin:4px 0; font-size:12px; color:#64748b;"><strong>UID:</strong> <code>${rest.id}</code></p>
           <div style="margin-top: 12px; display:flex; gap:6px;">
             ${isSub
@@ -259,7 +260,7 @@ async function loadWorkersTab() {
         <div class="card" style="padding: 15px; border: 1px solid #ddd; text-align: left; background: #fff;">
           <h3 style="margin-top:0; color:#1d4ed8;">${worker.employeeName || 'İsimsiz'}</h3>
           <p style="margin:5px 0;"><strong>Telefon:</strong> ${phoneStr}</p>
-          <p style="margin:5px 0;"><strong>İlçe:</strong> ${worker.employeeDistrict || 'Belirtilmedi'}</p>
+          <p style="margin:5px 0;"><strong>Şehir / İlçe:</strong> ${(worker.employeeCity || '')} ${(worker.employeeDistrict ? '/ ' + worker.employeeDistrict : '')}</p>
           <p style="margin:5px 0;"><strong>Yapabileceği İşler:</strong> ${jobsStr}</p>
           <p style="margin:5px 0;"><strong>Müsait Günler:</strong> ${daysStr}</p>
           <p style="margin:5px 0;"><strong>Müsait Saatler:</strong> ${hoursStr}</p>

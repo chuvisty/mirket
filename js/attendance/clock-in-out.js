@@ -1,5 +1,5 @@
 // --- CLOCK IN/OUT: Core attendance engine, geo validation & auto-close ---
-// --- AUTO-END SHIFT LOGIC FOR EXPIRED SHIFTS ---
+// --- AUTO-END SHIFT LOGIC FOR EXPIRED & UNCLOSED SHIFTS ---
 async function autoCloseExpiredShifts(restaurantId) {
   if (!restaurantId) return;
 
@@ -10,8 +10,9 @@ async function autoCloseExpiredShifts(restaurantId) {
     if (!userSnap.exists()) return;
     const userData = userSnap.data();
 
-    // Check if feature flag autoEndShiftAtScheduledTime is enabled for restaurant
-    if (!userData.autoEndShiftAtScheduledTime) return;
+    const openingHour = typeof userData.openingHour === 'number' ? userData.openingHour : 6;
+    let closingHour = typeof userData.closingHour === 'number' ? userData.closingHour : 23;
+    if (closingHour === 24) closingHour = 0;
 
     const q = window.firebaseFirestore.query(
       window.firebaseFirestore.collection(window.db, 'shifts'),
@@ -26,13 +27,59 @@ async function autoCloseExpiredShifts(restaurantId) {
     const currentHourMin = now.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit', hour12: false });
 
     const expiredShifts = [];
+
     snap.forEach(docSnap => {
       const data = docSnap.data();
-      if (!data.date || !data.endTime) return;
+      let shiftDate = data.date;
+      if (!shiftDate && data.checkInTime && typeof data.checkInTime.toDate === 'function') {
+        shiftDate = getLocalDateString(data.checkInTime.toDate());
+      }
+      if (!shiftDate) shiftDate = todayStr;
 
-      // Auto close if shift date is in the past OR shift date is today and current time >= endTime
-      if (data.date < todayStr || (data.date === todayStr && currentHourMin >= data.endTime)) {
-        expiredShifts.push({ id: docSnap.id, ...data });
+      // Calculate restaurant closing Date for this shift
+      let isExpired = false;
+      let checkOutTimestamp = null;
+
+      try {
+        const parts = shiftDate.split('-').map(Number);
+        if (parts.length === 3) {
+          const [sYear, sMonth, sDay] = parts;
+          const shiftClosingDate = new Date(sYear, sMonth - 1, sDay, closingHour, 0, 0);
+
+          // If closingHour <= openingHour, restaurant closes on the following morning (e.g. 08:00 -> 01:00)
+          if (closingHour <= openingHour) {
+            shiftClosingDate.setDate(shiftClosingDate.getDate() + 1);
+          }
+
+          if (now >= shiftClosingDate) {
+            isExpired = true;
+            checkOutTimestamp = window.firebaseFirestore.Timestamp.fromDate(shiftClosingDate);
+          }
+        }
+      } catch (dateErr) {
+        console.warn("Date parsing error in autoCloseExpiredShifts:", dateErr);
+      }
+
+      // Also check if scheduled endTime has passed AND restaurant has autoEndShiftAtScheduledTime enabled
+      if (!isExpired && userData.autoEndShiftAtScheduledTime && data.endTime) {
+        if (shiftDate < todayStr || (shiftDate === todayStr && currentHourMin >= data.endTime)) {
+          isExpired = true;
+          checkOutTimestamp = data.endTime;
+        }
+      }
+
+      // If shift is older than yesterday, it is unconditionally expired
+      if (!isExpired && shiftDate < todayStr) {
+        isExpired = true;
+        checkOutTimestamp = checkOutTimestamp || window.firebaseFirestore.Timestamp.fromDate(now);
+      }
+
+      if (isExpired) {
+        expiredShifts.push({
+          id: docSnap.id,
+          checkOutTime: checkOutTimestamp || `${String(closingHour).padStart(2, '0')}:00`,
+          ...data
+        });
       }
     });
 
@@ -42,12 +89,12 @@ async function autoCloseExpiredShifts(restaurantId) {
         const ref = window.firebaseFirestore.doc(window.db, 'shifts', shift.id);
         batch.update(ref, {
           status: 'completed',
-          checkOutTime: shift.endTime,
+          checkOutTime: shift.checkOutTime,
           autoEnded: true
         });
       });
       await batch.commit();
-      console.info(`[Auto-End Shift] Automatically completed ${expiredShifts.length} expired shift(s).`);
+      console.info(`[Auto-End Shift] Automatically completed ${expiredShifts.length} unclosed shift(s) at restaurant closing time.`);
     }
   } catch (err) {
     console.error("Error auto closing expired shifts:", err);
