@@ -178,6 +178,290 @@
     }
     .shift-assigned { color: #10b981; font-weight: 500; }
     .shift-unassigned { color: #ef4444; font-weight: 500; }
+
+    /* Layout: Calendar Grid + Available Staff Pool Sidebar */
+    .calendar-and-pool-container {
+      display: flex;
+      gap: 16px;
+      align-items: stretch;
+    }
+    .calendar-main-col {
+      flex: 1;
+      min-width: 0;
+    }
+    .staff-pool-sidebar {
+      width: 270px;
+      flex-shrink: 0;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+      align-self: stretch;
+      max-height: 750px;
+    }
+    @media (max-width: 1080px) {
+      .calendar-and-pool-container {
+        flex-direction: column;
+      }
+      .staff-pool-sidebar {
+        width: 100%;
+        max-height: 400px;
+      }
+    }
+    .staff-pool-header {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      background: #ffffff;
+    }
+    .staff-pool-title-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 10px;
+    }
+    .staff-pool-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0;
+    }
+    .staff-pool-sub {
+      font-size: 11px;
+      color: #64748b;
+    }
+    .staff-pool-search {
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: #f8fafc;
+      box-sizing: border-box;
+    }
+    .staff-pool-search:focus {
+      outline: none;
+      border-color: #3b82f6;
+      background: #ffffff;
+    }
+    .staff-pool-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .staff-pool-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .staff-pool-list::-webkit-scrollbar-track {
+      background: #f8fafc;
+    }
+    .staff-pool-list::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .staff-pool-list::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Staff Pool Card Item */
+    .staff-pool-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      cursor: grab;
+      user-select: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .staff-pool-item:hover {
+      background: #f8fafc;
+      border-color: #3b82f6;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.08);
+    }
+    .staff-pool-item:active,
+    .staff-pool-item.is-dragging {
+      cursor: grabbing;
+      opacity: 0.5;
+      background: #eff6ff;
+    }
+    .staff-pool-item-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .staff-pool-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .staff-pool-details {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .staff-pool-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 125px;
+    }
+    .staff-pool-role {
+      font-size: 10px;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 125px;
+    }
+    .staff-pool-item-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .staff-pool-hours {
+      font-size: 10px;
+      font-weight: 600;
+      color: #0369a1;
+      background: #e0f2fe;
+      padding: 2px 5px;
+      border-radius: 4px;
+    }
+    .staff-pool-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+    }
+    .staff-pool-drag-handle {
+      color: #94a3b8;
+      font-size: 12px;
+      letter-spacing: -1px;
+    }
+
+    /* Boş Slot (Unassigned Slot) Styles */
+    .shift-slot-empty {
+      background: #f8fafc !important;
+      border: 1.5px dashed #94a3b8 !important;
+      border-left: 4px solid #0284c7 !important;
+      transition: all 0.2s ease !important;
+      position: relative;
+    }
+    .shift-slot-empty:hover {
+      border-color: #3b82f6 !important;
+      background: #ffffff !important;
+      transform: translateY(-1px);
+    }
+    .shift-slot-empty.drop-target-ready {
+      border-color: #3b82f6 !important;
+      background: #eff6ff !important;
+      animation: slotPulse 1.5s infinite;
+    }
+    .shift-slot-empty.drop-target-active {
+      border: 2px solid #2563eb !important;
+      background: #dbeafe !important;
+      transform: scale(1.03);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    @keyframes slotPulse {
+      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3); }
+      70% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+    .slot-role-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .slot-role-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0369a1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .slot-mini-btn {
+      background: none;
+      border: none;
+      font-size: 10px;
+      cursor: pointer;
+      opacity: 0.6;
+      padding: 0 2px;
+    }
+    .slot-mini-btn:hover {
+      opacity: 1;
+    }
+    .slot-empty-prompt {
+      font-size: 10px;
+      font-weight: 600;
+      color: #64748b;
+      margin-top: 2px;
+      letter-spacing: -0.2px;
+    }
+    .slot-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .slot-unassign-btn {
+      background: #fee2e2;
+      border: none;
+      color: #ef4444;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      transition: all 0.2s;
+    }
+    .slot-unassign-btn:hover {
+      background: #ef4444;
+      color: white;
+    }
+    .slot-template-select {
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #0f172a;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .slot-template-select:hover {
+      border-color: #3b82f6;
+    }
     
     .add-shift-btn {
       margin-top: auto;
@@ -414,7 +698,7 @@
 
 <main class="container">
   
-  <div class="gozcu-container w-100" style="width: 100%; max-width: 1000px;">
+  <div class="gozcu-container w-100" style="width: 100%; max-width: 1360px;">
     
     <!-- Paywall Overlay -->
     <div id="paywallOverlay" class="paywall-overlay hidden">
@@ -439,17 +723,45 @@
 
       <!-- Calendar Section -->
       <section class="card" style="max-width: 100%; margin-bottom: 20px;">
-        <div class="calendar-header">
+        <div class="calendar-header" style="flex-wrap: wrap; gap: 12px;">
           <h2>Haftalık Vardiya Takvimi</h2>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <button class="btn ghost" onclick="changeWeek(-1)">&#8592; Önceki Hafta</button>
             <span id="currentWeekLabel" style="margin: 0 10px; font-weight: 600;">Bu Hafta</span>
             <button class="btn ghost" onclick="changeWeek(1)">Sonraki Hafta &#8594;</button>
             <button class="btn ghost" onclick="clearWeekShifts()" style="color: #ef4444; border-color: #fca5a5; margin-left: 6px;">🗑️ Tüm Haftayı Sil</button>
+            
+            <!-- Vardiya Şablonu Uygula & Yönet Grubu -->
+            <div style="display: inline-flex; gap: 6px; align-items: center; margin-left: 4px;">
+              <select id="slotTemplateSelect" onchange="handleSlotTemplateSelectChange(this.value)" class="slot-template-select" title="Hazır slot şablonunu seçili haftaya uygular">
+                <option value="">⚡ Vardiya Şablonu Uygula ▾</option>
+              </select>
+              <button class="btn ghost" type="button" onclick="openSlotBlueprintModal()" title="Slot Taslaklarını Yönet" style="padding: 6px 10px; font-size: 13px;">⚙️ Şablonlar</button>
+            </div>
           </div>
         </div>
-        <div id="calendarGrid" class="calendar-grid">
-          <!-- Calendar days injected here -->
+
+        <!-- 2 Sütunlu Düzen: Sol/Orta Takvim Izgarası + Sağ Müsait Personel Havuzu -->
+        <div class="calendar-and-pool-container">
+          <div class="calendar-main-col">
+            <div id="calendarGrid" class="calendar-grid">
+              <!-- Calendar days injected here -->
+            </div>
+          </div>
+
+          <!-- Müsait Personel Havuzu (Sağ Panel) -->
+          <aside id="staffPoolSidebar" class="staff-pool-sidebar">
+            <div class="staff-pool-header">
+              <div class="staff-pool-title-row">
+                <h3 class="staff-pool-title">Müsait Personel Havuzu</h3>
+                <span class="staff-pool-sub">(Available Staff Pool)</span>
+              </div>
+              <input type="text" id="staffPoolSearchInput" placeholder="Personel ara..." oninput="filterStaffPoolList(this.value)" class="staff-pool-search">
+            </div>
+            <div id="staffPoolList" class="staff-pool-list">
+              <!-- Draggable staff items injected here -->
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -813,6 +1125,92 @@
   </div>
 </div>
 
+<!-- Slot Blueprints Manager Modal -->
+<div id="slotBlueprintModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 680px; padding: 24px;">
+    <span class="close-modal" onclick="closeSlotBlueprintModal()">&times;</span>
+    
+    <!-- List View -->
+    <div id="blueprintListView">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+          <h2 style="margin: 0; font-size: 20px; color: #0f172a;">📋 Slot Taslakları (Şablon Setleri)</h2>
+          <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Haftalık takviminizi tek tıkla doldurabileceğiniz hazır pozisyon şablonları oluşturun.</p>
+        </div>
+        <button type="button" class="btn primary" onclick="openCreateBlueprintForm()" style="font-size: 13px; padding: 8px 14px;">+ Yeni Taslak</button>
+      </div>
+
+      <div id="blueprintListContainer" style="max-height: 400px; overflow-y: auto; margin-bottom: 10px;">
+        <!-- Blueprints injected here -->
+      </div>
+    </div>
+
+    <!-- Form View (Create / Edit) -->
+    <div id="blueprintFormView" class="hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 id="blueprintFormTitle" style="margin: 0; font-size: 19px; color: #0f172a;">Yeni Slot Şablonu Oluştur</h2>
+        <button type="button" class="btn ghost" onclick="showBlueprintListView()" style="font-size: 12px; padding: 6px 12px;">← Listeye Dön</button>
+      </div>
+
+      <div class="input-group" style="margin-bottom: 12px;">
+        <span style="font-size: 13px; font-weight: 600;">Şablon Adı</span>
+        <input type="text" id="blueprintName" placeholder="Örn: Yaz Hafta Sonu, Kış Hafta İçi" style="padding: 8px 12px; font-size: 13px; border-radius: 8px; border: 1px solid #cbd5e1;">
+      </div>
+
+      <div class="input-group" style="margin-bottom: 14px;">
+        <span style="font-size: 13px; font-weight: 600;">Açıklama (Opsiyonel)</span>
+        <input type="text" id="blueprintDescription" placeholder="Örn: Cumartesi & Pazar yoğunluk kadrosu" style="padding: 8px 12px; font-size: 13px; border-radius: 8px; border: 1px solid #cbd5e1;">
+      </div>
+
+      <!-- Quick bulk buttons -->
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+        <span style="font-size: 12px; color: #64748b; font-weight: 600;">Hızlı Ekle:</span>
+        <button type="button" class="btn ghost" onclick="addBulkSlotsToBlueprint('weekdays')" style="font-size: 11px; padding: 4px 8px;">+ Hafta İçi (Pzt-Cum)</button>
+        <button type="button" class="btn ghost" onclick="addBulkSlotsToBlueprint('weekend')" style="font-size: 11px; padding: 4px 8px;">+ Hafta Sonu (Cmt-Paz)</button>
+        <button type="button" class="btn ghost" onclick="addBulkSlotsToBlueprint('all')" style="font-size: 11px; padding: 4px 8px;">+ Tüm Hafta (7 Gün)</button>
+      </div>
+
+      <!-- Table Header -->
+      <div style="display: grid; grid-template-columns: 130px 110px 90px 90px 70px 36px; gap: 8px; font-size: 11px; font-weight: 700; color: #64748b; padding: 0 8px 6px; border-bottom: 1px solid #e2e8f0; margin-bottom: 8px;">
+        <div>Gün</div>
+        <div>Görev / Rol</div>
+        <div>Başlangıç</div>
+        <div>Bitiş</div>
+        <div>Slot Sayısı</div>
+        <div></div>
+      </div>
+
+      <!-- Dynamic Slot Rows -->
+      <div id="blueprintSlotsRows" style="max-height: 240px; overflow-y: auto; margin-bottom: 14px;">
+        <!-- Rows injected here -->
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn ghost" onclick="addSlotRowToBlueprintForm()" style="font-size: 12px;">+ Tek Satır Ekle</button>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="btn ghost" onclick="showBlueprintListView()">İptal</button>
+          <button type="button" class="btn primary" onclick="saveBlueprintFromForm()" style="padding: 8px 20px;">Şablonu Kaydet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Assign Modal (Mobile & Click-to-Assign) -->
+<div id="quickAssignModal" class="modal hidden">
+  <div class="modal-content" style="max-width: 420px; padding: 22px;">
+    <span class="close-modal" onclick="closeQuickAssignModal()">&times;</span>
+    <h2 style="font-size: 18px; color: #0f172a; margin-bottom: 8px;">⚡ Personel Ata</h2>
+    <div id="quickAssignShiftDetails"></div>
+    <div style="font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 8px;">Atanacak Personeli Seçin:</div>
+    <div id="quickAssignStaffList" style="max-height: 260px; overflow-y: auto; margin-bottom: 15px;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px;">
+      <button type="button" class="btn ghost" onclick="openEditCurrentQuickShift()" style="font-size: 12px;">⚙️ Vardiya Ayarları</button>
+      <button type="button" class="btn ghost" onclick="closeQuickAssignModal()">Kapat</button>
+    </div>
+  </div>
+</div>
+
 <div id="dayActionMenu" class="day-action-menu hidden"></div>
 
 <div id="footerContainer"></div>
@@ -837,6 +1235,8 @@
 <script src="js/shifts/init.js?v=5"></script>
 <script src="js/shifts/settings.js?v=5"></script>
 <script src="js/shifts/staff-management.js?v=5"></script>
+<script src="js/shifts/slot-templates.js?v=5"></script>
+<script src="js/shifts/drag-drop.js?v=5"></script>
 <script src="js/shifts/calendar-render.js?v=5"></script>
 <script src="js/shifts/calendar-actions.js?v=5"></script>
 <script src="js/shifts/shift-crud.js?v=5"></script>
