@@ -306,6 +306,11 @@ exports.onShiftAssigned = functions.region('europe-west3').firestore.document('s
         const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
         const TEMPLATE_NAME = process.env.TEMPLATE_NAME;
 
+        console.log(`[DEBUG onShiftAssigned] Sending WhatsApp push to: ${formattedPhone}`);
+        console.log(`[DEBUG onShiftAssigned] PHONE_NUMBER_ID: ${PHONE_NUMBER_ID}`);
+        console.log(`[DEBUG onShiftAssigned] TEMPLATE_NAME: ${TEMPLATE_NAME}`);
+        console.log(`[DEBUG onShiftAssigned] META_ACCESS_TOKEN starts with: ${META_ACCESS_TOKEN ? META_ACCESS_TOKEN.substring(0, 10) + '...' : 'UNDEFINED'}`);
+
         await axios.post(
             `https://graph.facebook.com/v19.0/${PHONE_NUMBER_ID}/messages`,
             {
