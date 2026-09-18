@@ -37,6 +37,125 @@
 
       <div id="accountDetails" class="account-details"></div>
 
+      <!-- Worker Preferences Form (Editable) -->
+      <div id="workerPreferencesCard" class="hidden" style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+          <div>
+            <h2 style="margin: 0; font-size: 20px; color: #1e293b;">🎯 Çalışma Tercihlerim ve Müsaitlik</h2>
+            <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Hangi görevlerde ve ne zaman çalışmak istediğinizi buradan dilediğiniz an güncelleyebilirsiniz.</p>
+          </div>
+        </div>
+
+        <div id="workerPrefMessage" class="auth-message hidden" role="alert" style="margin-bottom: 15px;"></div>
+
+        <form id="workerPreferencesForm" onsubmit="event.preventDefault(); saveWorkerPreferences();">
+          <!-- Jobs -->
+          <div class="input-group" style="margin-bottom: 20px;">
+            <span style="font-weight: 600; margin-bottom: 8px;">HANGİ İŞLERİ YAPABİLİRSİNİZ?</span>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;">
+              <label><input type="checkbox" name="prefJobs" value="garson" /> Garson</label>
+              <label><input type="checkbox" name="prefJobs" value="sef-garson" /> Şef Garson</label>
+              <label><input type="checkbox" name="prefJobs" value="komi" /> Komi</label>
+              <label><input type="checkbox" name="prefJobs" value="barista" /> Barista</label>
+              <label><input type="checkbox" name="prefJobs" value="bulasikci" /> Bulaşıkçı</label>
+              <label><input type="checkbox" name="prefJobs" value="host" /> Host - Hostes</label>
+              <label><input type="checkbox" name="prefJobs" value="asci" /> Aşçı</label>
+              <label><input type="checkbox" name="prefJobs" value="diger" id="prefJobsDigerCb" onchange="document.getElementById('prefJobsOther').style.display = this.checked ? '' : 'none'" /> Diğer</label>
+            </div>
+            <input type="text" id="prefJobsOther" placeholder="Diğer meslek/görev belirtin" style="display:none; margin-top: 8px;" />
+          </div>
+
+          <!-- Available Days -->
+          <div class="input-group" style="margin-bottom: 20px;">
+            <span style="font-weight: 600; margin-bottom: 8px;">HANGİ GÜNLER MÜSAİTSİNİZ?</span>
+            <div class="pill-group">
+              <label><input type="checkbox" name="prefDays" value="pazartesi" class="pill-checkbox" /> <span class="pill-label">Pzt</span></label>
+              <label><input type="checkbox" name="prefDays" value="sali" class="pill-checkbox" /> <span class="pill-label">Sal</span></label>
+              <label><input type="checkbox" name="prefDays" value="carsamba" class="pill-checkbox" /> <span class="pill-label">Çar</span></label>
+              <label><input type="checkbox" name="prefDays" value="persembe" class="pill-checkbox" /> <span class="pill-label">Per</span></label>
+              <label><input type="checkbox" name="prefDays" value="cuma" class="pill-checkbox" /> <span class="pill-label">Cum</span></label>
+              <label><input type="checkbox" name="prefDays" value="cumartesi" class="pill-checkbox" /> <span class="pill-label">Cmt</span></label>
+              <label><input type="checkbox" name="prefDays" value="pazar" class="pill-checkbox" /> <span class="pill-label">Paz</span></label>
+            </div>
+          </div>
+
+          <!-- Available Hours -->
+          <div class="input-group" style="margin-bottom: 20px;">
+            <span style="font-weight: 600; margin-bottom: 8px;">HANGİ SAATLER MÜSAİTSİNİZ?</span>
+            <div class="pill-group grid-4" style="margin-bottom: 10px;">
+              <label><input type="radio" name="prefHourPre" id="prefHourPreTulum" value="tum-gun" class="pill-checkbox" onchange="toggleAccountHours(this.value)" /> <span class="pill-label" style="font-size: 13px;">Tüm Gün</span></label>
+              <label><input type="radio" name="prefHourPre" id="prefHourPreSabah" value="sabah" class="pill-checkbox" onchange="toggleAccountHours(this.value)" /> <span class="pill-label" style="font-size: 13px; flex-direction: column;">Sabah<small style="font-size: 10px; opacity: 0.8;">06:00-12:00</small></span></label>
+              <label><input type="radio" name="prefHourPre" id="prefHourPreOglen" value="oglen" class="pill-checkbox" onchange="toggleAccountHours(this.value)" /> <span class="pill-label" style="font-size: 13px; flex-direction: column;">Öğlen<small style="font-size: 10px; opacity: 0.8;">10:00-16:00</small></span></label>
+              <label><input type="radio" name="prefHourPre" id="prefHourPreAksam" value="aksam" class="pill-checkbox" onchange="toggleAccountHours(this.value)" /> <span class="pill-label" style="font-size: 13px; flex-direction: column;">Akşam<small style="font-size: 10px; opacity: 0.8;">16:00-24:00</small></span></label>
+            </div>
+            <div class="pill-group grid-6" id="accountHoursGroup">
+              <label><input type="checkbox" name="prefHours" value="00-01" class="pill-checkbox" /> <span class="pill-label hour-block"><span>00:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>01:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="01-02" class="pill-checkbox" /> <span class="pill-label hour-block"><span>01:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>02:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="02-03" class="pill-checkbox" /> <span class="pill-label hour-block"><span>02:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>03:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="03-04" class="pill-checkbox" /> <span class="pill-label hour-block"><span>03:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>04:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="04-05" class="pill-checkbox" /> <span class="pill-label hour-block"><span>04:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>05:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="05-06" class="pill-checkbox" /> <span class="pill-label hour-block"><span>05:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>06:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="06-07" class="pill-checkbox" /> <span class="pill-label hour-block"><span>06:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>07:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="07-08" class="pill-checkbox" /> <span class="pill-label hour-block"><span>07:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>08:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="08-09" class="pill-checkbox" /> <span class="pill-label hour-block"><span>08:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>09:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="09-10" class="pill-checkbox" /> <span class="pill-label hour-block"><span>09:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>10:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="10-11" class="pill-checkbox" /> <span class="pill-label hour-block"><span>10:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>11:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="11-12" class="pill-checkbox" /> <span class="pill-label hour-block"><span>11:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>12:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="12-13" class="pill-checkbox" /> <span class="pill-label hour-block"><span>12:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>13:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="13-14" class="pill-checkbox" /> <span class="pill-label hour-block"><span>13:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>14:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="14-15" class="pill-checkbox" /> <span class="pill-label hour-block"><span>14:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>15:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="15-16" class="pill-checkbox" /> <span class="pill-label hour-block"><span>15:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>16:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="16-17" class="pill-checkbox" /> <span class="pill-label hour-block"><span>16:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>17:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="17-18" class="pill-checkbox" /> <span class="pill-label hour-block"><span>17:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>18:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="18-19" class="pill-checkbox" /> <span class="pill-label hour-block"><span>18:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>19:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="19-20" class="pill-checkbox" /> <span class="pill-label hour-block"><span>19:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>20:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="20-21" class="pill-checkbox" /> <span class="pill-label hour-block"><span>20:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>21:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="21-22" class="pill-checkbox" /> <span class="pill-label hour-block"><span>21:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>22:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="22-23" class="pill-checkbox" /> <span class="pill-label hour-block"><span>22:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>23:00</span></span></label>
+              <label><input type="checkbox" name="prefHours" value="23-00" class="pill-checkbox" /> <span class="pill-label hour-block"><span>23:00</span><span style="opacity:0.6;font-size:10px;">↓</span><span>00:00</span></span></label>
+            </div>
+          </div>
+
+          <!-- Work Types -->
+          <div class="input-group" style="margin-bottom: 20px;">
+            <span style="font-weight: 600; margin-bottom: 8px;">UYGUN OLDUĞUNUZ ÇALIŞMA ŞEKLİ</span>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+              <label><input type="checkbox" name="prefWorkTypes" value="tam-zamanli" /> Tam zamanlı</label>
+              <label><input type="checkbox" name="prefWorkTypes" value="yari-zamanli" /> Yarı Zamanlı</label>
+              <label><input type="checkbox" name="prefWorkTypes" value="tek-seferlik" /> Tek seferlik</label>
+              <label><input type="checkbox" name="prefWorkTypes" value="aksam-vardiyasi" /> Akşam Vardiyası</label>
+            </div>
+          </div>
+
+          <!-- Education -->
+          <div class="input-group" style="margin-bottom: 20px;">
+            <span style="font-weight: 600; margin-bottom: 8px;">EĞİTİM DURUMU</span>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+              <label><input type="radio" name="prefEducation" value="lise-ogrencisi" /> Lise öğrencisi</label>
+              <label><input type="radio" name="prefEducation" value="lise-mezunu" /> Lise mezunu</label>
+              <label><input type="radio" name="prefEducation" value="universite-ogrencisi" /> Üniversite öğrencisi</label>
+              <label><input type="radio" name="prefEducation" value="universite-mezunu" /> Üniversite mezunu</label>
+              <label><input type="radio" name="prefEducation" value="diger" id="prefEducationDigerRadio" onchange="document.getElementById('prefEducationOther').style.display = this.checked ? '' : 'none'" /> Diğer</label>
+            </div>
+            <input type="text" id="prefEducationOther" placeholder="Eğitim durumunuzu belirtin" style="display:none; margin-top: 8px;" />
+          </div>
+
+          <!-- WhatsApp Option -->
+          <div class="input-group" style="margin-bottom: 25px;">
+            <span style="font-weight: 600; margin-bottom: 4px;">SİZE UYGUN İŞLER WHATSAPP ÜZERİNDEN GÖNDERİLSİN Mİ?</span>
+            <p style="font-size: 13px; color: #64748b; margin: 0 0 8px 0;">Uygun bir pozisyon açıldığında yetkililerimiz sizinle WhatsApp üzerinden iletişime geçer.</p>
+            <div style="display: flex; gap: 20px;">
+              <label><input type="radio" name="prefWhatsapp" value="yes" /> Evet</label>
+              <label><input type="radio" name="prefWhatsapp" value="no" /> Hayır</label>
+            </div>
+          </div>
+
+          <button class="btn primary" type="submit" id="savePreferencesButton" style="padding: 12px 28px; font-size: 15px;">
+            💾 Tercihlerimi Kaydet
+          </button>
+        </form>
+      </div>
+
       <!-- Worker Shifts Section with Filter Tabs -->
       <div id="workerShiftsSection" class="hidden" style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
@@ -133,20 +252,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js?v=5"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js?v=5"></script>
 
-  <script src="firebase.js?v=5"></script>
-  <script src="js/core.js?v=5"></script>
-  <script src="js/auth-ui.js?v=5"></script>
+  <script src="firebase.js?v=6"></script>
+  <script src="js/core.js?v=6"></script>
+  <script src="js/auth-ui.js?v=6"></script>
 <!-- Attendance Modülleri (sıra önemli) -->
-  <script src="js/attendance/utils.js?v=5"></script>
-  <script src="js/attendance/qr-core.js?v=5"></script>
-  <script src="js/attendance/shift-matching.js?v=5"></script>
-  <script src="js/attendance/checklist.js?v=5"></script>
-  <script src="js/attendance/clock-in-out.js?v=5"></script>
-  <script src="js/attendance/qr-scanner.js?v=5"></script>
-  <script src="js/attendance/reports.js?v=5"></script>
-  <script src="js/account.js?v=5"></script>
-  <script src="js/restaurant.js?v=5"></script>
-  <script src="js/worker.js?v=5"></script>
-  <script src="js/admin.js?v=5"></script>
+  <script src="js/attendance/utils.js?v=6"></script>
+  <script src="js/attendance/qr-core.js?v=6"></script>
+  <script src="js/attendance/shift-matching.js?v=6"></script>
+  <script src="js/attendance/checklist.js?v=6"></script>
+  <script src="js/attendance/clock-in-out.js?v=6"></script>
+  <script src="js/attendance/qr-scanner.js?v=6"></script>
+  <script src="js/attendance/reports.js?v=6"></script>
+  <script src="js/account.js?v=6"></script>
+  <script src="js/restaurant.js?v=6"></script>
+  <script src="js/worker.js?v=6"></script>
+  <script src="js/admin.js?v=6"></script>
 </body>
 </html>

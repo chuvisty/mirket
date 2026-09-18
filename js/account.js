@@ -128,6 +128,19 @@ async function renderAccountPage(user) {
       }
     }
 
+    // Worker preferences form toggle & populate
+    const workerPrefCard = document.getElementById('workerPreferencesCard');
+    if (workerPrefCard) {
+      if (userData.userType === 'worker') {
+        workerPrefCard.classList.remove('hidden');
+        workerPrefCard.style.display = 'block';
+        loadWorkerPreferencesToForm(userData);
+      } else {
+        workerPrefCard.classList.add('hidden');
+        workerPrefCard.style.display = 'none';
+      }
+    }
+
     // Show Admin Panel button if admin
     const adminBtn = document.getElementById('adminPanelButton');
     if (adminBtn) {
@@ -145,3 +158,169 @@ async function renderAccountPage(user) {
     setAccountMessage('Hesap bilgileri yüklenirken bir hata oluştu.', 'error');
   }
 }
+
+function loadWorkerPreferencesToForm(userData) {
+  // Jobs
+  const currentJobs = Array.isArray(userData.jobs) ? userData.jobs : [];
+  const knownJobs = ['garson', 'sef-garson', 'komi', 'barista', 'bulasikci', 'host', 'asci'];
+  let otherJobVal = '';
+
+  document.querySelectorAll('input[name="prefJobs"]').forEach(cb => {
+    if (cb.value === 'diger') {
+      const customJob = currentJobs.find(j => !knownJobs.includes(j));
+      if (customJob) {
+        cb.checked = true;
+        otherJobVal = customJob;
+      } else {
+        cb.checked = false;
+      }
+    } else {
+      cb.checked = currentJobs.includes(cb.value);
+    }
+  });
+  const otherInput = document.getElementById('prefJobsOther');
+  if (otherInput) {
+    otherInput.value = otherJobVal;
+    otherInput.style.display = otherJobVal ? '' : 'none';
+  }
+
+  // Days
+  const currentDays = Array.isArray(userData.availableDays) ? userData.availableDays : [];
+  document.querySelectorAll('input[name="prefDays"]').forEach(cb => {
+    cb.checked = currentDays.includes(cb.value);
+  });
+
+  // Hours
+  const currentHours = Array.isArray(userData.availableHours) ? userData.availableHours : [];
+  document.querySelectorAll('#accountHoursGroup input[name="prefHours"]').forEach(cb => {
+    cb.checked = currentHours.includes(cb.value);
+  });
+
+  // Work Types
+  const currentWorkTypes = Array.isArray(userData.workTypes) ? userData.workTypes : [];
+  document.querySelectorAll('input[name="prefWorkTypes"]').forEach(cb => {
+    cb.checked = currentWorkTypes.includes(cb.value);
+  });
+
+  // Education
+  const knownEdu = ['lise-ogrencisi', 'lise-mezunu', 'universite-ogrencisi', 'universite-mezunu'];
+  const userEdu = userData.education || '';
+  const eduOtherInput = document.getElementById('prefEducationOther');
+  if (knownEdu.includes(userEdu)) {
+    const radio = document.querySelector(`input[name="prefEducation"][value="${userEdu}"]`);
+    if (radio) radio.checked = true;
+    if (eduOtherInput) eduOtherInput.style.display = 'none';
+  } else if (userEdu) {
+    const digerRadio = document.getElementById('prefEducationDigerRadio');
+    if (digerRadio) digerRadio.checked = true;
+    if (eduOtherInput) {
+      eduOtherInput.value = userEdu;
+      eduOtherInput.style.display = '';
+    }
+  }
+
+  // WhatsApp
+  const whatsappVal = userData.whatsapp === 'no' ? 'no' : 'yes';
+  const waRadio = document.querySelector(`input[name="prefWhatsapp"][value="${whatsappVal}"]`);
+  if (waRadio) waRadio.checked = true;
+}
+
+function toggleAccountHours(type) {
+  const hourCheckboxes = document.querySelectorAll('#accountHoursGroup input[name="prefHours"]');
+  let range = [];
+  if (type === 'tum-gun') {
+    range = Array.from(hourCheckboxes).map(cb => cb.value);
+  } else if (type === 'sabah') {
+    range = ['06-07', '07-08', '08-09', '09-10', '10-11', '11-12'];
+  } else if (type === 'oglen') {
+    range = ['10-11', '11-12', '12-13', '13-14', '14-15', '15-16'];
+  } else if (type === 'aksam') {
+    range = ['16-17', '17-18', '18-19', '19-20', '20-21', '21-22', '22-23', '23-00'];
+  }
+  
+  hourCheckboxes.forEach(cb => {
+    cb.checked = range.includes(cb.value);
+  });
+}
+window.toggleAccountHours = toggleAccountHours;
+
+async function saveWorkerPreferences() {
+  const user = window.auth?.currentUser;
+  if (!user) {
+    alert('Oturum açık değil. Lütfen giriş yapın.');
+    return;
+  }
+
+  const msgBox = document.getElementById('workerPrefMessage');
+  const saveBtn = document.getElementById('savePreferencesButton');
+  if (saveBtn) saveBtn.disabled = true;
+
+  try {
+    // Jobs
+    const jobCheckboxes = document.querySelectorAll('input[name="prefJobs"]:checked');
+    const jobs = Array.from(jobCheckboxes).map(cb => cb.value);
+    if (jobs.includes('diger')) {
+      const otherVal = document.getElementById('prefJobsOther')?.value?.trim();
+      jobs.splice(jobs.indexOf('diger'), 1);
+      if (otherVal) jobs.push(otherVal);
+    }
+
+    // Days
+    const dayCheckboxes = document.querySelectorAll('input[name="prefDays"]:checked');
+    const availableDays = Array.from(dayCheckboxes).map(cb => cb.value);
+
+    // Hours
+    const hourCheckboxes = document.querySelectorAll('#accountHoursGroup input[name="prefHours"]:checked');
+    const availableHours = Array.from(hourCheckboxes).map(cb => cb.value);
+
+    // Work Types
+    const workTypeCheckboxes = document.querySelectorAll('input[name="prefWorkTypes"]:checked');
+    const workTypes = Array.from(workTypeCheckboxes).map(cb => cb.value);
+
+    // Education
+    const eduRadio = document.querySelector('input[name="prefEducation"]:checked');
+    let education = eduRadio ? eduRadio.value : '';
+    if (education === 'diger') {
+      education = document.getElementById('prefEducationOther')?.value?.trim() || 'diger';
+    }
+
+    // WhatsApp
+    const waRadio = document.querySelector('input[name="prefWhatsapp"]:checked');
+    const whatsapp = waRadio ? waRadio.value : 'yes';
+
+    const userRef = window.firebaseFirestore.doc(window.db, 'users', user.uid);
+    await window.firebaseFirestore.updateDoc(userRef, {
+      jobs,
+      availableDays,
+      availableHours,
+      workTypes,
+      education,
+      whatsapp,
+      updatedAt: window.firebaseFirestore.serverTimestamp()
+    });
+
+    if (msgBox) {
+      msgBox.textContent = '✅ Çalışma tercihleriniz ve müsaitlik bilgileriniz başarıyla kaydedildi!';
+      msgBox.className = 'auth-message success';
+      msgBox.classList.remove('hidden');
+      setTimeout(() => {
+        msgBox.className = 'auth-message hidden';
+      }, 4000);
+    }
+
+    // Re-render account details summary
+    await renderAccountPage(user);
+
+  } catch (err) {
+    console.error('Error saving worker preferences:', err);
+    if (msgBox) {
+      msgBox.textContent = 'Tercihler kaydedilirken bir hata oluştu: ' + (err.message || 'Bilinmeyen hata');
+      msgBox.className = 'auth-message error';
+      msgBox.classList.remove('hidden');
+    }
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+  }
+}
+window.saveWorkerPreferences = saveWorkerPreferences;
+

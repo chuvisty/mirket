@@ -214,8 +214,17 @@ function openDayDetail(dateStr) {
   const visibleStart = restaurantOpeningHour;
   const visibleEnd = restaurantClosingHour;
   const hours = [];
-  for (let h = visibleStart; h < visibleEnd; h++) {
-    hours.push(h);
+  if (visibleStart < visibleEnd) {
+    for (let h = visibleStart; h < visibleEnd; h++) {
+      hours.push(h);
+    }
+  } else {
+    for (let h = visibleStart; h < 24; h++) {
+      hours.push(h);
+    }
+    for (let h = 0; h < visibleEnd; h++) {
+      hours.push(h);
+    }
   }
 
   const header = document.createElement('div');
@@ -293,9 +302,14 @@ function openDayDetail(dateStr) {
     shifts.forEach(shift => {
       const [startH, startM] = shift.startTime.split(':').map(Number);
       const [endH, endM] = shift.endTime.split(':').map(Number);
-      const startIdx = Math.max(0, startH - visibleStart);
-      const endIdx = Math.min(hours.length, endH - visibleStart);
-      const span = Math.max(1, endIdx - startIdx);
+      let startIdx = hours.indexOf(startH);
+      if (startIdx === -1) startIdx = 0;
+      let endIdx = hours.indexOf(endH);
+      if (endIdx === -1) {
+        endIdx = hours.length;
+      }
+      let span = endIdx > startIdx ? (endIdx - startIdx) : Math.max(1, hours.length - startIdx);
+      span = Math.max(1, Math.min(span, hours.length - startIdx));
       
       const bar = document.createElement('div');
       bar.className = 'day-timeline-shift-bar';

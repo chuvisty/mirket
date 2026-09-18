@@ -28,6 +28,9 @@ function initGozcuPage() {
         // Load data
         await loadRestaurantSettings();
         await loadStaff();
+        if (typeof autoCloseExpiredShifts === 'function') {
+          await autoCloseExpiredShifts(restaurantId);
+        }
         if (typeof loadSlotBlueprints === 'function') {
           await loadSlotBlueprints();
         }

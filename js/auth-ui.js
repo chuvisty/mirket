@@ -57,6 +57,19 @@ function toggleAuthMode() {
   if (typeof updateAuthUI === 'function') updateAuthUI();
 }
 
+function handleCityChange(type) {
+  if (type === 'business') {
+    const city = document.getElementById('businessCity')?.value;
+    const districtSelect = document.getElementById('businessDistrict');
+    if (typeof updateDistrictSelect === 'function') updateDistrictSelect(city, districtSelect);
+  } else {
+    const city = document.getElementById('employeeCity')?.value;
+    const districtSelect = document.getElementById('employeeDistrict');
+    if (typeof updateDistrictSelect === 'function') updateDistrictSelect(city, districtSelect);
+  }
+}
+window.handleCityChange = handleCityChange;
+
 function initAuthPage() {
   const authCard = document.querySelector('.auth-card');
   if (!authCard) return;
@@ -99,6 +112,20 @@ function initAuthPage() {
       showAuthMessage('', 'info');
       if (typeof updateAuthUI === 'function') updateAuthUI();
     });
+  }
+
+  // Populate city selects
+  const bCityEl = document.getElementById('businessCity');
+  const eCityEl = document.getElementById('employeeCity');
+  if (typeof populateCitySelect === 'function') {
+    populateCitySelect(bCityEl);
+    populateCitySelect(eCityEl);
+  }
+  if (bCityEl) {
+    bCityEl.addEventListener('change', () => handleCityChange('business'));
+  }
+  if (eCityEl) {
+    eCityEl.addEventListener('change', () => handleCityChange('employee'));
   }
 
   // Event listeners for conditional inputs
@@ -395,57 +422,6 @@ async function handleAuthSubmit() {
         if (!employeePhone) markError('employeePhone');
         if (!employeeCity) markError('employeeCity');
         if (!employeeDistrict) markError('employeeDistrict');
-        if (!employeeNeighborhood) markError('employeeNeighborhood');
-
-        // Education
-        const educationRadios = document.querySelectorAll('input[name="education"]:checked');
-        let education = '';
-        if (educationRadios.length > 0) {
-          education = educationRadios[0].value;
-          if (education === 'diger') {
-            const other = document.getElementById('educationOther');
-            education = other?.value?.trim();
-            if (!education) markError('educationOther');
-          }
-        } else {
-          markError('education', true);
-        }
-
-        // Jobs
-        const jobCheckboxes = document.querySelectorAll('input[name="jobs"]:checked');
-        const jobs = Array.from(jobCheckboxes).map(cb => cb.value);
-        if (jobs.length === 0) {
-          markError('jobs', true);
-        } else if (jobs.includes('diger')) {
-          const otherJob = document.getElementById('jobsOther')?.value?.trim();
-          if (otherJob) jobs.push(otherJob);
-          else markError('jobsOther');
-          jobs.splice(jobs.indexOf('diger'), 1);
-        }
-
-        // Available Days
-        const dayCheckboxes = document.querySelectorAll('input[name="days"]:checked');
-        const availableDays = Array.from(dayCheckboxes).map(cb => cb.value);
-        if (availableDays.length === 0) markError('days', true);
-
-        // Available Hours
-        const hourCheckboxes = document.querySelectorAll('input[name="hours"]:checked');
-        const availableHours = Array.from(hourCheckboxes).map(cb => cb.value);
-        if (availableHours.length === 0) markError('hours', true);
-
-        // Work Types
-        const workTypeCheckboxes = document.querySelectorAll('input[name="workTypes"]:checked');
-        const workTypes = Array.from(workTypeCheckboxes).map(cb => cb.value);
-        if (workTypes.length === 0) markError('workTypes', true);
-
-        // WhatsApp
-        const whatsappRadios = document.querySelectorAll('input[name="whatsapp"]:checked');
-        let whatsapp = '';
-        if (whatsappRadios.length > 0) {
-          whatsapp = whatsappRadios[0].value;
-        } else {
-          markError('whatsapp', true);
-        }
 
         if (hasStep2Error) {
           showAuthMessage('Lütfen kırmızı ile işaretli çalışan bilgilerini eksiksiz doldurun.', 'warning');
@@ -459,13 +435,13 @@ async function handleAuthSubmit() {
           employeePhone,
           employeeCity,
           employeeDistrict,
-          employeeNeighborhood,
-          education,
-          jobs,
-          availableDays,
-          availableHours,
-          workTypes,
-          whatsapp,
+          employeeNeighborhood: employeeNeighborhood || '',
+          education: '',
+          jobs: [],
+          availableDays: [],
+          availableHours: [],
+          workTypes: [],
+          whatsapp: 'yes',
           workerCode: Math.floor(100000 + Math.random() * 900000).toString()
         });
       }

@@ -50,15 +50,23 @@
   </div>
 </div>
 
-<script src="firebase.js?v=5"></script>
-<script src="js/core.js?v=5"></script>
-<script src="js/auth-ui.js?v=5"></script>
-<script src="js/attendance/qr-core.js?v=5"></script>
-<script src="js/shifts/settings.js?v=5"></script>
+<script src="firebase.js?v=6"></script>
+<script src="js/core.js?v=6"></script>
+<script src="js/auth-ui.js?v=6"></script>
+<script src="js/attendance/utils.js?v=6"></script>
+<script src="js/attendance/clock-in-out.js?v=6"></script>
+<script src="js/attendance/qr-core.js?v=6"></script>
+<script src="js/shifts/settings.js?v=6"></script>
 
 <script>
   window.dynamicQrInterval = null;
-  // Initialize the specific page logic if needed, but core.js does most.
+  if (window.firebaseAuth?.onAuthStateChanged && window.auth) {
+    window.firebaseAuth.onAuthStateChanged(window.auth, (user) => {
+      if (user && typeof autoCloseExpiredShifts === 'function') {
+        autoCloseExpiredShifts(user.uid);
+      }
+    });
+  }
 </script>
 
 </body>
