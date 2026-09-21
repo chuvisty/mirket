@@ -236,7 +236,7 @@ async function updateAuthStateUI(user) {
     }
     showAuthMessage('Zaten giriş yaptınız: ' + userEmail + '. Çıkış yapmak için butona tıklayın.', 'success');
     
-    if (user.email === 'admin@mirket.com') {
+    if ((user.email || '').toLowerCase() === 'admin@mirket.com') {
       if (authHeaderLink) {
         authHeaderLink.textContent = 'Admin Paneli';
         authHeaderLink.href = 'admin.html';
@@ -483,29 +483,29 @@ async function handleAuthSubmit() {
   try {
     const cred = await window.firebaseAuth.signInWithEmailAndPassword(window.auth, email, password);
     showAuthMessage('Başarıyla giriş yapıldı! Yönlendiriliyorsunuz...', 'success');
+
+    const userEmail = (cred?.user?.email || window.auth?.currentUser?.email || email || '').toLowerCase();
+    if (userEmail === 'admin@mirket.com') {
+      setTimeout(function() { window.location.href = 'admin.html'; }, 800);
+      return;
+    }
+
     let redirectUrl = 'account.html';
     try {
       const currentUser = cred?.user || window.auth?.currentUser;
       if (currentUser) {
-        if (currentUser.email === 'admin@mirket.com') {
-          redirectUrl = 'admin.html';
-        } else {
-          const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', currentUser.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            if (userData.userType === 'restaurant') redirectUrl = 'gunluk-is-bul.html';
-            else if (userData.userType === 'admin') redirectUrl = 'admin.html';
-            else redirectUrl = 'account.html';
-          }
+        const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', currentUser.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.userType === 'restaurant') redirectUrl = 'gunluk-is-bul.html';
+          else if (userData.userType === 'admin') redirectUrl = 'admin.html';
+          else redirectUrl = 'account.html';
         }
       }
     } catch(err) {
       console.error('Failed to fetch user type', err);
-      if (email.toLowerCase() === 'admin@mirket.com') {
-        redirectUrl = 'admin.html';
-      }
     }
-    setTimeout(function() { window.location.href = redirectUrl; }, 1200);
+    setTimeout(function() { window.location.href = redirectUrl; }, 1000);
   } catch (error) {
     const message = getAuthErrorMessage(error.code);
     showAuthMessage(message, error.code === 'auth/user-not-found' ? 'warning' : 'error');

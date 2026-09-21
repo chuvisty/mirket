@@ -11,14 +11,13 @@ const firebaseConfig = {
 async function initFirebase() {
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
   const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
-  const { initializeFirestore, getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, orderBy, writeBatch } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
+  const { initializeFirestore, getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocsFromServer, serverTimestamp, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, orderBy, writeBatch } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
   const { getFunctions, httpsCallable, connectFunctionsEmulator } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js");
 
   const app = initializeApp(firebaseConfig);
   window.auth = getAuth(app);
   window.db = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
-    useFetchStreams: false
+    experimentalAutoDetectLongPolling: true
   });
   window.functions = getFunctions(app, "europe-west3");
 
@@ -41,6 +40,8 @@ async function initFirebase() {
     doc,
     setDoc,
     getDoc,
+    getDocFromServer,
+    getDocsFromServer,
     serverTimestamp,
     collection,
     addDoc,

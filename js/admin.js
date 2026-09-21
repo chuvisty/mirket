@@ -39,7 +39,7 @@ function initAdminPage() {
         return;
       }
 
-      if (user.email === 'admin@mirket.com') {
+      if ((user.email || '').toLowerCase() === 'admin@mirket.com') {
         if (msg) msg.classList.add('hidden');
         _tabLoaded.ilanlar = true;
         loadApplicationsTab();

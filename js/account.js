@@ -53,30 +53,45 @@ async function renderAccountPage(user) {
   setAccountMessage('Hesabınız yükleniyor...', 'info');
   accountDetails.innerHTML = '';
 
+  const isAdminUser = Boolean(user.email && user.email.toLowerCase() === 'admin@mirket.com');
+  let userData = isAdminUser ? {
+    email: user.email.toLowerCase(),
+    userType: 'admin',
+    authorizedName: 'Sistem Yöneticisi',
+    createdAt: null
+  } : null;
+
   try {
     const userRef = window.firebaseFirestore.doc(window.db, 'users', user.uid);
-    const userSnapshot = await window.firebaseFirestore.getDoc(userRef);
-
-    let userData;
-    if (!userSnapshot.exists()) {
-      if (user.email === 'admin@mirket.com') {
-        userData = {
-          email: user.email.toLowerCase(),
-          userType: 'admin',
-          authorizedName: 'Sistem Yöneticisi',
-          createdAt: window.firebaseFirestore.serverTimestamp()
-        };
-        try {
-          await window.firebaseFirestore.setDoc(userRef, userData);
-        } catch (e) {
-          console.error("Error creating admin doc:", e);
-        }
-      } else {
-        accountMessage.textContent = 'Hesap bilgileri bulunamadı. Lütfen yeniden giriş yapın veya destek ile iletişime geçin.';
-        return;
+    let userSnapshot = null;
+    try {
+      userSnapshot = await window.firebaseFirestore.getDoc(userRef);
+    } catch (fetchErr) {
+      console.warn("Firestore user fetch warning:", fetchErr);
+      if (!isAdminUser) {
+        throw fetchErr;
       }
-    } else {
+    }
+
+    if (userSnapshot && userSnapshot.exists()) {
       userData = userSnapshot.data();
+    } else if (isAdminUser) {
+      // If admin doc doesn't exist yet, save it in background
+      (async () => {
+        try {
+          await window.firebaseFirestore.setDoc(userRef, {
+            email: user.email.toLowerCase(),
+            userType: 'admin',
+            authorizedName: 'Sistem Yöneticisi',
+            createdAt: window.firebaseFirestore.serverTimestamp()
+          }, { merge: true });
+        } catch (e) {
+          console.warn("Background admin provisioning:", e);
+        }
+      })();
+    } else {
+      accountMessage.textContent = 'Hesap bilgileri bulunamadı. Lütfen yeniden giriş yapın veya destek ile iletişime geçin.';
+      return;
     }
 
     const createDate = userData.createdAt && typeof userData.createdAt.toDate === 'function'
