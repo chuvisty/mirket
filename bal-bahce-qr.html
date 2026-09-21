@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bal Bahçe | Google Yorum & Değerlendirme QR Kodu</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #d97706;
+      --primary-dark: #b45309;
+      --primary-light: #fef3c7;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container { max-width: 900px; width: 100%; }
+    .header { text-align: center; margin-bottom: 35px; }
+    .header h1 { font-family: 'Playfair Display', serif; font-size: 32px; color: #78350f; margin-bottom: 8px; }
+    .header p { color: var(--text-muted); font-size: 15px; max-width: 600px; margin: 0 auto; }
+    .layout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start; }
+    @media (max-width: 768px) { .layout-grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-color);
+    }
+    .table-stand {
+      background: linear-gradient(145deg, #ffffff, #fffbeb);
+      border: 2px solid #fde68a;
+      border-radius: 24px;
+      padding: 35px 25px;
+      text-align: center;
+      box-shadow: 0 20px 35px -10px rgba(217,119,6,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .table-stand::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 6px;
+      background: linear-gradient(90deg, #d97706, #f59e0b, #fbbf24);
+    }
+    .restaurant-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: #92400e;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .sub-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #b45309;
+      margin-bottom: 20px;
+    }
+    .qr-frame {
+      display: inline-block;
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 18px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+      border: 1px solid #fed7aa;
+      margin-bottom: 20px;
+    }
+    .qr-frame img { width: 230px; height: 230px; display: block; border-radius: 8px; }
+    .stand-callout { font-size: 15px; font-weight: 600; color: #1f2937; margin-bottom: 6px; }
+    .stand-desc { font-size: 12px; color: #6b7280; line-height: 1.4; }
+    .stars { color: #f59e0b; font-size: 18px; margin: 8px 0; letter-spacing: 3px; }
+    .actions-panel h3 { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 12px; }
+    .actions-panel p { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; }
+    .btn-stack { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+      width: 100%;
+    }
+    .btn-primary { background: #d97706; color: #ffffff; }
+    .btn-primary:hover { background: #b45309; transform: translateY(-1px); }
+    .btn-secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+    .btn-secondary:hover { background: #e2e8f0; color: #0f172a; }
+    .btn-outline { background: transparent; color: #d97706; border: 2px solid #d97706; }
+    .btn-outline:hover { background: #fffbeb; }
+    .info-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 13px;
+      color: #475569;
+    }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .header, .actions-panel, .info-box { display: none !important; }
+      .layout-grid { display: block; }
+      .table-stand {
+        box-shadow: none;
+        border: 2px solid #000000;
+        max-width: 380px;
+        margin: 40px auto;
+        page-break-inside: avoid;
+      }
+      .table-stand::before { display: none; }
+      .qr-frame { box-shadow: none; border: 1px solid #ccc; }
+      .qr-frame img { width: 260px; height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>Bal Bahçe • Kalıcı QR Kod</h1>
+      <p>Müşterilerinizin Google Haritalar üzerinden doğrudan değerlendirme ve 5 yıldızlı yorum bırakabilmesi için özel olarak hazırlanmış kalıcı QR kod.</p>
+    </header>
+
+    <div class="layout-grid">
+      <div class="table-stand">
+        <div class="restaurant-title">
+          <span>🍴</span>
+          <span>Bal Bahçe</span>
+        </div>
+        <div class="sub-title">Restoran & Bahçe Keyfi</div>
+
+        <div class="qr-frame">
+          <img src="bal_bahce_qr.png" alt="Bal Bahçe Google Değerlendirme QR Kodu">
+        </div>
+
+        <div class="stars">★★★★★</div>
+        <div class="stand-callout">Deneyiminizi Bizimle Paylaşın!</div>
+        <p class="stand-desc">Kameranızı QR koda tutarak Google üzerinden restoranımızı değerlendirebilir ve yorumunuzu bırakabilirsiniz.</p>
+      </div>
+
+      <div class="card actions-panel">
+        <h3>Dosyaları İndirin & Kullanın</h3>
+        <p>Aşağıdaki seçeneklerden dilediğinizi indirip masa pleksilerinde, menü arkalarında veya sticker olarak kullanabilirsiniz.</p>
+
+        <div class="btn-stack">
+          <a href="bal_bahce_qr.png" download="bal_bahce_qr.png" class="btn btn-primary">
+            <span>📥 Ultra Yüksek Çözünürlüklü PNG İndir</span>
+            <small style="opacity: 0.8; font-size: 11px;">(2136×2136 px, 300 DPI)</small>
+          </a>
+
+          <a href="bal_bahce_qr.svg" download="bal_bahce_qr.svg" class="btn btn-secondary">
+            <span>📐 Vektörel SVG İndir</span>
+            <small style="opacity: 0.8; font-size: 11px;">(Matbaa & Tabela Baskısı)</small>
+          </a>
+
+          <button onclick="window.print()" class="btn btn-outline" type="button">
+            <span>🖨️ Masa Standı Olarak Yazdır / PDF Kaydet</span>
+          </button>
+
+          <a href="https://www.google.com/search?hl=tr-SE&gl=se&q=Bal+Bah%C3%A7e,+Co%C4%9Flaki,+G%C3%BCndo%C4%9Fdu+Cd.+No:71,+68100+Aksaray+Merkez/Aksaray,+T%C3%BCrkiye&ludocid=17048116617288862234&lsig=AB86z5UMJdGVtWdnbf5HbwZHo1gg#lrd=0x14d671a5e70c62d7:0xec9713bd16efca1a,3" target="_blank" class="btn btn-secondary">
+            <span>🔗 Hedef Google Bağlantısını Aç & Test Et</span>
+          </a>
+        </div>
+
+        <div class="info-box">
+          <strong>📌 QR Kod Özellikleri:</strong>
+          <ul style="margin-left: 20px; margin-top: 6px; line-height: 1.6;">
+            <li><strong>Hata Düzeltme Seviyesi:</strong> Level H (%30 tolerans). Ortadaki logo kameranın okumasını kesinlikle engellemez.</li>
+            <li><strong>Kalıcılık:</strong> URL doğrudan Google İşletme Profilinize ve yorum penceresine bağlıdır, süresi dolmaz.</li>
+            <li><strong>Konum:</strong> Coğlaki, Gündoğdu Cd. No:71, 68100 Aksaray Merkez / Bal Bahçe.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -9,6 +9,9 @@ const firebaseConfig = {
 };
 
 async function initFirebase() {
+  if (window.auth && window.db) {
+    return;
+  }
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js");
   const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js");
   const { initializeFirestore, getFirestore, doc, setDoc, getDoc, getDocFromServer, getDocsFromServer, serverTimestamp, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, orderBy, writeBatch } = await import("https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js");
