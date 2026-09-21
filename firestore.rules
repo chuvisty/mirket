@@ -8,8 +8,11 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin';
+      return isAuthenticated() && (
+        request.auth.token.email == 'admin@mirket.com' ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.userType == 'admin')
+      );
     }
 
     match /users/{userId} {

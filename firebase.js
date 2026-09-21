@@ -11,12 +11,14 @@ const firebaseConfig = {
 async function initFirebase() {
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js");
   const { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithCustomToken, onAuthStateChanged, signOut } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js");
-  const { getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, orderBy, writeBatch } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
+  const { initializeFirestore, getFirestore, doc, setDoc, getDoc, serverTimestamp, collection, addDoc, getDocs, query, where, updateDoc, deleteDoc, orderBy, writeBatch } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
   const { getFunctions, httpsCallable, connectFunctionsEmulator } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-functions.js");
 
   const app = initializeApp(firebaseConfig);
   window.auth = getAuth(app);
-  window.db = getFirestore(app);
+  window.db = initializeFirestore(app, {
+    experimentalForceLongPolling: true
+  });
   window.functions = getFunctions(app, "europe-west3");
 
   if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
@@ -29,7 +31,10 @@ async function initFirebase() {
     createUserWithEmailAndPassword,
     signInWithCustomToken,
     onAuthStateChanged,
-    signOut
+    signOut,
+    get currentUser() {
+      return window.auth ? window.auth.currentUser : null;
+    }
   };
   window.firebaseFirestore = {
     doc,

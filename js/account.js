@@ -57,12 +57,28 @@ async function renderAccountPage(user) {
     const userRef = window.firebaseFirestore.doc(window.db, 'users', user.uid);
     const userSnapshot = await window.firebaseFirestore.getDoc(userRef);
 
+    let userData;
     if (!userSnapshot.exists()) {
-      accountMessage.textContent = 'Hesap bilgileri bulunamadı. Lütfen yeniden giriş yapın veya destek ile iletişime geçin.';
-      return;
+      if (user.email === 'admin@mirket.com') {
+        userData = {
+          email: user.email.toLowerCase(),
+          userType: 'admin',
+          authorizedName: 'Sistem Yöneticisi',
+          createdAt: window.firebaseFirestore.serverTimestamp()
+        };
+        try {
+          await window.firebaseFirestore.setDoc(userRef, userData);
+        } catch (e) {
+          console.error("Error creating admin doc:", e);
+        }
+      } else {
+        accountMessage.textContent = 'Hesap bilgileri bulunamadı. Lütfen yeniden giriş yapın veya destek ile iletişime geçin.';
+        return;
+      }
+    } else {
+      userData = userSnapshot.data();
     }
 
-    const userData = userSnapshot.data();
     const createDate = userData.createdAt && typeof userData.createdAt.toDate === 'function'
       ? userData.createdAt.toDate().toLocaleString('tr-TR')
       : '';
@@ -81,6 +97,17 @@ async function renderAccountPage(user) {
       details.push(`<p><strong>İşletme Konumu:</strong> ${escapeHTML(userData.businessCity)} / ${escapeHTML(userData.businessDistrict)} / ${escapeHTML(userData.businessNeighborhood)}</p>`);
       details.push(`<p><strong>Yetkili Adı / Ünvanı:</strong> ${escapeHTML(userData.authorizedName)}</p>`);
       details.push(`<p><strong>Yetkili Telefon:</strong> ${escapeHTML(userData.authorizedPhone)}</p>`);
+    } else if (userData.userType === 'admin') {
+      details.push(`<p><strong>Yönetici Adı:</strong> ${escapeHTML(userData.authorizedName || userData.employeeName || 'Sistem Yöneticisi')}</p>`);
+      if (userData.authorizedPhone || userData.employeePhone) {
+        details.push(`<p><strong>Telefon:</strong> ${escapeHTML(userData.authorizedPhone || userData.employeePhone)}</p>`);
+      }
+      details.push(`
+        <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe; border-radius: 12px; padding: 16px; margin: 16px 0; text-align: center;">
+          <p style="margin: 0 0 8px 0; font-weight: 700; color: #1e40af; font-size: 15px;">👑 Yönetici Yetkileri Aktif</p>
+          <p style="margin: 0; font-size: 13px; color: #3b82f6;">İlanları, restoranları ve personelleri yönetmek için Yönetici Panelini kullanabilirsiniz.</p>
+        </div>
+      `);
     } else {
       let workerCode = userData.workerCode;
       if (!workerCode) {
@@ -118,7 +145,7 @@ async function renderAccountPage(user) {
     // Worker shift status banner & active shift check
     const workerShiftStatus = document.getElementById('workerShiftStatus');
     if (workerShiftStatus) {
-      if (userData.userType === 'restaurant') {
+      if (userData.userType === 'restaurant' || userData.userType === 'admin') {
         workerShiftStatus.style.display = 'none';
       } else {
         workerShiftStatus.style.display = 'block';
