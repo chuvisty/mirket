@@ -19,11 +19,7 @@ async function initFirebase() {
 
   const app = initializeApp(firebaseConfig);
   window.auth = getAuth(app);
-  window.db = initializeFirestore(app, {
-    host: 'europe-west1-firestore.googleapis.com',
-    ssl: true,
-    experimentalAutoDetectLongPolling: true
-  });
+  window.db = getFirestore(app);
   window.functions = getFunctions(app, "europe-west3");
 
   if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
