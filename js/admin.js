@@ -39,26 +39,35 @@ function initAdminPage() {
         return;
       }
 
+      if (user.email === 'admin@mirket.com') {
+        if (msg) msg.classList.add('hidden');
+        _tabLoaded.ilanlar = true;
+        loadApplicationsTab();
+        (async () => {
+          try {
+            const userRef = window.firebaseFirestore.doc(window.db, 'users', user.uid);
+            const userSnap = await window.firebaseFirestore.getDoc(userRef);
+            if (!userSnap.exists()) {
+              await window.firebaseFirestore.setDoc(userRef, {
+                email: user.email.toLowerCase(),
+                userType: 'admin',
+                authorizedName: 'Sistem Yöneticisi',
+                createdAt: window.firebaseFirestore.serverTimestamp()
+              }, { merge: true });
+            }
+          } catch (e) {
+            console.warn('Background admin profile sync:', e);
+          }
+        })();
+        return;
+      }
+
       try {
         const userRef = window.firebaseFirestore.doc(window.db, 'users', user.uid);
         const userSnap = await window.firebaseFirestore.getDoc(userRef);
         if (userSnap.exists() && userSnap.data().userType === 'admin') {
           if (msg) msg.classList.add('hidden');
           // Load default tab (İlanlar) on page open
-          _tabLoaded.ilanlar = true;
-          loadApplicationsTab();
-        } else if (user.email === 'admin@mirket.com') {
-          try {
-            await window.firebaseFirestore.setDoc(userRef, {
-              email: user.email.toLowerCase(),
-              userType: 'admin',
-              authorizedName: 'Sistem Yöneticisi',
-              createdAt: window.firebaseFirestore.serverTimestamp()
-            }, { merge: true });
-          } catch (setErr) {
-            console.error("Admin auto-provisioning error:", setErr);
-          }
-          if (msg) msg.classList.add('hidden');
           _tabLoaded.ilanlar = true;
           loadApplicationsTab();
         } else {

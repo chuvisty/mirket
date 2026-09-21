@@ -236,20 +236,27 @@ async function updateAuthStateUI(user) {
     }
     showAuthMessage('Zaten giriş yaptınız: ' + userEmail + '. Çıkış yapmak için butona tıklayın.', 'success');
     
-    try {
-      const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        if (userData.userType === 'restaurant') {
-          if (navGunlukIsBul) navGunlukIsBul.style.display = 'none';
-        } else if (userData.userType === 'worker') {
-          if (navPersonelBul) navPersonelBul.style.display = 'none';
-          if (navMirketGozcu) navMirketGozcu.style.display = 'none';
-          if (navCanliQr) navCanliQr.style.display = 'none';
-        }
+    if (user.email === 'admin@mirket.com') {
+      if (authHeaderLink) {
+        authHeaderLink.textContent = 'Admin Paneli';
+        authHeaderLink.href = 'admin.html';
       }
-    } catch(err) {
-      console.error('Failed to fetch user type for nav visibility', err);
+    } else {
+      try {
+        const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.userType === 'restaurant') {
+            if (navGunlukIsBul) navGunlukIsBul.style.display = 'none';
+          } else if (userData.userType === 'worker') {
+            if (navPersonelBul) navPersonelBul.style.display = 'none';
+            if (navMirketGozcu) navMirketGozcu.style.display = 'none';
+            if (navCanliQr) navCanliQr.style.display = 'none';
+          }
+        }
+      } catch(err) {
+        console.error('Failed to fetch user type for nav visibility', err);
+      }
     }
     
     if (window.accountPageActive && typeof window.renderAccountPage === 'function') {
