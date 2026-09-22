@@ -82,7 +82,7 @@ async function loadRestaurantSettings() {
       renderCustomShiftTemplatesList();
       renderShiftTemplatesUI();
 
-      // Attendance PIN (unique 4-digit branch code for blue-collar staff clock-in)
+      // Attendance PIN (unique 4-digit branch code for staff clock-in)
       let attendancePin = data.attendancePin;
       const allowPinAttendance = data.allowPinAttendance !== false; // default true
 
