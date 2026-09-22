@@ -19,6 +19,7 @@ async function saveRestaurantSettings() {
   const closing = parseInt(document.getElementById('restaurantClosingHour').value);
   const autoEndVal = document.getElementById('autoEndShiftToggle') ? document.getElementById('autoEndShiftToggle').checked : false;
   const whatsappNotifyVal = document.getElementById('whatsappShiftNotificationToggle') ? document.getElementById('whatsappShiftNotificationToggle').checked : false;
+  const allowPinVal = document.getElementById('allowPinAttendanceToggle') ? document.getElementById('allowPinAttendanceToggle').checked : true;
 
   if (isNaN(opening) || isNaN(closing)) {
     alert('Lütfen geçerli açılış ve kapanış saatleri giriniz.');
@@ -31,19 +32,22 @@ async function saveRestaurantSettings() {
   }
   
   try {
+    const updatePayload = {
+      openingHour: opening,
+      closingHour: closing,
+      autoEndShiftAtScheduledTime: autoEndVal,
+      whatsappShiftNotifications: whatsappNotifyVal,
+      allowPinAttendance: allowPinVal
+    };
     await window.firebaseFirestore.updateDoc(
       window.firebaseFirestore.doc(window.db, 'users', restaurantId),
-      {
-        openingHour: opening,
-        closingHour: closing,
-        autoEndShiftAtScheduledTime: autoEndVal,
-        whatsappShiftNotifications: whatsappNotifyVal
-      }
+      updatePayload
     );
     restaurantOpeningHour = opening;
     restaurantClosingHour = closing;
     autoEndShiftAtScheduledTime = autoEndVal;
     whatsappShiftNotifications = whatsappNotifyVal;
+    window.allowPinAttendance = allowPinVal;
     alert('İşletme ayarları kaydedildi.');
     renderCalendar();
   } catch (error) {
@@ -152,3 +156,163 @@ async function deleteCustomShiftTemplate(index) {
     alert('Şablon silinirken hata oluştu.');
   }
 }
+
+// --- ATTENDANCE PIN: Unique 4-digit code generation & management ---
+async function generateUniqueAttendancePin(excludeRestaurantId = null) {
+  let isUnique = false;
+  let attempts = 0;
+  let candidatePin = '';
+
+  while (!isUnique && attempts < 25) {
+    attempts++;
+    candidatePin = String(Math.floor(1000 + Math.random() * 9000));
+
+    try {
+      const q = window.firebaseFirestore.query(
+        window.firebaseFirestore.collection(window.db, 'users'),
+        window.firebaseFirestore.where('attendancePin', '==', candidatePin)
+      );
+      const snap = await window.firebaseFirestore.getDocs(q);
+
+      if (snap.empty) {
+        isUnique = true;
+      } else {
+        const otherDocs = snap.docs.filter(d => d.id !== excludeRestaurantId);
+        if (otherDocs.length === 0) {
+          isUnique = true;
+        }
+      }
+    } catch (err) {
+      console.warn("PIN uniqueness check error, retrying:", err);
+    }
+  }
+
+  return candidatePin;
+}
+window.generateUniqueAttendancePin = generateUniqueAttendancePin;
+
+async function regenerateBranchPin() {
+  const rId = window.restaurantId || (window.auth?.currentUser?.uid);
+  if (!rId) {
+    alert("Restoran oturumu bulunamadı.");
+    return;
+  }
+
+  const confirmGen = confirm("Yeni bir 4 haneli şube PIN kodu üretmek istediğinizden emin misiniz? Eski kod geçersiz olacaktır.");
+  if (!confirmGen) return;
+
+  const btn = document.getElementById('regenBranchPinBtn');
+  if (btn) btn.disabled = true;
+
+  try {
+    const newPin = await generateUniqueAttendancePin(rId);
+    await window.firebaseFirestore.updateDoc(
+      window.firebaseFirestore.doc(window.db, 'users', rId),
+      { attendancePin: newPin }
+    );
+    window.attendancePin = newPin;
+
+    if (document.getElementById('branchPinInput')) {
+      document.getElementById('branchPinInput').value = newPin;
+    }
+    if (document.getElementById('branchPinDisplayBadge')) {
+      document.getElementById('branchPinDisplayBadge').textContent = newPin;
+    }
+    const msgEl = document.getElementById('branchPinSaveMessage');
+    if (msgEl) {
+      msgEl.textContent = `✅ Yeni şube kodunuz başarıyla tanımlandı: ${newPin}`;
+      msgEl.className = 'auth-message success';
+      msgEl.classList.remove('hidden');
+      setTimeout(() => msgEl.classList.add('hidden'), 4000);
+    } else {
+      alert(`Yeni şube kodunuz başarıyla tanımlandı: ${newPin}`);
+    }
+  } catch (err) {
+    console.error("Error regenerating branch pin:", err);
+    alert("Yeni kod üretilirken bir hata oluştu.");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+window.regenerateBranchPin = regenerateBranchPin;
+
+async function saveBranchPinSettings() {
+  const rId = window.restaurantId || (window.auth?.currentUser?.uid);
+  if (!rId) {
+    alert("Restoran oturumu bulunamadı.");
+    return;
+  }
+
+  const pinInput = document.getElementById('branchPinInput');
+  const allowToggle = document.getElementById('allowPinAttendanceToggle');
+  const msgEl = document.getElementById('branchPinSaveMessage');
+
+  if (!pinInput) return;
+  const enteredPin = pinInput.value.trim();
+  const allowVal = allowToggle ? allowToggle.checked : true;
+
+  if (!/^\d{4}$/.test(enteredPin)) {
+    if (msgEl) {
+      msgEl.textContent = 'Şube PIN kodu tam olarak 4 haneli bir sayı olmalıdır (Örn: 5824).';
+      msgEl.className = 'auth-message error';
+      msgEl.classList.remove('hidden');
+    } else {
+      alert('Şube PIN kodu tam olarak 4 haneli bir sayı olmalıdır.');
+    }
+    return;
+  }
+
+  try {
+    // Check collision with other restaurants
+    const q = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'users'),
+      window.firebaseFirestore.where('attendancePin', '==', enteredPin)
+    );
+    const snap = await window.firebaseFirestore.getDocs(q);
+    const isTakenByAnother = snap.docs.some(d => d.id !== rId);
+
+    if (isTakenByAnother) {
+      if (msgEl) {
+        msgEl.textContent = `Bu PIN kodu (${enteredPin}) başka bir işletme tarafından kullanılmaktadır. Lütfen farklı bir 4 haneli kod seçiniz veya 'Yeni Kod Üret' butonunu kullanınız.`;
+        msgEl.className = 'auth-message error';
+        msgEl.classList.remove('hidden');
+      } else {
+        alert(`Bu PIN kodu (${enteredPin}) başka bir işletme tarafından kullanılmaktadır. Lütfen farklı bir kod giriniz.`);
+      }
+      return;
+    }
+
+    await window.firebaseFirestore.updateDoc(
+      window.firebaseFirestore.doc(window.db, 'users', rId),
+      {
+        attendancePin: enteredPin,
+        allowPinAttendance: allowVal
+      }
+    );
+
+    window.attendancePin = enteredPin;
+    window.allowPinAttendance = allowVal;
+
+    if (document.getElementById('branchPinDisplayBadge')) {
+      document.getElementById('branchPinDisplayBadge').textContent = enteredPin;
+    }
+
+    if (msgEl) {
+      msgEl.textContent = `✅ Şube PIN kodu ve ayarları başarıyla kaydedildi: ${enteredPin}`;
+      msgEl.className = 'auth-message success';
+      msgEl.classList.remove('hidden');
+      setTimeout(() => msgEl.classList.add('hidden'), 4000);
+    } else {
+      alert('Şube PIN ayarları kaydedildi.');
+    }
+  } catch (err) {
+    console.error("Error saving branch pin:", err);
+    if (msgEl) {
+      msgEl.textContent = 'Ayarlar kaydedilirken hata oluştu: ' + err.message;
+      msgEl.className = 'auth-message error';
+      msgEl.classList.remove('hidden');
+    }
+  }
+}
+window.saveBranchPinSettings = saveBranchPinSettings;
+

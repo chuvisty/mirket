@@ -81,6 +81,34 @@ async function loadRestaurantSettings() {
 
       renderCustomShiftTemplatesList();
       renderShiftTemplatesUI();
+
+      // Attendance PIN (unique 4-digit branch code for blue-collar staff clock-in)
+      let attendancePin = data.attendancePin;
+      const allowPinAttendance = data.allowPinAttendance !== false; // default true
+
+      if (!attendancePin && typeof generateUniqueAttendancePin === 'function') {
+        attendancePin = await generateUniqueAttendancePin(restaurantId);
+        try {
+          await window.firebaseFirestore.updateDoc(
+            window.firebaseFirestore.doc(window.db, 'users', restaurantId),
+            { attendancePin: attendancePin, allowPinAttendance: true }
+          );
+        } catch (e) {
+          console.warn("Could not auto-generate initial attendancePin:", e);
+        }
+      }
+      window.attendancePin = attendancePin;
+      window.allowPinAttendance = allowPinAttendance;
+
+      if (document.getElementById('branchPinInput')) {
+        document.getElementById('branchPinInput').value = attendancePin || '';
+      }
+      if (document.getElementById('allowPinAttendanceToggle')) {
+        document.getElementById('allowPinAttendanceToggle').checked = allowPinAttendance;
+      }
+      if (document.getElementById('branchPinDisplayBadge')) {
+        document.getElementById('branchPinDisplayBadge').textContent = attendancePin || '----';
+      }
     }
   } catch (error) {
     console.error("Error loading restaurant settings:", error);

@@ -146,6 +146,13 @@ function renderAttendanceTable(shifts) {
       ? `<span style="font-size:11px; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px;" title="GPS ile doğrulandı (${shift.checkInGeo.distanceMeters}m)">✓ GPS</span>`
       : `<span style="font-size:11px; background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:4px;">Manuel</span>`;
 
+    let methodBadge = '';
+    if (shift.entryMethod === 'pin_code') {
+      methodBadge = `<span style="font-size:10px; background:#fef3c7; color:#b45309; padding:2px 5px; border-radius:4px; font-weight:600; border:1px solid #fde68a;" title="Şube PIN kodu ile giriş (${shift.entryPin || ''})">🔢 PIN</span>`;
+    } else if (shift.entryMethod === 'qr_live') {
+      methodBadge = `<span style="font-size:10px; background:#f0fdf4; color:#15803d; padding:2px 5px; border-radius:4px; font-weight:600; border:1px solid #bbf7d0;" title="Canlı QR ile giriş">📱 QR</span>`;
+    }
+
     const statusBadge = shift.status === 'active'
       ? `<span style="background:#3b82f6; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">Aktif</span>`
       : `<span style="background:#10b981; color:white; padding:2px 6px; border-radius:4px; font-size:11px;">Tamamlandı</span>`;
@@ -171,7 +178,7 @@ function renderAttendanceTable(shifts) {
         <td><strong>${workedHours > 0 ? workedHours.toFixed(1) + ' Sa' : '-'}</strong></td>
         <td><strong style="color: #047857;">${wageLabel}</strong></td>
         <td>${checklistBadge}</td>
-        <td>${punctualityBadge} ${statusBadge} ${geoBadge} ${overrideBtn}</td>
+        <td>${punctualityBadge} ${statusBadge} ${methodBadge} ${geoBadge} ${overrideBtn}</td>
       </tr>
     `;
   }).join('');
