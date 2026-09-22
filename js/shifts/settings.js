@@ -1,18 +1,47 @@
 // --- SETTINGS: Restaurant settings save, shift templates & QR modal ---
 
 
+function checkProtectedLockState() {
+  const expiry = localStorage.getItem('gozcu_unlocked_until');
+  if (expiry && Date.now() < parseInt(expiry, 10)) {
+    const pinSection = document.getElementById('pinEntrySection');
+    const protSection = document.getElementById('protectedSections');
+    if (pinSection) pinSection.style.display = 'none';
+    if (protSection) protSection.style.display = 'block';
+    return true;
+  }
+  return false;
+}
+window.checkProtectedLockState = checkProtectedLockState;
+
 function unlockProtectedSections() {
-  const input = document.getElementById('restaurantPinInput').value;
+  const inputEl = document.getElementById('restaurantPinInput');
+  const input = inputEl ? inputEl.value : '';
   const errorMsg = document.getElementById('pinErrorMessage');
   const targetPin = window.restaurantPin || '0068';
   
   if (input === targetPin) {
+    // Keep unlocked for 15 minutes across page refreshes
+    localStorage.setItem('gozcu_unlocked_until', String(Date.now() + 15 * 60 * 1000));
     document.getElementById('pinEntrySection').style.display = 'none';
     document.getElementById('protectedSections').style.display = 'block';
+    if (errorMsg) errorMsg.style.display = 'none';
   } else {
-    errorMsg.style.display = 'block';
+    if (errorMsg) errorMsg.style.display = 'block';
   }
 }
+window.unlockProtectedSections = unlockProtectedSections;
+
+function relockProtectedSections() {
+  localStorage.removeItem('gozcu_unlocked_until');
+  const pinSection = document.getElementById('pinEntrySection');
+  const protSection = document.getElementById('protectedSections');
+  if (pinSection) pinSection.style.display = 'block';
+  if (protSection) protSection.style.display = 'none';
+  const inputEl = document.getElementById('restaurantPinInput');
+  if (inputEl) inputEl.value = '';
+}
+window.relockProtectedSections = relockProtectedSections;
 
 async function saveRestaurantSettings() {
   const opening = parseInt(document.getElementById('restaurantOpeningHour').value);
@@ -61,15 +90,15 @@ function renderCustomShiftTemplatesList() {
   if (!listContainer) return;
   
   if (!customShiftTemplates || customShiftTemplates.length === 0) {
-    listContainer.innerHTML = '<span style="font-size: 12px; color: #94a3b8;">Henüz özel vardiya şablonu eklenmedi.</span>';
+    listContainer.innerHTML = '<span style="font-size: 12px; color: #94a3b8;">Tanımlı vardiya şablonu bulunmuyor. Yukarıdan yeni çalışma saatleri ekleyebilirsiniz.</span>';
     return;
   }
 
   listContainer.innerHTML = customShiftTemplates.map((t, idx) => `
-    <div style="display: inline-flex; align-items: center; gap: 8px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 20px; padding: 5px 12px; font-size: 13px; color: #1e293b;">
+    <div style="display: inline-flex; align-items: center; gap: 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 20px; padding: 6px 14px; font-size: 13px; color: #1e293b;">
       <span style="font-weight: 600;">${t.name}</span>
       <span style="color: #64748b; font-size: 12px;">(${t.startTime} - ${t.endTime})</span>
-      <button type="button" onclick="deleteCustomShiftTemplate(${idx})" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; font-weight: bold; padding: 0 2px;">&times;</button>
+      <button type="button" onclick="deleteCustomShiftTemplate(${idx})" title="Bu şablonu sil" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px; font-weight: bold; padding: 0 4px; line-height: 1;">&times;</button>
     </div>
   `).join('');
 }
@@ -78,27 +107,16 @@ function renderShiftTemplatesUI() {
   const container = document.getElementById('shiftTemplatesContainer');
   if (!container) return;
 
-  const defaultTemplates = [
-    { name: 'Sabah', startTime: '08:00', endTime: '16:00' },
-    { name: 'Akşam', startTime: '16:00', endTime: '00:00' },
-    { name: 'Tam Gün', startTime: '08:00', endTime: '20:00' }
-  ];
+  if (!customShiftTemplates || customShiftTemplates.length === 0) {
+    container.innerHTML = '<span style="font-size: 12px; color: #94a3b8; padding: 4px 6px;">Kayıtlı şablon bulunamadı. Ayarlar bölümünden ekleyebilirsiniz.</span>';
+    return;
+  }
 
-  const allTemplates = customShiftTemplates.length > 0 ? customShiftTemplates : defaultTemplates;
-
-  container.innerHTML = allTemplates.map(t => `
+  container.innerHTML = customShiftTemplates.map(t => `
     <button type="button" class="shift-template-btn" onclick="applyShiftTemplate('${t.startTime}', '${t.endTime}')">
       ${t.name} (${t.startTime}-${t.endTime})
     </button>
   `).join('');
-
-  // If custom templates exist, also add a reset/default option if needed
-  if (customShiftTemplates.length > 0) {
-    container.innerHTML += `
-      <button type="button" class="shift-template-btn" style="border-style: dashed; opacity: 0.8;" onclick="applyShiftTemplate('08:00', '16:00')">Sabah (08-16)</button>
-      <button type="button" class="shift-template-btn" style="border-style: dashed; opacity: 0.8;" onclick="applyShiftTemplate('16:00', '00:00')">Akşam (16-00)</button>
-    `;
-  }
 }
 
 async function addCustomShiftTemplate() {
@@ -141,6 +159,12 @@ async function addCustomShiftTemplate() {
 
 async function deleteCustomShiftTemplate(index) {
   if (index < 0 || index >= customShiftTemplates.length) return;
+  const target = customShiftTemplates[index];
+  const targetName = target ? `${target.name} (${target.startTime} - ${target.endTime})` : 'bu şablonu';
+  if (!confirm(`"${targetName}" şablonunu silmek istediğinize emin misiniz?`)) {
+    return;
+  }
+
   customShiftTemplates.splice(index, 1);
 
   try {

@@ -150,6 +150,17 @@ async function handleShiftSubmit(e) {
     }
   }
   
+  const now = new Date();
+  const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const isPast = date < localTodayStr;
+
+  if (isPast) {
+    const confirmPast = confirm(`⚠️ Dikkat: Geçmiş bir tarihe (${date}) ait vardiya kaydında ekleme/düzeltme yapıyorsunuz.\n\nBu işlem sistemde "Düzeltme" olarak işaretlenecektir. Devam etmek istiyor musunuz?`);
+    if (!confirmPast) {
+      return;
+    }
+  }
+
   const submitBtn = e.target.querySelector('button[type="submit"]');
   submitBtn.disabled = true;
   submitBtn.textContent = 'Kaydediliyor...';
@@ -164,6 +175,11 @@ async function handleShiftSubmit(e) {
     notes,
     checklist: currentModalChecklist
   };
+
+  if (isPast) {
+    shiftData.isRetroactiveEdit = true;
+    shiftData.retroactiveEditedAt = window.firebaseFirestore.serverTimestamp();
+  }
   
   try {
     if (id) {
@@ -195,7 +211,18 @@ async function handleShiftSubmit(e) {
 
 async function deleteShift() {
   const id = document.getElementById('shiftId').value;
-  if (id && confirm("Bu vardiyayı silmek istediğinize emin misiniz?")) {
+  if (!id) return;
+
+  const shift = currentShifts.find(s => s.id === id);
+  const now = new Date();
+  const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+  let confirmMsg = "Bu vardiyayı silmek istediğinize emin misiniz?";
+  if (shift && shift.date < localTodayStr) {
+    confirmMsg = `⚠️ DİKKAT: Geçmiş bir tarihe (${shift.date}) ait bir vardiyayı siliyorsunuz.\n\nBu işlem geçmiş mesai verilerini etkileyebilir. Silmek istediğinize emin misiniz?`;
+  }
+
+  if (confirm(confirmMsg)) {
     try {
       await window.firebaseFirestore.deleteDoc(window.firebaseFirestore.doc(window.db, 'shifts', id));
       await loadShiftsForCurrentWeek();

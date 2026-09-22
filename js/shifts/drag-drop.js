@@ -172,14 +172,29 @@ async function assignStaffToShift(shiftId, staffId) {
     return;
   }
 
+  const now = new Date();
+  const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const isPast = shift.date < localTodayStr;
+
+  if (isPast) {
+    const confirmPast = confirm(`⚠️ Dikkat: Geçmiş bir tarihe (${shift.date}) ait vardiyaya personel atıyorsunuz.\n\nBu işlem sistemde "Düzeltme" olarak işaretlenecektir. Devam etmek istiyor musunuz?`);
+    if (!confirmPast) return;
+  }
+
   // Optimistic UI update
   shift.staffId = staffId;
+  if (isPast) shift.isRetroactiveEdit = true;
   renderCalendar();
 
   try {
+    const updatePayload = { staffId };
+    if (isPast) {
+      updatePayload.isRetroactiveEdit = true;
+      updatePayload.retroactiveEditedAt = window.firebaseFirestore.serverTimestamp();
+    }
     await window.firebaseFirestore.updateDoc(
       window.firebaseFirestore.doc(window.db, 'shifts', shiftId),
-      { staffId }
+      updatePayload
     );
   } catch (error) {
     console.error("Error assigning staff to shift:", error);
@@ -192,14 +207,29 @@ async function unassignStaffFromShift(shiftId) {
   const shift = currentShifts.find(s => s.id === shiftId);
   if (!shift) return;
 
+  const now = new Date();
+  const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const isPast = shift.date < localTodayStr;
+
+  if (isPast) {
+    const confirmPast = confirm(`⚠️ Dikkat: Geçmiş bir tarihe (${shift.date}) ait vardiyadan personeli kaldırıyorsunuz.\n\nBu işlem sistemde "Düzeltme" olarak işaretlenecektir. Devam etmek istiyor musunuz?`);
+    if (!confirmPast) return;
+  }
+
   // Optimistic UI update
   shift.staffId = null;
+  if (isPast) shift.isRetroactiveEdit = true;
   renderCalendar();
 
   try {
+    const updatePayload = { staffId: null };
+    if (isPast) {
+      updatePayload.isRetroactiveEdit = true;
+      updatePayload.retroactiveEditedAt = window.firebaseFirestore.serverTimestamp();
+    }
     await window.firebaseFirestore.updateDoc(
       window.firebaseFirestore.doc(window.db, 'shifts', shiftId),
-      { staffId: null }
+      updatePayload
     );
   } catch (error) {
     console.error("Error unassigning staff from shift:", error);

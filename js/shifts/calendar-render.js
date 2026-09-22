@@ -90,6 +90,15 @@ function renderCalendar() {
           }
         };
 
+        const isRetro = Boolean(shift.isRetroactiveEdit);
+        const retroBadge = isRetro
+          ? `<span style="display:inline-block; font-size:9px; background:#fffbeb; color:#b45309; padding:1px 4px; border-radius:3px; border:1px solid #fde68a; font-weight:700;" title="Geçmiş Kayıt Düzeltmesi">⚠️ Düzeltme</span>`
+          : '';
+
+        if (isRetro) {
+          shiftEl.style.boxShadow = '0 0 0 1.5px #f59e0b';
+        }
+
         const roleColor = getRoleColor(shift.role);
         if (roleColor) {
           shiftEl.style.borderLeft = `4px solid #0284c7`;
@@ -97,13 +106,13 @@ function renderCalendar() {
 
         shiftEl.innerHTML = `
           <div class="slot-role-header">
-            <span class="slot-role-title">${shift.role || 'Genel Görev'}</span>
+            <span class="slot-role-title">${shift.role || 'Genel Görev'} ${retroBadge}</span>
             <button type="button" class="slot-mini-btn" title="Düzenle" onclick="event.stopPropagation(); editShift('${shift.id}')">⚙️</button>
           </div>
           <div class="shift-time">${shift.startTime || ''} - ${shift.endTime || ''}</div>
           <div class="slot-empty-prompt">⚡ [Boş - Sürükle]</div>
         `;
-        shiftEl.title = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nGörev: ${shift.role || 'Belirtilmedi'}\nDurum: Boş Slot (Personel Sürükleyin veya Tıklayın)`;
+        shiftEl.title = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nGörev: ${shift.role || 'Belirtilmedi'}\nDurum: Boş Slot (Personel Sürükleyin veya Tıklayın)${isRetro ? '\n[⚠️ Geçmiş Kayıt Düzeltmesi]' : ''}`;
       } else {
         // --- DOLU SLOT / VARDİYA (ASSIGNED SHIFT) ---
         shiftEl.className = 'shift-item shift-assigned';
@@ -111,6 +120,15 @@ function renderCalendar() {
           event.stopPropagation();
           editShift(shift.id);
         };
+
+        const isRetro = Boolean(shift.isRetroactiveEdit);
+        const retroBadge = isRetro
+          ? `<span style="display:inline-block; font-size:9px; background:#fffbeb; color:#b45309; padding:1px 4px; border-radius:3px; border:1px solid #fde68a; font-weight:700;" title="Geçmiş Kayıt Düzeltmesi">⚠️ Düzeltme</span>`
+          : '';
+
+        if (isRetro) {
+          shiftEl.style.boxShadow = '0 0 0 1.5px #f59e0b';
+        }
 
         let staffName = staff ? staff.name : (shift.workerName || 'Çalışan');
         let displayName = staffName;
@@ -133,9 +151,9 @@ function renderCalendar() {
           
           clockInInfo = `<div class="shift-clock-info">${realCheckInTimeStr}${realCheckOutTimeStr}</div>`;
           const plannedInfo = shift.startTime && shift.endTime ? `\nPlanlanan: ${shift.startTime} - ${shift.endTime}` : '';
-          tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nGerçek Giriş: ${realCheckInTimeStr}${realCheckOutTimeStr}\nPersonel: ${displayName}\nDurum: ${statusText}${plannedInfo}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
+          tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nGerçek Giriş: ${realCheckInTimeStr}${realCheckOutTimeStr}\nPersonel: ${displayName}\nDurum: ${statusText}${plannedInfo}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}${isRetro ? '\n[⚠️ Geçmiş Kayıt Düzeltmesi]' : ''}`;
         } else {
-          tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nPersonel: ${staffName}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}`;
+          tooltipText = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nPersonel: ${staffName}\nGörev: ${shift.role || 'Belirtilmedi'}\nNot: ${shift.notes || '-'}${isRetro ? '\n[⚠️ Geçmiş Kayıt Düzeltmesi]' : ''}`;
         }
         
         shiftEl.title = tooltipText;
@@ -154,7 +172,7 @@ function renderCalendar() {
 
         shiftEl.innerHTML = `
           <div class="slot-top-row">
-            <div class="shift-time">${shift.startTime || ''} - ${shift.endTime || ''}</div>
+            <div class="shift-time">${shift.startTime || ''} - ${shift.endTime || ''} ${retroBadge}</div>
             ${unassignBtnHtml}
           </div>
           ${clockInInfo}
