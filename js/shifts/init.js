@@ -25,6 +25,11 @@ function initGozcuPage() {
         if (paywallEl) paywallEl.classList.add('hidden');
         if (gozcuContentEl) gozcuContentEl.classList.remove('blurred');
         
+        // Restore PIN unlock state if still within session time (15 mins)
+        if (typeof checkProtectedLockState === 'function') {
+          checkProtectedLockState();
+        }
+
         // Load data
         await loadRestaurantSettings();
         await loadStaff();
@@ -57,7 +62,26 @@ async function loadRestaurantSettings() {
       const data = userDoc.data();
       restaurantOpeningHour = data.openingHour || 6;
       restaurantClosingHour = data.closingHour || 23;
-      customShiftTemplates = data.shiftTemplates || [];
+      
+      // If shiftTemplates has never been defined on this restaurant (data.shiftTemplates === undefined),
+      // initialize with defaults once, so that the restaurant can delete any or all of them.
+      if (data.shiftTemplates === undefined) {
+        customShiftTemplates = [
+          { id: 'tpl_default_1', name: 'Sabah', startTime: '08:00', endTime: '16:00' },
+          { id: 'tpl_default_2', name: 'Akşam', startTime: '16:00', endTime: '00:00' },
+          { id: 'tpl_default_3', name: 'Tam Gün', startTime: '08:00', endTime: '20:00' }
+        ];
+        try {
+          await window.firebaseFirestore.updateDoc(
+            window.firebaseFirestore.doc(window.db, 'users', restaurantId),
+            { shiftTemplates: customShiftTemplates }
+          );
+        } catch (e) {
+          console.warn("Could not save initial default templates:", e);
+        }
+      } else {
+        customShiftTemplates = Array.isArray(data.shiftTemplates) ? data.shiftTemplates : [];
+      }
       autoEndShiftAtScheduledTime = !!data.autoEndShiftAtScheduledTime;
       whatsappShiftNotifications = !!data.whatsappShiftNotifications;
       window.restaurantPin = data.pinCode || '0068';
@@ -81,6 +105,34 @@ async function loadRestaurantSettings() {
 
       renderCustomShiftTemplatesList();
       renderShiftTemplatesUI();
+
+      // Attendance PIN (unique 4-digit branch code for staff clock-in)
+      let attendancePin = data.attendancePin;
+      const allowPinAttendance = data.allowPinAttendance !== false; // default true
+
+      if (!attendancePin && typeof generateUniqueAttendancePin === 'function') {
+        attendancePin = await generateUniqueAttendancePin(restaurantId);
+        try {
+          await window.firebaseFirestore.updateDoc(
+            window.firebaseFirestore.doc(window.db, 'users', restaurantId),
+            { attendancePin: attendancePin, allowPinAttendance: true }
+          );
+        } catch (e) {
+          console.warn("Could not auto-generate initial attendancePin:", e);
+        }
+      }
+      window.attendancePin = attendancePin;
+      window.allowPinAttendance = allowPinAttendance;
+
+      if (document.getElementById('branchPinInput')) {
+        document.getElementById('branchPinInput').value = attendancePin || '';
+      }
+      if (document.getElementById('allowPinAttendanceToggle')) {
+        document.getElementById('allowPinAttendanceToggle').checked = allowPinAttendance;
+      }
+      if (document.getElementById('branchPinDisplayBadge')) {
+        document.getElementById('branchPinDisplayBadge').textContent = attendancePin || '----';
+      }
     }
   } catch (error) {
     console.error("Error loading restaurant settings:", error);

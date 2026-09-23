@@ -26,11 +26,16 @@
           <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
             <div>
               <h3 style="margin: 0 0 4px 0; color: #1e293b; font-size: 18px;">Vardiya Giriş / Çıkış (Clock-In)</h3>
-              <p style="margin: 0; font-size: 13px; color: #64748b;">İş yerinize ulaştığınızda restoran ekranındaki QR kodu okutarak mesainizi başlatın veya bitirin.</p>
+              <p style="margin: 0; font-size: 13px; color: #64748b;">İş yerinize ulaştığınızda restoran ekranındaki QR kodu okutarak veya 4 haneli şube PIN kodunuzu girerek mesainizi başlatın.</p>
             </div>
-            <button class="btn primary" onclick="openQrScanModal()" style="padding: 12px 22px; font-size: 15px; display: inline-flex; align-items: center; gap: 8px;">
-              <span>📷 QR Kod Okut (Giriş / Çıkış)</span>
-            </button>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn primary" onclick="openQrScanModal()" style="padding: 12px 20px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px;">
+                <span>📷 QR Kod Okut</span>
+              </button>
+              <button class="btn secondary" onclick="openPinModal('checkin')" style="padding: 12px 18px; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #d97706; color: #b45309; background: #fffbeb;">
+                <span>🔢 PIN ile Başlat</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -232,6 +237,34 @@
       </div>
       <button class="btn primary" onclick="retryLocationPermission()" style="width: 100%; margin-top: 20px;">
         🔄 Tekrar Dene
+      </button>
+    </div>
+  </div>
+
+  <!-- PIN Attendance Modal -->
+  <div id="pinAttendanceModal" class="modal hidden">
+    <div class="modal-content" style="max-width: 420px; text-align: center; padding: 30px 24px;">
+      <span class="close-modal" onclick="closePinModal()">&times;</span>
+      <div style="font-size: 40px; margin-bottom: 8px;">🔢</div>
+      <h2 id="pinModalTitle" style="font-size: 20px; color: #1e293b; margin-bottom: 8px;">Şube PIN Kodu ile Giriş</h2>
+      <p id="pinModalDesc" style="font-size: 13px; color: #64748b; margin-bottom: 20px; line-height: 1.5;">
+        Restoran panosundaki 4 haneli şube kodunu giriniz. Konumunuz doğrulanarak mesainiz başlatılacaktır.
+      </p>
+
+      <div style="display: flex; justify-content: center; margin-bottom: 18px;">
+        <input type="tel" id="attendancePinInput" maxlength="4" placeholder="••••"
+          style="width: 170px; height: 56px; font-size: 32px; letter-spacing: 12px; text-align: center; font-weight: 800; border-radius: 12px; border: 2px solid #cbd5e1; outline: none; background: #f8fafc; color: #0f172a;"
+          oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(this.value.length === 4) document.getElementById('pinSubmitBtn').focus();">
+      </div>
+
+      <div id="pinAttendanceMessage" class="auth-message hidden" style="margin-bottom: 15px; font-size: 13px;"></div>
+
+      <button id="pinSubmitBtn" class="btn primary" onclick="submitPinAttendance()" style="width: 100%; padding: 14px; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+        <span>📍 Konumu Doğrula ve Devam Et</span>
+      </button>
+      
+      <button class="btn ghost" onclick="closePinModal()" style="width: 100%; margin-top: 10px; font-size: 13px; color: #64748b;">
+        Vazgeç
       </button>
     </div>
   </div>

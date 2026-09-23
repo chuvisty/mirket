@@ -31,6 +31,25 @@
           </button>
         </div>
       </section>
+
+      <!-- Branch PIN Info Card for Staff -->
+      <section class="card" style="max-width: 100%; margin-bottom: 20px; background: #fffbeb; border: 1px solid #fde68a; border-left: 5px solid #d97706;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span style="font-size: 20px;">🔢</span>
+              <h3 style="color: #78350f; margin: 0; font-size: 18px;">Şube PIN Kodunuz (Bilgisayar Kapalıyken Giriş)</h3>
+            </div>
+            <p style="color: #92400e; font-size: 13px; margin: 0;">Bu ekran henüz açılmamışken erken gelen çalışanlarınız, bu 4 haneli şube kodunu ve konumlarını kullanarak mesailerini başlatabilir.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="text-align: center;">
+              <span style="display: block; font-size: 11px; font-weight: 700; color: #b45309; text-transform: uppercase; margin-bottom: 2px;">Giriş PIN Kodu</span>
+              <span id="branchPinDisplayBadge" style="background: #ffffff; color: #78350f; border: 2px dashed #d97706; padding: 6px 18px; border-radius: 12px; font-size: 24px; font-weight: 800; letter-spacing: 5px; display: inline-block;">----</span>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -43,9 +62,14 @@
     <h2 style="font-size: 22px; color: #1e293b; margin-bottom: 8px;">📱 Canlı Vardiya QR Kodu</h2>
     <p style="font-size: 13px; color: #64748b; margin-bottom: 20px; line-height: 1.5;">Çalışanlar kendi telefonlarından bu kodu okutarak mesai başlatır veya bitirir. Kopyalanmayı önlemek için kod 60 saniyede bir otomatik yenilenir.</p>
     <div id="qrcodeContainer" style="display: inline-flex; align-items: center; justify-content: center; padding: 20px; background: #ffffff; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 10px 30px rgba(0,0,0,0.06); margin-bottom: 15px; min-width: 240px; min-height: 240px;"></div>
-    <div style="display: inline-flex; align-items: center; gap: 6px; background: #f0fdf4; color: #166534; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #bbf7d0;">
-      <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block;"></span>
-      <span>Canlı QR Akışı Aktif</span>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+      <div style="display: inline-flex; align-items: center; gap: 6px; background: #f0fdf4; color: #166534; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #bbf7d0;">
+        <span style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block;"></span>
+        <span>Canlı QR Akışı Aktif</span>
+      </div>
+      <div style="margin-top: 5px; padding: 8px 16px; background: #fffbeb; border-radius: 10px; border: 1px solid #fef3c7; font-size: 12px; color: #92400e;">
+        <span>📌 Şube PIN Kodu: <strong id="modalBranchPinBadge" style="font-size: 16px; letter-spacing: 2px;">----</strong> (QR açılmadığında alternatif)</span>
+      </div>
     </div>
   </div>
 </div>
@@ -61,9 +85,34 @@
 <script>
   window.dynamicQrInterval = null;
   if (window.firebaseAuth?.onAuthStateChanged && window.auth) {
-    window.firebaseAuth.onAuthStateChanged(window.auth, (user) => {
-      if (user && typeof autoCloseExpiredShifts === 'function') {
-        autoCloseExpiredShifts(user.uid);
+    window.firebaseAuth.onAuthStateChanged(window.auth, async (user) => {
+      if (user) {
+        if (typeof autoCloseExpiredShifts === 'function') {
+          autoCloseExpiredShifts(user.uid);
+        }
+        try {
+          const userDoc = await window.firebaseFirestore.getDoc(
+            window.firebaseFirestore.doc(window.db, 'users', user.uid)
+          );
+          if (userDoc.exists()) {
+            let p = userDoc.data().attendancePin;
+            if (!p && typeof generateUniqueAttendancePin === 'function') {
+              p = await generateUniqueAttendancePin(user.uid);
+              await window.firebaseFirestore.updateDoc(
+                window.firebaseFirestore.doc(window.db, 'users', user.uid),
+                { attendancePin: p, allowPinAttendance: true }
+              );
+            }
+            if (document.getElementById('branchPinDisplayBadge')) {
+              document.getElementById('branchPinDisplayBadge').textContent = p || '----';
+            }
+            if (document.getElementById('modalBranchPinBadge')) {
+              document.getElementById('modalBranchPinBadge').textContent = p || '----';
+            }
+          }
+        } catch (err) {
+          console.warn("Could not load branch pin in canli-qr:", err);
+        }
       }
     });
   }
