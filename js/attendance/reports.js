@@ -1,4 +1,4 @@
-// --- REPORTS: Attendance table rendering & CSV export ---
+﻿// --- REPORTS: Attendance table rendering & CSV export ---
 async function loadAttendanceLogs(restaurantId, filterPeriod = 'today') {
   const tableBody = document.getElementById('attendanceLogsTableBody');
   if (!tableBody) return;
@@ -356,6 +356,77 @@ function switchAttendanceView(view) {
 }
 window.switchAttendanceView = switchAttendanceView;
 
+// Safely parse Firestore timestamps, ISO strings, date objects or "HH:MM" times
+function parseDateOrTime(val, baseDateStr) {
+  if (!val) return null;
+  if (typeof val.toDate === 'function') {
+    const d = val.toDate();
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (val && typeof val.seconds === 'number') {
+    const d = new Date(val.seconds * 1000);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  if (val instanceof Date) {
+    return isNaN(val.getTime()) ? null : val;
+  }
+  if (typeof val === 'string') {
+    if (val.includes('-') || val.includes('/')) {
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) return d;
+    }
+    if (val.includes(':')) {
+      const parts = val.split(':').map(Number);
+      if (!isNaN(parts[0]) && !isNaN(parts[1])) {
+        const d = baseDateStr ? new Date(baseDateStr) : new Date();
+        d.setHours(parts[0], parts[1], parts[2] ? parts[2] : 0, 0);
+        return isNaN(d.getTime()) ? null : d;
+      }
+    }
+  }
+  return null;
+}
+
+// Safely calculate actual worked minutes for a shift without ever returning NaN
+function calculateActualWorkedMinutes(shift) {
+  if (shift.totalWorkedMinutes !== undefined && shift.totalWorkedMinutes !== null) {
+    const num = Number(shift.totalWorkedMinutes);
+    if (!isNaN(num) && num > 0) return num;
+  }
+  const inDate = parseDateOrTime(shift.checkInTime, shift.date);
+  const outDate = parseDateOrTime(shift.checkOutTime, shift.date);
+  if (inDate && outDate) {
+    let diffMs = outDate.getTime() - inDate.getTime();
+    if (diffMs < 0) diffMs += 24 * 60 * 60 * 1000;
+    const diffMins = Math.round(diffMs / 60000);
+    if (!isNaN(diffMins) && diffMins > 0) return diffMins;
+  }
+  if (shift.startTime && shift.endTime) {
+    const partsStart = String(shift.startTime).split(':').map(Number);
+    const partsEnd = String(shift.endTime).split(':').map(Number);
+    if (!isNaN(partsStart[0]) && !isNaN(partsStart[1]) && !isNaN(partsEnd[0]) && !isNaN(partsEnd[1])) {
+      let mins = (partsEnd[0] * 60 + partsEnd[1]) - (partsStart[0] * 60 + partsStart[1]);
+      if (mins <= 0) mins += 24 * 60;
+      if (!isNaN(mins) && mins > 0) return mins;
+    }
+  }
+  return 0;
+}
+
+// Safely calculate planned minutes
+function calculatePlannedMinutes(shift) {
+  if (shift.startTime && shift.endTime) {
+    const partsStart = String(shift.startTime).split(':').map(Number);
+    const partsEnd = String(shift.endTime).split(':').map(Number);
+    if (!isNaN(partsStart[0]) && !isNaN(partsStart[1]) && !isNaN(partsEnd[0]) && !isNaN(partsEnd[1])) {
+      let mins = (partsEnd[0] * 60 + partsEnd[1]) - (partsStart[0] * 60 + partsStart[1]);
+      if (mins <= 0) mins += 24 * 60;
+      if (!isNaN(mins) && mins > 0) return mins;
+    }
+  }
+  return 0;
+}
+
 // Load, aggregate and render Monthly Payroll Summary
 async function loadMonthlyPayrollSummary(restId, targetMonth = null) {
   const targetRestId = restId || (window.auth && window.auth.currentUser ? window.auth.currentUser.uid : null);
@@ -436,43 +507,29 @@ async function loadMonthlyPayrollSummary(restId, targetMonth = null) {
       rec.shiftsCount += 1;
       rec.shifts.push(shift);
 
-      // Planned duration
-      if (shift.startTime && shift.endTime) {
-        const [sh, sm] = shift.startTime.split(':').map(Number);
-        const [eh, em] = shift.endTime.split(':').map(Number);
-        let mins = (eh * 60 + em) - (sh * 60 + sm);
-        if (mins <= 0) mins += 24 * 60;
-        rec.plannedMinutes += mins;
-      }
+      // Planned duration (never returns NaN)
+      const plannedMins = calculatePlannedMinutes(shift);
+      rec.plannedMinutes += plannedMins;
 
-      // Actual duration
-      let actualMins = 0;
-      if (shift.totalWorkedMinutes) {
-        actualMins = shift.totalWorkedMinutes;
-      } else if (shift.checkInTime && shift.checkOutTime) {
-        const inD = typeof shift.checkInTime.toDate === 'function' ? shift.checkInTime.toDate() : new Date(shift.checkInTime);
-        const outD = typeof shift.checkOutTime.toDate === 'function' ? shift.checkOutTime.toDate() : new Date(shift.checkOutTime);
-        actualMins = Math.max(0, Math.round((outD - inD) / 60000));
-      } else if (shift.status === 'completed' && shift.startTime && shift.endTime) {
-        const [sh, sm] = shift.startTime.split(':').map(Number);
-        const [eh, em] = shift.endTime.split(':').map(Number);
-        let mins = (eh * 60 + em) - (sh * 60 + sm);
-        if (mins <= 0) mins += 24 * 60;
-        actualMins = mins;
-      }
+      // Actual duration (never returns NaN)
+      const actualMins = calculateActualWorkedMinutes(shift);
       rec.workedMinutes += actualMins;
 
-      // Punctuality check
+      // Punctuality check (safe date parsing)
       if (shift.checkInTime && shift.startTime) {
-        const cDate = typeof shift.checkInTime.toDate === 'function' ? shift.checkInTime.toDate() : new Date(shift.checkInTime);
-        const inTimeStr = cDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
-        const [actH, actM] = inTimeStr.split(':').map(Number);
-        const [schH, schM] = shift.startTime.split(':').map(Number);
-        const diff = (actH * 60 + actM) - (schH * 60 + schM);
-        if (diff <= 5) {
-          rec.onTimeCount += 1;
-        } else {
-          rec.lateCount += 1;
+        const cDate = parseDateOrTime(shift.checkInTime, shift.date);
+        if (cDate && !isNaN(cDate.getTime())) {
+          const inTimeStr = cDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
+          const [actH, actM] = inTimeStr.split(':').map(Number);
+          const [schH, schM] = String(shift.startTime).split(':').map(Number);
+          if (!isNaN(actH) && !isNaN(actM) && !isNaN(schH) && !isNaN(schM)) {
+            const diff = (actH * 60 + actM) - (schH * 60 + schM);
+            if (diff <= 5) {
+              rec.onTimeCount += 1;
+            } else {
+              rec.lateCount += 1;
+            }
+          }
         }
       }
 
@@ -485,16 +542,18 @@ async function loadMonthlyPayrollSummary(restId, targetMonth = null) {
 
     // 5. Build summary list
     const summaryList = Object.values(staffMap).map(item => {
-      const workedHours = item.workedMinutes / 60;
-      const plannedHours = item.plannedMinutes / 60;
-      const diffHours = workedHours - plannedHours; // Positive = Overtime, Negative = Missing hours
+      const workedHours = isNaN(item.workedMinutes) ? 0 : Math.max(0, item.workedMinutes / 60);
+      const plannedHours = isNaN(item.plannedMinutes) ? 0 : Math.max(0, item.plannedMinutes / 60);
+      const diffHours = workedHours - plannedHours;
 
+      const wageAmount = Number(item.wageAmount) || 0;
       let totalEarnings = 0;
       if (item.wageType === 'daily') {
-        totalEarnings = item.shiftsCount * item.wageAmount;
+        totalEarnings = item.shiftsCount * wageAmount;
       } else {
-        totalEarnings = workedHours * item.wageAmount;
+        totalEarnings = workedHours * wageAmount;
       }
+      if (isNaN(totalEarnings)) totalEarnings = 0;
 
       const punctualityRatio = (item.onTimeCount + item.lateCount) > 0
         ? Math.round((item.onTimeCount / (item.onTimeCount + item.lateCount)) * 100)
@@ -510,7 +569,7 @@ async function loadMonthlyPayrollSummary(restId, targetMonth = null) {
         plannedHours,
         diffHours,
         totalEarnings,
-        punctualityRatio,
+        punctualityRatio: isNaN(punctualityRatio) ? 100 : punctualityRatio,
         checklistScore
       };
     });
@@ -533,11 +592,14 @@ window.loadMonthlyPayrollSummary = loadMonthlyPayrollSummary;
 
 // Update Dashboard KPI cards
 function updatePayrollKpis(summaryList, monthShifts) {
-  const activeStaff = summaryList.filter(s => s.shiftsCount > 0);
+  const activeStaff = summaryList.filter(s => (s.shiftsCount > 0) || (s.workedHours > 0));
   const totalStaffCount = activeStaff.length;
-  const totalHours = activeStaff.reduce((sum, s) => sum + s.workedHours, 0);
-  const totalPayroll = activeStaff.reduce((sum, s) => sum + s.totalEarnings, 0);
-  const totalOvertime = activeStaff.reduce((sum, s) => sum + (s.diffHours > 0 ? s.diffHours : 0), 0);
+  const totalHours = activeStaff.reduce((sum, s) => sum + (Number(s.workedHours) || 0), 0);
+  const totalPayroll = activeStaff.reduce((sum, s) => sum + (Number(s.totalEarnings) || 0), 0);
+  const totalOvertime = activeStaff.reduce((sum, s) => {
+    const diff = Number(s.diffHours) || 0;
+    return sum + (diff > 0 ? diff : 0);
+  }, 0);
 
   const kpiStaffEl = document.getElementById('kpiPayrollStaffCount');
   const kpiHoursEl = document.getElementById('kpiPayrollTotalHours');
@@ -545,9 +607,9 @@ function updatePayrollKpis(summaryList, monthShifts) {
   const kpiOvertimeEl = document.getElementById('kpiPayrollOvertimeHours');
 
   if (kpiStaffEl) kpiStaffEl.textContent = `${totalStaffCount} Kişi`;
-  if (kpiHoursEl) kpiHoursEl.textContent = `${totalHours.toFixed(1)} Saat`;
-  if (kpiPayrollEl) kpiPayrollEl.textContent = `${Math.round(totalPayroll).toLocaleString('tr-TR')} ₺`;
-  if (kpiOvertimeEl) kpiOvertimeEl.textContent = `+${totalOvertime.toFixed(1)} Saat`;
+  if (kpiHoursEl) kpiHoursEl.textContent = `${(isNaN(totalHours) ? 0 : totalHours).toFixed(1)} Saat`;
+  if (kpiPayrollEl) kpiPayrollEl.textContent = `${Math.round(isNaN(totalPayroll) ? 0 : totalPayroll).toLocaleString('tr-TR')} ₺`;
+  if (kpiOvertimeEl) kpiOvertimeEl.textContent = `+${(isNaN(totalOvertime) ? 0 : totalOvertime).toFixed(1)} Saat`;
 }
 
 // Render the aggregated Payroll Table
@@ -555,8 +617,7 @@ function renderPayrollSummaryTable(summaryList) {
   const tableBody = document.getElementById('payrollSummaryTableBody');
   if (!tableBody) return;
 
-  // Filter out completely inactive staff if desired, or keep them with 0
-  const activeList = summaryList.filter(s => s.shiftsCount > 0);
+  const activeList = summaryList.filter(s => (s.shiftsCount > 0) || (s.workedHours > 0));
 
   if (activeList.length === 0) {
     tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:25px; color:#94a3b8;">Seçilen ayda aktif mesai kaydı bulunamadı.</td></tr>';
@@ -568,29 +629,36 @@ function renderPayrollSummaryTable(summaryList) {
   let grandTotalShifts = 0;
 
   const rowsHtml = activeList.map(st => {
-    grandTotalHours += st.workedHours;
-    grandTotalEarnings += st.totalEarnings;
-    grandTotalShifts += st.shiftsCount;
+    const workedH = isNaN(st.workedHours) ? 0 : Number(st.workedHours);
+    const plannedH = isNaN(st.plannedHours) ? 0 : Number(st.plannedHours);
+    const diffH = isNaN(st.diffHours) ? 0 : Number(st.diffHours);
+    const earnings = isNaN(st.totalEarnings) ? 0 : Number(st.totalEarnings);
+
+    grandTotalHours += workedH;
+    grandTotalEarnings += earnings;
+    grandTotalShifts += (Number(st.shiftsCount) || 0);
 
     // Diff / Overtime badge
     let diffBadge = '<span style="color:#94a3b8; font-size:12px;">0.0s</span>';
-    if (st.diffHours > 0.1) {
-      diffBadge = `<span style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11px;" title="Fazla Mesai">+${st.diffHours.toFixed(1)}s Mesai</span>`;
-    } else if (st.diffHours < -0.1) {
-      diffBadge = `<span style="background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11px;" title="Eksik Mesai">${st.diffHours.toFixed(1)}s Eksik</span>`;
+    if (diffH > 0.1) {
+      diffBadge = `<span style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11px;" title="Fazla Mesai">+${diffH.toFixed(1)}s Mesai</span>`;
+    } else if (diffH < -0.1) {
+      diffBadge = `<span style="background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11px;" title="Eksik Mesai">${Math.abs(diffH).toFixed(1)}s Eksik</span>`;
     }
 
     // Wage label
+    const wageAmount = Number(st.wageAmount) || 0;
     const wageLabel = st.wageType === 'daily'
-      ? `${st.wageAmount.toLocaleString('tr-TR')} ₺/Gün`
-      : `${st.wageAmount.toLocaleString('tr-TR')} ₺/Saat`;
+      ? `${wageAmount.toLocaleString('tr-TR')} ₺/Gün`
+      : `${wageAmount.toLocaleString('tr-TR')} ₺/Saat`;
 
     // Performance indicators
-    const checkBadge = st.checklistScore !== null
+    const checkBadge = (st.checklistScore !== null && !isNaN(st.checklistScore))
       ? `<span style="font-size:11px; font-weight:600; color:#0f766e;">%${st.checklistScore}</span>`
       : '<span style="color:#cbd5e1;">-</span>';
 
-    const punctualityBadge = `<span style="font-size:11px; font-weight:600; color:${st.punctualityRatio >= 85 ? '#15803d' : '#b45309'};">%${st.punctualityRatio}</span>`;
+    const punctualityRatio = isNaN(st.punctualityRatio) ? 100 : Number(st.punctualityRatio);
+    const punctualityBadge = `<span style="font-size:11px; font-weight:600; color:${punctualityRatio >= 85 ? '#15803d' : '#b45309'};">%${punctualityRatio}</span>`;
 
     return `
       <tr>
@@ -599,11 +667,11 @@ function renderPayrollSummaryTable(summaryList) {
           <div style="font-size: 11px; color: #64748b;">${st.role} • ${st.phone || 'Tel yok'}</div>
         </td>
         <td style="padding: 12px 10px; text-align: center; font-weight: 600;">${st.shiftsCount} Gün</td>
-        <td style="padding: 12px 10px; text-align: center; color: #64748b;">${st.plannedHours.toFixed(1)}s</td>
-        <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: #0f172a;">${st.workedHours.toFixed(1)} Saat</td>
+        <td style="padding: 12px 10px; text-align: center; color: #64748b;">${plannedH.toFixed(1)}s</td>
+        <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: #0f172a;">${workedH.toFixed(1)} Saat</td>
         <td style="padding: 12px 10px; text-align: center;">${diffBadge}</td>
         <td style="padding: 12px 10px; font-size: 12px; color: #475569;">${wageLabel}</td>
-        <td style="padding: 12px 10px; font-size: 14px; font-weight: 800; color: #047857;">${Math.round(st.totalEarnings).toLocaleString('tr-TR')} ₺</td>
+        <td style="padding: 12px 10px; font-size: 14px; font-weight: 800; color: #047857;">${Math.round(earnings).toLocaleString('tr-TR')} ₺</td>
         <td style="padding: 12px 10px; text-align: center;">
           ${punctualityBadge} / ${checkBadge}
         </td>
@@ -639,7 +707,7 @@ function exportPayrollSummaryToCSV() {
     return;
   }
 
-  const activeList = loadedPayrollSummary.filter(s => s.shiftsCount > 0);
+  const activeList = loadedPayrollSummary.filter(s => (s.shiftsCount > 0) || (s.workedHours > 0));
   if (activeList.length === 0) {
     alert("Seçilen dönemde puantaj kaydı bulunmuyor.");
     return;
@@ -661,6 +729,11 @@ function exportPayrollSummaryToCSV() {
   ];
 
   const rows = activeList.map(st => {
+    const workedH = isNaN(st.workedHours) ? 0 : Number(st.workedHours);
+    const plannedH = isNaN(st.plannedHours) ? 0 : Number(st.plannedHours);
+    const diffH = isNaN(st.diffHours) ? 0 : Number(st.diffHours);
+    const earnings = isNaN(st.totalEarnings) ? 0 : Number(st.totalEarnings);
+
     return [
       `"${st.name.replace(/"/g, '""')}"`,
       `"${(st.role || '').replace(/"/g, '""')}"`,
@@ -668,13 +741,13 @@ function exportPayrollSummaryToCSV() {
       `"${st.wageType === 'daily' ? 'Günlük' : 'Saatlik'}"`,
       `"${st.wageAmount}"`,
       `"${st.shiftsCount}"`,
-      `"${st.plannedHours.toFixed(1)}"`,
-      `"${st.workedHours.toFixed(1)}"`,
-      `"${st.diffHours.toFixed(1)}"`,
-      `"${Math.round(st.totalEarnings)}"`,
+      `"${plannedH.toFixed(1)}"`,
+      `"${workedH.toFixed(1)}"`,
+      `"${diffH.toFixed(1)}"`,
+      `"${Math.round(earnings)}"`,
       `"${st.punctualityRatio}"`,
       `"${st.checklistScore !== null ? st.checklistScore : ''}"`
-    ].join(';'); // Use semicolon for seamless Turkish Excel compatibility
+    ].join(';');
   });
 
   const csvContent = "\uFEFF" + [headers.join(';'), ...rows].join('\r\n');
@@ -708,3 +781,4 @@ function printPayrollReport() {
   window.print();
 }
 window.printPayrollReport = printPayrollReport;
+
