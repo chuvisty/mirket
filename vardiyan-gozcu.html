@@ -15,9 +15,18 @@
   <link rel="apple-touch-icon" href="/images/favicon.png">
   <link rel="icon" type="image/png" href="/images/favicon.png">
   <style>
+    html, body {
+      overflow-x: hidden;
+      max-width: 100%;
+      width: 100%;
+    }
     /* Specific styles for Mirket Gözcü that could be moved to styles.css later */
     .gozcu-container {
       position: relative;
+      width: 100%;
+      max-width: 1360px;
+      min-width: 0;
+      box-sizing: border-box;
     }
     
     .paywall-overlay {
@@ -800,19 +809,19 @@
         <!-- Section Top Controls (Screen view) -->
         <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
           <div>
-            <h2 style="margin: 0;">📊 Puantaj & Mesai Takip Merkezi</h2>
+            <h2 style="margin: 0; font-size: 18px;">📊 Puantaj & Mesai Takip Merkezi</h2>
             <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0;">Ay sonu toplu bordro dökümü alın, fazla/eksik mesaileri analiz edin ve resmi puantaj çıktısı hazırlayın.</p>
           </div>
-          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <div class="payroll-view-tabs">
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; width: 100%; max-width: 100%;">
+            <div class="payroll-view-tabs" style="flex: 1; min-width: 220px;">
               <button type="button" id="tabPayrollSummary" class="payroll-view-tab active" onclick="switchAttendanceView('summary')">
-                📋 Aylık Puantaj & Bordro
+                📋 Aylık Puantaj
               </button>
               <button type="button" id="tabAttendanceLogs" class="payroll-view-tab" onclick="switchAttendanceView('logs')">
-                🕒 Günlük Ham Kayıtlar
+                🕒 Günlük Loglar
               </button>
             </div>
-            <button class="btn ghost btn-sm" onclick="relockProtectedSections()" style="font-size: 13px; color: #64748b; border: 1px solid #cbd5e1;" title="Yönetici bölümlerini hemen kilitle">
+            <button class="btn ghost btn-sm" onclick="relockProtectedSections()" style="font-size: 13px; color: #64748b; border: 1px solid #cbd5e1; margin-left: auto;" title="Yönetici bölümlerini hemen kilitle">
               🔒 Kilitle
             </button>
           </div>
@@ -821,19 +830,19 @@
         <!-- VIEW 1: Aylık Puantaj & Bordro Konsolide Raporu -->
         <div id="payrollSummarySection">
           <!-- Filter and Action Toolbar -->
-          <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-size: 13px; font-weight: 700; color: #334155;">Dönem Seçimi:</span>
-              <select id="payrollMonthSelect" onchange="loadMonthlyPayrollSummary(restaurantId, this.value)" style="padding: 8px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; cursor: pointer;">
+          <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; background: #f8fafc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e2e8f0; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 13px; font-weight: 700; color: #334155;">Dönem:</span>
+              <select id="payrollMonthSelect" onchange="loadMonthlyPayrollSummary(restaurantId, this.value)" style="padding: 6px 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; cursor: pointer; max-width: 100%;">
                 <!-- Populated dynamically -->
               </select>
             </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <button type="button" class="btn secondary" onclick="printPayrollReport()" style="font-size: 13px; display: flex; align-items: center; gap: 6px;">
-                🖨️ Yazdır / Resmi PDF Al
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn secondary btn-sm" onclick="printPayrollReport()" style="font-size: 12px; padding: 6px 10px; display: inline-flex; align-items: center; gap: 4px;">
+                🖨️ Yazdır / PDF
               </button>
-              <button type="button" class="btn primary" onclick="exportPayrollSummaryToCSV()" style="font-size: 13px; display: flex; align-items: center; gap: 6px;">
-                📥 Excel / CSV İndir
+              <button type="button" class="btn primary btn-sm" onclick="exportPayrollSummaryToCSV()" style="font-size: 12px; padding: 6px 10px; display: inline-flex; align-items: center; gap: 4px;">
+                📥 Excel / CSV
               </button>
             </div>
           </div>
@@ -863,7 +872,7 @@
           </div>
 
           <!-- Aggregated Staff Timesheet Table -->
-          <div style="overflow-x: auto;">
+          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; max-width: 100%; box-sizing: border-box;">
             <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
               <thead>
                 <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
@@ -916,7 +925,7 @@
             </button>
           </div>
 
-          <div style="overflow-x: auto;">
+          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; max-width: 100%; box-sizing: border-box;">
             <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
               <thead>
                 <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
