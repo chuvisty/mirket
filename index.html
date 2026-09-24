@@ -31,6 +31,13 @@
 
 <section class="hero">
   <div class="hero-content fade-in">
+    <!-- PWA Hero Pill / Announcement Badge -->
+    <div class="pwa-hero-pill" onclick="if(window.triggerPwaInstall) window.triggerPwaInstall();" role="button" tabindex="0">
+      <span class="pwa-pill-badge">YENİ</span>
+      <span class="pwa-pill-text">📲 <strong>Mirket Mobil Uygulaması:</strong> Ana ekranınıza ekleyip tek dokunuşla açın</span>
+      <span class="pwa-pill-cta">Yükle &rarr;</span>
+    </div>
+
     <h1>İhtiyacın Olan Personeli <br>Aynı Gün Bul!</h1>
     <div class="marquee-container">
       <p class="marquee-text">Garson, Komi, Mutfak Personeli, Destek Elemanı, Host, Hostes ve daha fazlası     Garson, Komi, Mutfak Personeli, Destek Elemanı, Host, Hostes ve daha fazlası     Garson, Komi, Mutfak Personeli, Destek Elemanı, Host, Hostes ve Daha Fazlası</p>
@@ -40,6 +47,9 @@
 
     <div class="hero-buttons">
       <button class="btn primary" onclick="window.location.href='login.html'" style="font-size: 18px; padding: 15px 30px;">🚀 Hemen Başla (Giriş Yap / Kayıt Ol)</button>
+      <button class="btn secondary" onclick="if(window.triggerPwaInstall) window.triggerPwaInstall();" style="font-size: 16px; padding: 15px 25px; display: inline-flex; align-items: center; gap: 8px;">
+        📲 Uygulamayı Yükle
+      </button>
     </div>
   </div>
 </section>

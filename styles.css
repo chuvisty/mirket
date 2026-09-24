@@ -1233,3 +1233,128 @@ nav a:hover {
     color: #64748b;
   }
 }
+
+/* ==========================================================================
+   Header PWA Button & Hero Pill Styles
+   ========================================================================== */
+.nav-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-pwa-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 7px 14px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  white-space: nowrap;
+}
+
+.btn-pwa-header:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+}
+
+.pwa-header-icon {
+  font-size: 14px;
+}
+
+.pwa-header-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .btn-pwa-header {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-pwa-header {
+    padding: 5px 8px;
+    gap: 4px;
+  }
+  .btn-pwa-header .pwa-header-label {
+    font-size: 11px;
+  }
+}
+
+/* PWA Hero Pill / Announcement Banner */
+.pwa-hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #bfdbfe;
+  padding: 6px 18px 6px 8px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12);
+  cursor: pointer;
+  margin-bottom: 24px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 95%;
+}
+
+.pwa-hero-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.22);
+  border-color: #3b82f6;
+  background: #ffffff;
+}
+
+.pwa-pill-badge {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.pwa-pill-text {
+  font-size: 13px;
+  color: #1e293b;
+}
+
+.pwa-pill-text strong {
+  color: #0f172a;
+}
+
+.pwa-pill-cta {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 600px) {
+  .pwa-hero-pill {
+    padding: 6px 12px 6px 6px;
+    gap: 6px;
+    margin-bottom: 18px;
+  }
+  .pwa-pill-text {
+    font-size: 12px;
+  }
+  .pwa-pill-cta {
+    display: none;
+  }
+}
