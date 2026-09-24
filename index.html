@@ -12,9 +12,16 @@
   <meta property="og:type" content="website">
   <meta name="facebook-domain-verification" content="yq7ljofk6pw0spc3az5t5bzx6m12fd" />
 
-  <link rel="stylesheet" href="styles.css?v=4">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/png" href="/images/favicon.png">
+  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mirket">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
 </head>
 <body>
 
@@ -24,6 +31,13 @@
 
 <section class="hero">
   <div class="hero-content fade-in">
+    <!-- PWA Hero Pill / Announcement Badge -->
+    <div class="pwa-hero-pill" onclick="if(window.triggerPwaInstall) window.triggerPwaInstall();" role="button" tabindex="0">
+      <span class="pwa-pill-badge">YENİ</span>
+      <span class="pwa-pill-text">📲 <strong>Mirket Mobil Uygulaması:</strong> Ana ekranınıza ekleyip tek dokunuşla açın</span>
+      <span class="pwa-pill-cta">Yükle &rarr;</span>
+    </div>
+
     <h1>İhtiyacın Olan Personeli <br>Aynı Gün Bul!</h1>
     <div class="marquee-container">
       <p class="marquee-text">Garson, Komi, Mutfak Personeli, Destek Elemanı, Host, Hostes ve daha fazlası     Garson, Komi, Mutfak Personeli, Destek Elemanı, Host, Hostes ve daha fazlası     Garson, Komi, Mutfak Personeli, Destek Elemanı, Host, Hostes ve Daha Fazlası</p>
@@ -33,6 +47,9 @@
 
     <div class="hero-buttons">
       <button class="btn primary" onclick="window.location.href='login.html'" style="font-size: 18px; padding: 15px 30px;">🚀 Hemen Başla (Giriş Yap / Kayıt Ol)</button>
+      <button class="btn secondary" onclick="if(window.triggerPwaInstall) window.triggerPwaInstall();" style="font-size: 16px; padding: 15px 25px; display: inline-flex; align-items: center; gap: 8px;">
+        📲 Uygulamayı Yükle
+      </button>
     </div>
   </div>
 </section>

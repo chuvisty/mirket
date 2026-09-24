@@ -43,6 +43,12 @@ function initGozcuPage() {
         if (typeof loadAttendanceLogs === 'function') {
           await loadAttendanceLogs(restaurantId, 'today');
         }
+        if (typeof populatePayrollMonthDropdown === 'function') {
+          populatePayrollMonthDropdown();
+        }
+        if (typeof loadMonthlyPayrollSummary === 'function') {
+          await loadMonthlyPayrollSummary(restaurantId);
+        }
       } else {
         if (paywallEl) paywallEl.classList.remove('hidden');
         if (gozcuContentEl) gozcuContentEl.classList.add('blurred');
