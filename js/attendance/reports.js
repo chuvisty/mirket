@@ -296,3 +296,415 @@ function exportAttendanceToCSV() {
   document.body.removeChild(link);
 }
 window.exportAttendanceToCSV = exportAttendanceToCSV;
+
+// ==========================================================================
+// AY SONU TOPLU PUANTAJ & BORDRO DÖKÜMÜ (MONETIZATION & MUHASEBE RAPORU)
+// ==========================================================================
+
+let loadedPayrollSummary = [];
+let currentPayrollPeriodMonth = '';
+let currentPayrollFilterStaffId = 'all';
+
+// Initialize month selector with current month and past 6 months
+function populatePayrollMonthDropdown() {
+  const monthSelect = document.getElementById('payrollMonthSelect');
+  if (!monthSelect) return;
+
+  monthSelect.innerHTML = '';
+  const now = new Date();
+  const monthNames = [
+    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+  ];
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const yr = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const val = `${yr}-${mo}`;
+    const label = `${monthNames[d.getMonth()]} ${yr}`;
+    
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = label;
+    if (i === 0) opt.selected = true;
+    monthSelect.appendChild(opt);
+  }
+
+  currentPayrollPeriodMonth = monthSelect.value;
+}
+window.populatePayrollMonthDropdown = populatePayrollMonthDropdown;
+
+// Switch between "Personel Bazlı Puantaj Özeti" and "Günlük Vardiya Logları"
+function switchAttendanceView(view) {
+  const summaryCard = document.getElementById('payrollSummarySection');
+  const logsSection = document.getElementById('attendanceLogsGranularSection');
+  const tabSummary = document.getElementById('tabPayrollSummary');
+  const tabLogs = document.getElementById('tabAttendanceLogs');
+
+  if (view === 'summary') {
+    if (summaryCard) summaryCard.style.display = 'block';
+    if (logsSection) logsSection.style.display = 'none';
+    if (tabSummary) tabSummary.classList.add('active');
+    if (tabLogs) tabLogs.classList.remove('active');
+  } else {
+    if (summaryCard) summaryCard.style.display = 'none';
+    if (logsSection) logsSection.style.display = 'block';
+    if (tabSummary) tabSummary.classList.remove('active');
+    if (tabLogs) tabLogs.classList.add('active');
+  }
+}
+window.switchAttendanceView = switchAttendanceView;
+
+// Load, aggregate and render Monthly Payroll Summary
+async function loadMonthlyPayrollSummary(restId, targetMonth = null) {
+  const targetRestId = restId || (window.auth && window.auth.currentUser ? window.auth.currentUser.uid : null);
+  if (!targetRestId) return;
+
+  const monthSelect = document.getElementById('payrollMonthSelect');
+  const selectedMonth = targetMonth || (monthSelect ? monthSelect.value : new Date().toISOString().slice(0, 7));
+  currentPayrollPeriodMonth = selectedMonth;
+
+  const tableBody = document.getElementById('payrollSummaryTableBody');
+  if (tableBody) {
+    tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:25px; color:#64748b;">📊 Dönem puantaj ve hakediş verileri hesaplanıyor...</td></tr>';
+  }
+
+  try {
+    // 1. Fetch all shifts for this restaurant
+    const q = window.firebaseFirestore.query(
+      window.firebaseFirestore.collection(window.db, 'shifts'),
+      window.firebaseFirestore.where('restaurantId', '==', targetRestId)
+    );
+
+    const snapshot = await window.firebaseFirestore.getDocs(q);
+    const allShifts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // 2. Filter shifts for the selected month (date string starts with YYYY-MM)
+    const monthShifts = allShifts.filter(s => s.date && s.date.startsWith(selectedMonth));
+
+    // 3. Make sure staffMembers is loaded
+    const staffList = window.staffMembers || [];
+
+    // 4. Aggregate by staff
+    const staffMap = {};
+
+    // Pre-populate with known staff so even zero-hour staff can be tracked if needed
+    staffList.forEach(st => {
+      staffMap[st.id] = {
+        staffId: st.id,
+        name: st.name || 'İsimsiz Personel',
+        role: st.role || 'Personel',
+        phone: st.phone || '',
+        wageType: st.wageType || 'hourly',
+        wageAmount: Number(st.wageAmount) || 0,
+        shiftsCount: 0,
+        workedMinutes: 0,
+        plannedMinutes: 0,
+        totalChecklistItems: 0,
+        completedChecklistItems: 0,
+        onTimeCount: 0,
+        lateCount: 0,
+        shifts: []
+      };
+    });
+
+    // Process shifts
+    monthShifts.forEach(shift => {
+      const staffKey = shift.staffId || (shift.workerPhone ? `phone_${shift.workerPhone}` : `name_${shift.workerName || 'unknown'}`);
+      
+      if (!staffMap[staffKey]) {
+        staffMap[staffKey] = {
+          staffId: shift.staffId || null,
+          name: shift.workerName || 'Misafir Çalışan',
+          role: 'Günlük Personel',
+          phone: shift.workerPhone || '',
+          wageType: 'hourly',
+          wageAmount: 0,
+          shiftsCount: 0,
+          workedMinutes: 0,
+          plannedMinutes: 0,
+          totalChecklistItems: 0,
+          completedChecklistItems: 0,
+          onTimeCount: 0,
+          lateCount: 0,
+          shifts: []
+        };
+      }
+
+      const rec = staffMap[staffKey];
+      rec.shiftsCount += 1;
+      rec.shifts.push(shift);
+
+      // Planned duration
+      if (shift.startTime && shift.endTime) {
+        const [sh, sm] = shift.startTime.split(':').map(Number);
+        const [eh, em] = shift.endTime.split(':').map(Number);
+        let mins = (eh * 60 + em) - (sh * 60 + sm);
+        if (mins <= 0) mins += 24 * 60;
+        rec.plannedMinutes += mins;
+      }
+
+      // Actual duration
+      let actualMins = 0;
+      if (shift.totalWorkedMinutes) {
+        actualMins = shift.totalWorkedMinutes;
+      } else if (shift.checkInTime && shift.checkOutTime) {
+        const inD = typeof shift.checkInTime.toDate === 'function' ? shift.checkInTime.toDate() : new Date(shift.checkInTime);
+        const outD = typeof shift.checkOutTime.toDate === 'function' ? shift.checkOutTime.toDate() : new Date(shift.checkOutTime);
+        actualMins = Math.max(0, Math.round((outD - inD) / 60000));
+      } else if (shift.status === 'completed' && shift.startTime && shift.endTime) {
+        const [sh, sm] = shift.startTime.split(':').map(Number);
+        const [eh, em] = shift.endTime.split(':').map(Number);
+        let mins = (eh * 60 + em) - (sh * 60 + sm);
+        if (mins <= 0) mins += 24 * 60;
+        actualMins = mins;
+      }
+      rec.workedMinutes += actualMins;
+
+      // Punctuality check
+      if (shift.checkInTime && shift.startTime) {
+        const cDate = typeof shift.checkInTime.toDate === 'function' ? shift.checkInTime.toDate() : new Date(shift.checkInTime);
+        const inTimeStr = cDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
+        const [actH, actM] = inTimeStr.split(':').map(Number);
+        const [schH, schM] = shift.startTime.split(':').map(Number);
+        const diff = (actH * 60 + actM) - (schH * 60 + schM);
+        if (diff <= 5) {
+          rec.onTimeCount += 1;
+        } else {
+          rec.lateCount += 1;
+        }
+      }
+
+      // Checklist completion
+      if (shift.checklist && Array.isArray(shift.checklist) && shift.checklist.length > 0) {
+        rec.totalChecklistItems += shift.checklist.length;
+        rec.completedChecklistItems += shift.checklist.filter(c => c.completed).length;
+      }
+    });
+
+    // 5. Build summary list
+    const summaryList = Object.values(staffMap).map(item => {
+      const workedHours = item.workedMinutes / 60;
+      const plannedHours = item.plannedMinutes / 60;
+      const diffHours = workedHours - plannedHours; // Positive = Overtime, Negative = Missing hours
+
+      let totalEarnings = 0;
+      if (item.wageType === 'daily') {
+        totalEarnings = item.shiftsCount * item.wageAmount;
+      } else {
+        totalEarnings = workedHours * item.wageAmount;
+      }
+
+      const punctualityRatio = (item.onTimeCount + item.lateCount) > 0
+        ? Math.round((item.onTimeCount / (item.onTimeCount + item.lateCount)) * 100)
+        : 100;
+
+      const checklistScore = item.totalChecklistItems > 0
+        ? Math.round((item.completedChecklistItems / item.totalChecklistItems) * 100)
+        : null;
+
+      return {
+        ...item,
+        workedHours,
+        plannedHours,
+        diffHours,
+        totalEarnings,
+        punctualityRatio,
+        checklistScore
+      };
+    });
+
+    // Sort by worked hours descending
+    summaryList.sort((a, b) => b.workedHours - a.workedHours);
+    loadedPayrollSummary = summaryList;
+
+    renderPayrollSummaryTable(summaryList);
+    updatePayrollKpis(summaryList, monthShifts);
+
+  } catch (error) {
+    console.error("Error loading monthly payroll summary:", error);
+    if (tableBody) {
+      tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:25px; color:#ef4444;">Puantaj tablosu yüklenirken hata meydana geldi.</td></tr>';
+    }
+  }
+}
+window.loadMonthlyPayrollSummary = loadMonthlyPayrollSummary;
+
+// Update Dashboard KPI cards
+function updatePayrollKpis(summaryList, monthShifts) {
+  const activeStaff = summaryList.filter(s => s.shiftsCount > 0);
+  const totalStaffCount = activeStaff.length;
+  const totalHours = activeStaff.reduce((sum, s) => sum + s.workedHours, 0);
+  const totalPayroll = activeStaff.reduce((sum, s) => sum + s.totalEarnings, 0);
+  const totalOvertime = activeStaff.reduce((sum, s) => sum + (s.diffHours > 0 ? s.diffHours : 0), 0);
+
+  const kpiStaffEl = document.getElementById('kpiPayrollStaffCount');
+  const kpiHoursEl = document.getElementById('kpiPayrollTotalHours');
+  const kpiPayrollEl = document.getElementById('kpiPayrollTotalAmount');
+  const kpiOvertimeEl = document.getElementById('kpiPayrollOvertimeHours');
+
+  if (kpiStaffEl) kpiStaffEl.textContent = `${totalStaffCount} Kişi`;
+  if (kpiHoursEl) kpiHoursEl.textContent = `${totalHours.toFixed(1)} Saat`;
+  if (kpiPayrollEl) kpiPayrollEl.textContent = `${Math.round(totalPayroll).toLocaleString('tr-TR')} ₺`;
+  if (kpiOvertimeEl) kpiOvertimeEl.textContent = `+${totalOvertime.toFixed(1)} Saat`;
+}
+
+// Render the aggregated Payroll Table
+function renderPayrollSummaryTable(summaryList) {
+  const tableBody = document.getElementById('payrollSummaryTableBody');
+  if (!tableBody) return;
+
+  // Filter out completely inactive staff if desired, or keep them with 0
+  const activeList = summaryList.filter(s => s.shiftsCount > 0);
+
+  if (activeList.length === 0) {
+    tableBody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:25px; color:#94a3b8;">Seçilen ayda aktif mesai kaydı bulunamadı.</td></tr>';
+    return;
+  }
+
+  let grandTotalHours = 0;
+  let grandTotalEarnings = 0;
+  let grandTotalShifts = 0;
+
+  const rowsHtml = activeList.map(st => {
+    grandTotalHours += st.workedHours;
+    grandTotalEarnings += st.totalEarnings;
+    grandTotalShifts += st.shiftsCount;
+
+    // Diff / Overtime badge
+    let diffBadge = '<span style="color:#94a3b8; font-size:12px;">0.0s</span>';
+    if (st.diffHours > 0.1) {
+      diffBadge = `<span style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11px;" title="Fazla Mesai">+${st.diffHours.toFixed(1)}s Mesai</span>`;
+    } else if (st.diffHours < -0.1) {
+      diffBadge = `<span style="background:#fee2e2; color:#b91c1c; padding:2px 8px; border-radius:6px; font-weight:700; font-size:11px;" title="Eksik Mesai">${st.diffHours.toFixed(1)}s Eksik</span>`;
+    }
+
+    // Wage label
+    const wageLabel = st.wageType === 'daily'
+      ? `${st.wageAmount.toLocaleString('tr-TR')} ₺/Gün`
+      : `${st.wageAmount.toLocaleString('tr-TR')} ₺/Saat`;
+
+    // Performance indicators
+    const checkBadge = st.checklistScore !== null
+      ? `<span style="font-size:11px; font-weight:600; color:#0f766e;">%${st.checklistScore}</span>`
+      : '<span style="color:#cbd5e1;">-</span>';
+
+    const punctualityBadge = `<span style="font-size:11px; font-weight:600; color:${st.punctualityRatio >= 85 ? '#15803d' : '#b45309'};">%${st.punctualityRatio}</span>`;
+
+    return `
+      <tr>
+        <td style="padding: 12px 10px;">
+          <div style="font-weight: 700; color: #0f172a; font-size: 14px;">${st.name}</div>
+          <div style="font-size: 11px; color: #64748b;">${st.role} • ${st.phone || 'Tel yok'}</div>
+        </td>
+        <td style="padding: 12px 10px; text-align: center; font-weight: 600;">${st.shiftsCount} Gün</td>
+        <td style="padding: 12px 10px; text-align: center; color: #64748b;">${st.plannedHours.toFixed(1)}s</td>
+        <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: #0f172a;">${st.workedHours.toFixed(1)} Saat</td>
+        <td style="padding: 12px 10px; text-align: center;">${diffBadge}</td>
+        <td style="padding: 12px 10px; font-size: 12px; color: #475569;">${wageLabel}</td>
+        <td style="padding: 12px 10px; font-size: 14px; font-weight: 800; color: #047857;">${Math.round(st.totalEarnings).toLocaleString('tr-TR')} ₺</td>
+        <td style="padding: 12px 10px; text-align: center;">
+          ${punctualityBadge} / ${checkBadge}
+        </td>
+        <td class="signature-col" style="padding: 12px 10px; text-align: center; border-left: 1px dashed #cbd5e1; width: 110px;">
+          <div style="border-bottom: 1px dotted #94a3b8; height: 26px; margin: 4px 8px;"></div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // Grand summary footer row
+  const footerRow = `
+    <tr style="background: #f1f5f9; font-weight: 800; border-top: 2px solid #cbd5e1; font-size: 13px;">
+      <td style="padding: 14px 10px;">GENEL TOPLAM (${activeList.length} Personel):</td>
+      <td style="padding: 14px 10px; text-align: center;">${grandTotalShifts} Vardiya</td>
+      <td style="padding: 14px 10px; text-align: center;">-</td>
+      <td style="padding: 14px 10px; text-align: center; color: #0f172a;">${grandTotalHours.toFixed(1)} Saat</td>
+      <td style="padding: 14px 10px; text-align: center;">-</td>
+      <td style="padding: 14px 10px;">-</td>
+      <td style="padding: 14px 10px; color: #047857; font-size: 15px;">${Math.round(grandTotalEarnings).toLocaleString('tr-TR')} ₺</td>
+      <td style="padding: 14px 10px; text-align: center;">-</td>
+      <td class="signature-col" style="padding: 14px 10px;"></td>
+    </tr>
+  `;
+
+  tableBody.innerHTML = rowsHtml + footerRow;
+}
+
+// Export Monthly Payroll Summary to UTF-8 BOM CSV (Excel Compatible)
+function exportPayrollSummaryToCSV() {
+  if (!loadedPayrollSummary || loadedPayrollSummary.length === 0) {
+    alert("Dışa aktarılacak dönem puantaj verisi bulunamadı.");
+    return;
+  }
+
+  const activeList = loadedPayrollSummary.filter(s => s.shiftsCount > 0);
+  if (activeList.length === 0) {
+    alert("Seçilen dönemde puantaj kaydı bulunmuyor.");
+    return;
+  }
+
+  const headers = [
+    "Personel Adı",
+    "Rol / Görev",
+    "Telefon",
+    "Ücret Tipi",
+    "Birim Ücret (TL)",
+    "Çalışılan Gün (Vardiya)",
+    "Planlanan Saat",
+    "Gerçekleşen Saat",
+    "Fazla / Eksik Mesai (Saat)",
+    "Toplam Hakediş (TL)",
+    "Zamanındalık Oranı (%)",
+    "Görev Tamamlama (%)"
+  ];
+
+  const rows = activeList.map(st => {
+    return [
+      `"${st.name.replace(/"/g, '""')}"`,
+      `"${(st.role || '').replace(/"/g, '""')}"`,
+      `"${st.phone || ''}"`,
+      `"${st.wageType === 'daily' ? 'Günlük' : 'Saatlik'}"`,
+      `"${st.wageAmount}"`,
+      `"${st.shiftsCount}"`,
+      `"${st.plannedHours.toFixed(1)}"`,
+      `"${st.workedHours.toFixed(1)}"`,
+      `"${st.diffHours.toFixed(1)}"`,
+      `"${Math.round(st.totalEarnings)}"`,
+      `"${st.punctualityRatio}"`,
+      `"${st.checklistScore !== null ? st.checklistScore : ''}"`
+    ].join(';'); // Use semicolon for seamless Turkish Excel compatibility
+  });
+
+  const csvContent = "\uFEFF" + [headers.join(';'), ...rows].join('\r\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `mirket_aylik_puantaj_bordro_${currentPayrollPeriodMonth || 'donem'}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+window.exportPayrollSummaryToCSV = exportPayrollSummaryToCSV;
+
+// Print Official A4 Payroll & Timesheet Form
+function printPayrollReport() {
+  const monthSelect = document.getElementById('payrollMonthSelect');
+  const selectedLabel = monthSelect && monthSelect.selectedOptions[0] ? monthSelect.selectedOptions[0].textContent : currentPayrollPeriodMonth;
+
+  // Set print header info
+  const printTitle = document.getElementById('printReportTitle');
+  const printDate = document.getElementById('printReportDate');
+  if (printTitle) {
+    printTitle.textContent = `Aylık Personel Puantaj & Bordro Dökümü (${selectedLabel})`;
+  }
+  if (printDate) {
+    printDate.textContent = `Döküm Tarihi: ${new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  window.print();
+}
+window.printPayrollReport = printPayrollReport;

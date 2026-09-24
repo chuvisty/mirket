@@ -5,9 +5,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mirket Gözcü | Vardiya Takip Sistemi</title>
-  <meta name="description" content="Mirket Gözcü ile personellerinizin vardiyalarını kolayca yönetin.">
-  <link rel="stylesheet" href="styles.css?v=4">
-  <style>
+  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mirket">
+  <link rel="apple-touch-icon" href="/images/favicon.png">
+  <link rel="icon" type="image/png" href="/images/favicon.png">
     /* Specific styles for Mirket Gözcü that could be moved to styles.css later */
     .gozcu-container {
       position: relative;
@@ -777,49 +783,159 @@
       </section>
 
       <div id="protectedSections" style="display: none;">
-      <!-- Attendance Logs & Reporting Section -->
-      <section class="card" style="max-width: 100%; margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
-          <div>
-            <h2 style="margin: 0;">📊 Mesai & Giriş-Çıkış Raporları</h2>
-            <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0;">Çalışanların hangi gün kaçta giriş/çıkış yaptığını görün ve CSV raporu indirin.</p>
+      <!-- Attendance Logs & Monthly Payroll Section -->
+      <section id="payrollSummaryCard" class="card" style="max-width: 100%; margin-bottom: 20px;">
+        <!-- Print-only header -->
+        <div id="payrollPrintHeader">
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #0f172a; padding-bottom: 8px;">
+            <div>
+              <h1 id="printReportTitle" style="font-size: 20px; font-weight: 800; margin: 0; color: #0f172a;">Aylık Personel Puantaj & Bordro Dökümü</h1>
+              <div id="printRestaurantName" style="font-size: 13px; color: #475569; margin-top: 4px;">Mirket Gözcü Personel Takip Sistemi</div>
+            </div>
+            <div id="printReportDate" style="font-size: 11px; color: #64748b;"></div>
           </div>
-          <div style="display: flex; gap: 10px; align-items: center;">
-            <select id="attendanceFilterPeriod" onchange="loadAttendanceLogs(restaurantId, this.value)" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13px;">
-              <option value="today">Bugün</option>
-              <option value="week">Bu Hafta</option>
-              <option value="month">Bu Ay</option>
-              <option value="all">Tüm Zamanlar</option>
-            </select>
-            <button class="btn secondary" onclick="exportAttendanceToCSV()" style="font-size: 13px;">
-              📥 CSV Raporu İndir
-            </button>
-            <button class="btn ghost" onclick="relockProtectedSections()" style="font-size: 13px; color: #64748b; border: 1px solid #cbd5e1;" title="Yönetici bölümlerini hemen kilitle">
-              🔒 Paneli Kilitle
+        </div>
+
+        <!-- Section Top Controls (Screen view) -->
+        <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
+          <div>
+            <h2 style="margin: 0;">📊 Puantaj & Mesai Takip Merkezi</h2>
+            <p style="color: #64748b; font-size: 13px; margin: 4px 0 0 0;">Ay sonu toplu bordro dökümü alın, fazla/eksik mesaileri analiz edin ve resmi puantaj çıktısı hazırlayın.</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <div class="payroll-view-tabs">
+              <button type="button" id="tabPayrollSummary" class="payroll-view-tab active" onclick="switchAttendanceView('summary')">
+                📋 Aylık Puantaj & Bordro
+              </button>
+              <button type="button" id="tabAttendanceLogs" class="payroll-view-tab" onclick="switchAttendanceView('logs')">
+                🕒 Günlük Ham Kayıtlar
+              </button>
+            </div>
+            <button class="btn ghost btn-sm" onclick="relockProtectedSections()" style="font-size: 13px; color: #64748b; border: 1px solid #cbd5e1;" title="Yönetici bölümlerini hemen kilitle">
+              🔒 Kilitle
             </button>
           </div>
         </div>
-        
-        <div style="overflow-x: auto;">
-          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-            <thead>
-              <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
-                <th style="padding: 10px;">Çalışan</th>
-                <th style="padding: 10px;">Tarih</th>
-                <th style="padding: 10px;">Giriş Saati</th>
-                <th style="padding: 10px;">Çıkış Saati</th>
-                <th style="padding: 10px;">Çalışılan Saat</th>
-                <th style="padding: 10px;">Hakediş (TL)</th>
-                <th style="padding: 10px;">Görevler (Checklist)</th>
-                <th style="padding: 10px;">Durum & Doğrulama</th>
-              </tr>
-            </thead>
-            <tbody id="attendanceLogsTableBody">
-              <tr>
-                <td colspan="8" style="text-align:center; padding:20px; color:#94a3b8;">Mesai kayıtları yükleniyor...</td>
-              </tr>
-            </tbody>
-          </table>
+
+        <!-- VIEW 1: Aylık Puantaj & Bordro Konsolide Raporu -->
+        <div id="payrollSummarySection">
+          <!-- Filter and Action Toolbar -->
+          <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 13px; font-weight: 700; color: #334155;">Dönem Seçimi:</span>
+              <select id="payrollMonthSelect" onchange="loadMonthlyPayrollSummary(restaurantId, this.value)" style="padding: 8px 14px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; background: white; cursor: pointer;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button type="button" class="btn secondary" onclick="printPayrollReport()" style="font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                🖨️ Yazdır / Resmi PDF Al
+              </button>
+              <button type="button" class="btn primary" onclick="exportPayrollSummaryToCSV()" style="font-size: 13px; display: flex; align-items: center; gap: 6px;">
+                📥 Excel / CSV İndir
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Summary Cards -->
+          <div class="payroll-kpi-grid">
+            <div class="payroll-kpi-card">
+              <div class="kpi-label">Dönem Personeli</div>
+              <div class="kpi-value" id="kpiPayrollStaffCount">0 Kişi</div>
+              <div class="kpi-sub">Aktif çalışan sayısı</div>
+            </div>
+            <div class="payroll-kpi-card">
+              <div class="kpi-label">Toplam Çalışılan Saat</div>
+              <div class="kpi-value" id="kpiPayrollTotalHours">0 Saat</div>
+              <div class="kpi-sub">Fiili mesai toplamı</div>
+            </div>
+            <div class="payroll-kpi-card">
+              <div class="kpi-label">Net Fazla Mesai</div>
+              <div class="kpi-value" id="kpiPayrollOvertimeHours" style="color: #15803d;">0 Saat</div>
+              <div class="kpi-sub">Planlanan üstü çalışma</div>
+            </div>
+            <div class="payroll-kpi-card">
+              <div class="kpi-label">Toplam Bordro Hakedişi</div>
+              <div class="kpi-value" id="kpiPayrollTotalAmount" style="color: #047857;">0 ₺</div>
+              <div class="kpi-sub">Tahakkuk eden tutar</div>
+            </div>
+          </div>
+
+          <!-- Aggregated Staff Timesheet Table -->
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+              <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
+                  <th style="padding: 12px 10px;">Personel Bilgisi</th>
+                  <th style="padding: 12px 10px; text-align: center;">Çalışılan Gün</th>
+                  <th style="padding: 12px 10px; text-align: center;">Planlanan</th>
+                  <th style="padding: 12px 10px; text-align: center;">Gerçekleşen</th>
+                  <th style="padding: 12px 10px; text-align: center;">Mesai Farkı</th>
+                  <th style="padding: 12px 10px;">Ücret Modeli</th>
+                  <th style="padding: 12px 10px;">Toplam Hakediş</th>
+                  <th style="padding: 12px 10px; text-align: center;">Zamanındalık / Görev</th>
+                  <th class="signature-col" style="padding: 12px 10px; text-align: center;">Personel İmzası</th>
+                </tr>
+              </thead>
+              <tbody id="payrollSummaryTableBody">
+                <tr>
+                  <td colspan="9" style="text-align:center; padding:25px; color:#94a3b8;">Dönem verileri yükleniyor...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Print-only official signature footer -->
+          <div id="payrollPrintFooter">
+            <div class="print-signature-box">
+              <strong>İşletme Yetkilisi Kaşe / İmza</strong>
+              <span>Yukarıdaki çalışma saatleri ve hakediş tutarları incelenip onaylanmıştır.</span>
+            </div>
+            <div class="print-signature-box">
+              <strong>Personel / Muhasebe Kontrol</strong>
+              <span>Puantaj mutabakatı eksiksiz sağlanmıştır.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 2: Günlük Detaylı Vardiya & Giriş-Çıkış Logları (Eski Görünüm) -->
+        <div id="attendanceLogsGranularSection" style="display: none;">
+          <div class="no-print" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; background: #f8fafc; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 13px; font-weight: 700; color: #334155;">Filtrele:</span>
+              <select id="attendanceFilterPeriod" onchange="loadAttendanceLogs(restaurantId, this.value)" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 13px; background: white;">
+                <option value="today">Bugün</option>
+                <option value="week">Bu Hafta</option>
+                <option value="month">Bu Ay</option>
+                <option value="all">Tüm Zamanlar</option>
+              </select>
+            </div>
+            <button class="btn secondary" onclick="exportAttendanceToCSV()" style="font-size: 13px;">
+              📥 Detaylı Log CSV İndir
+            </button>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+              <thead>
+                <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; color: #475569;">
+                  <th style="padding: 10px;">Çalışan</th>
+                  <th style="padding: 10px;">Tarih</th>
+                  <th style="padding: 10px;">Giriş Saati</th>
+                  <th style="padding: 10px;">Çıkış Saati</th>
+                  <th style="padding: 10px;">Çalışılan Saat</th>
+                  <th style="padding: 10px;">Hakediş (TL)</th>
+                  <th style="padding: 10px;">Görevler (Checklist)</th>
+                  <th style="padding: 10px;">Durum & Doğrulama</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceLogsTableBody">
+                <tr>
+                  <td colspan="8" style="text-align:center; padding:20px; color:#94a3b8;">Mesai kayıtları yükleniyor...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -1278,5 +1394,6 @@
 <script src="js/shifts/calendar-render.js?v=13" data-cookieconsent="ignore"></script>
 <script src="js/shifts/calendar-actions.js?v=13" data-cookieconsent="ignore"></script>
 <script src="js/shifts/shift-crud.js?v=13" data-cookieconsent="ignore"></script>
+<script src="js/pwa-install.js" defer></script>
 </body>
 </html>
