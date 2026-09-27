@@ -5,15 +5,15 @@ This file was created to track features that are missing, need testing, or will 
 ## 🎯 Test & Canlıya Alım Sonrası İlk Öncelikler (Kullanıcı Tarafından Onaylanan Yol Haritası)
 > *`feature/pin-attendance` testleri tamamlanıp canlıya alındıktan hemen sonra bu 2 özellik sırayla geliştirilecektir:*
 
-- [ ] **1. PWA Desteği (Mobil Ana Ekrana Ekleme - Saha & Restoran Personeli Kolaylığı):**
-  - Web uygulamasına Progressive Web App (`manifest.json`, icon set ve meta etiketleri) desteği eklenmesi.
-  - Çalışanlar ve yöneticiler için "📲 Uygulamayı Ana Ekrana Ekle" butonu/rehberi.
-  - Tarayıcı adres çubuğu olmadan tam ekran mobil yerel uygulama gibi tek dokunuşla açılabilmesi.
+- [x] **1. PWA Desteği (Mobil Ana Ekrana Ekleme - Saha & Restoran Personeli Kolaylığı):**
+  - Web uygulamasına Progressive Web App (`manifest.json`, `sw.js`, icon set ve meta etiketleri) desteği eklendi.
+  - Çalışanlar ve yöneticiler için "📲 Uygulamayı Yükle" butonu, akıllı banner ve iOS Safari kurulum rehberi eklendi.
+  - Tarayıcı adres çubuğu olmadan tam ekran mobil yerel uygulama gibi tek dokunuşla açılabilmesi sağlandı.
 
-- [ ] **2. Ay Sonu Toplu Puantaj & Bordro Dökümü (Monetization & Muhasebe Raporu):**
-  - Restoran yöneticilerinin ay sonunda tek tıkla alabileceği dönemlik personel bazlı puantaj tablosu.
-  - Toplam çalışılan saat, saatlik/günlük hakediş tutarları, eksik/fazla mesai analizi.
-  - Muhasebeciye doğrudan iletilebilecek şık PDF / Excel / CSV çıktısı.
+- [x] **2. Ay Sonu Toplu Puantaj & Bordro Dökümü (Monetization & Muhasebe Raporu):**
+  - Restoran yöneticilerinin ay sonunda tek tıkla alabileceği dönemlik personel bazlı konsolide puantaj tablosu eklendi.
+  - Toplam çalışılan saat, saatlik/günlük hakediş tutarları, eksik/fazla mesai analizi, zamanındalık ve görev tamamlama puanı hesaplaması sağlandı.
+  - Muhasebeciye doğrudan iletilebilecek resmi A4 yazdır/PDF çıktısı ve UTF-8 BOM destekli Excel/CSV dökümü oluşturuldu.
 
 ## 🚀 Diğer Bekleyen Özellikler / Geliştirmeler
 

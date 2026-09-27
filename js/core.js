@@ -22,6 +22,15 @@ async function initApp() {
   if (typeof initWorkerFeedPage === 'function') initWorkerFeedPage();
   if (typeof initAdminPage === 'function') initAdminPage();
   if (typeof initGozcuPage === 'function') initGozcuPage();
+
+  // Initialize PWA installer across all pages
+  if (!document.getElementById('pwaInstallScript')) {
+    const pwaScript = document.createElement('script');
+    pwaScript.id = 'pwaInstallScript';
+    pwaScript.src = '/js/pwa-install.js';
+    pwaScript.defer = true;
+    document.body.appendChild(pwaScript);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
