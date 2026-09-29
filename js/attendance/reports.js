@@ -1,4 +1,4 @@
-﻿// --- REPORTS: Attendance table rendering & CSV export ---
+// --- REPORTS: Attendance table rendering & CSV export ---
 async function loadAttendanceLogs(restaurantId, filterPeriod = 'today') {
   const tableBody = document.getElementById('attendanceLogsTableBody');
   if (!tableBody) return;
@@ -18,20 +18,50 @@ async function loadAttendanceLogs(restaurantId, filterPeriod = 'today') {
 
     // Date filtering client-side for flexibility
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const todayStr = typeof getLocalDateString === 'function' ? getLocalDateString(now) : now.toLocaleDateString('en-CA');
 
     if (filterPeriod === 'today') {
-      shifts = shifts.filter(s => s.date === todayStr);
+      shifts = shifts.filter(s => {
+        if (s.date === todayStr) return true;
+        // Include overnight shifts currently active
+        if (s.status === 'active') return true;
+        // Include overnight shifts that finished today
+        if (s.checkOutTime && typeof s.checkOutTime.toDate === 'function') {
+          const outDateStr = typeof getLocalDateString === 'function'
+            ? getLocalDateString(s.checkOutTime.toDate())
+            : s.checkOutTime.toDate().toLocaleDateString('en-CA');
+          if (outDateStr === todayStr) return true;
+        }
+        return false;
+      });
     } else if (filterPeriod === 'week') {
-      const weekAgo = new Date();
+      const weekAgo = new Date(now);
       weekAgo.setDate(now.getDate() - 7);
-      const weekAgoStr = weekAgo.toISOString().split('T')[0];
-      shifts = shifts.filter(s => s.date >= weekAgoStr);
+      const weekAgoStr = typeof getLocalDateString === 'function' ? getLocalDateString(weekAgo) : weekAgo.toLocaleDateString('en-CA');
+      shifts = shifts.filter(s => {
+        if (s.date >= weekAgoStr) return true;
+        if (s.checkOutTime && typeof s.checkOutTime.toDate === 'function') {
+          const outDateStr = typeof getLocalDateString === 'function'
+            ? getLocalDateString(s.checkOutTime.toDate())
+            : s.checkOutTime.toDate().toLocaleDateString('en-CA');
+          if (outDateStr >= weekAgoStr) return true;
+        }
+        return false;
+      });
     } else if (filterPeriod === 'month') {
-      const monthAgo = new Date();
+      const monthAgo = new Date(now);
       monthAgo.setMonth(monthAgo.getMonth() - 1);
-      const monthAgoStr = monthAgo.toISOString().split('T')[0];
-      shifts = shifts.filter(s => s.date >= monthAgoStr);
+      const monthAgoStr = typeof getLocalDateString === 'function' ? getLocalDateString(monthAgo) : monthAgo.toLocaleDateString('en-CA');
+      shifts = shifts.filter(s => {
+        if (s.date >= monthAgoStr) return true;
+        if (s.checkOutTime && typeof s.checkOutTime.toDate === 'function') {
+          const outDateStr = typeof getLocalDateString === 'function'
+            ? getLocalDateString(s.checkOutTime.toDate())
+            : s.checkOutTime.toDate().toLocaleDateString('en-CA');
+          if (outDateStr >= monthAgoStr) return true;
+        }
+        return false;
+      });
     }
 
     // Sort by checkInTime descending
@@ -246,7 +276,18 @@ function exportAttendanceToCSV() {
       ? s.checkOutTime.toDate().toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' })
       : (s.endTime || '');
 
-    let workedHours = s.totalWorkedMinutes ? (s.totalWorkedMinutes / 60) : 0;
+    let workedHours = 0;
+    if (s.totalWorkedMinutes) {
+      workedHours = s.totalWorkedMinutes / 60;
+    } else if (s.checkInTime && s.checkOutTime && typeof s.checkInTime.toDate === 'function' && typeof s.checkOutTime.toDate === 'function') {
+      workedHours = (s.checkOutTime.toDate() - s.checkInTime.toDate()) / 3600000;
+    } else if (s.startTime && s.endTime && s.status === 'completed') {
+      const [sh, sm] = s.startTime.split(':').map(Number);
+      const [eh, em] = s.endTime.split(':').map(Number);
+      let mins = (eh * 60 + em) - (sh * 60 + sm);
+      if (mins <= 0) mins += 24 * 60;
+      workedHours = mins / 60;
+    }
     const staff = s.staffId ? staffList.find(st => st.id === s.staffId) : null;
     let earnings = 0;
     if (staff && staff.wageAmount) {

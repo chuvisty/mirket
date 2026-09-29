@@ -24,6 +24,9 @@ async function autoCloseExpiredShifts(restaurantId) {
 
     const now = new Date();
     const todayStr = getLocalDateString(now);
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = getLocalDateString(yesterday);
     const currentHourMin = now.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit', hour12: false });
 
     const expiredShifts = [];
@@ -39,6 +42,7 @@ async function autoCloseExpiredShifts(restaurantId) {
       // Calculate restaurant closing Date for this shift
       let isExpired = false;
       let checkOutTimestamp = null;
+      let checkOutDateObj = null;
 
       try {
         const parts = shiftDate.split('-').map(Number);
@@ -46,13 +50,14 @@ async function autoCloseExpiredShifts(restaurantId) {
           const [sYear, sMonth, sDay] = parts;
           const shiftClosingDate = new Date(sYear, sMonth - 1, sDay, closingHour, 0, 0);
 
-          // If closingHour <= openingHour, restaurant closes on the following morning (e.g. 08:00 -> 01:00)
+          // If closingHour <= openingHour, restaurant closes on the following morning (e.g. 08:00 -> 02:00)
           if (closingHour <= openingHour) {
             shiftClosingDate.setDate(shiftClosingDate.getDate() + 1);
           }
 
           if (now >= shiftClosingDate) {
             isExpired = true;
+            checkOutDateObj = shiftClosingDate;
             checkOutTimestamp = window.firebaseFirestore.Timestamp.fromDate(shiftClosingDate);
           }
         }
@@ -62,22 +67,58 @@ async function autoCloseExpiredShifts(restaurantId) {
 
       // Also check if scheduled endTime has passed AND restaurant has autoEndShiftAtScheduledTime enabled
       if (!isExpired && userData.autoEndShiftAtScheduledTime && data.endTime) {
-        if (shiftDate < todayStr || (shiftDate === todayStr && currentHourMin >= data.endTime)) {
-          isExpired = true;
-          checkOutTimestamp = data.endTime;
+        try {
+          const parts = shiftDate.split('-').map(Number);
+          if (parts.length === 3) {
+            const [sYear, sMonth, sDay] = parts;
+            const [endH, endM] = (data.endTime || '00:00').split(':').map(Number);
+            const scheduledEndDate = new Date(sYear, sMonth - 1, sDay, endH || 0, endM || 0, 0);
+
+            let crossesMidnight = false;
+            if (data.startTime) {
+              const [startH, startM] = data.startTime.split(':').map(Number);
+              if (endH < startH || (endH === startH && endM < startM)) {
+                crossesMidnight = true;
+              }
+            } else if (closingHour <= openingHour && endH < openingHour) {
+              crossesMidnight = true;
+            }
+
+            if (crossesMidnight) {
+              scheduledEndDate.setDate(scheduledEndDate.getDate() + 1);
+            }
+
+            if (now >= scheduledEndDate) {
+              isExpired = true;
+              checkOutDateObj = scheduledEndDate;
+              checkOutTimestamp = window.firebaseFirestore.Timestamp.fromDate(scheduledEndDate);
+            }
+          }
+        } catch (err) {
+          console.warn("Scheduled end date parsing error in autoCloseExpiredShifts:", err);
         }
       }
 
-      // If shift is older than yesterday, it is unconditionally expired
-      if (!isExpired && shiftDate < todayStr) {
+      // If shift started before yesterday, it is unconditionally expired
+      if (!isExpired && shiftDate < yesterdayStr) {
         isExpired = true;
-        checkOutTimestamp = checkOutTimestamp || window.firebaseFirestore.Timestamp.fromDate(now);
+        checkOutDateObj = now;
+        checkOutTimestamp = window.firebaseFirestore.Timestamp.fromDate(now);
       }
 
       if (isExpired) {
+        const checkInDate = data.checkInTime && typeof data.checkInTime.toDate === 'function'
+          ? data.checkInTime.toDate()
+          : (data.date ? new Date(`${data.date}T${data.startTime || '00:00'}:00`) : now);
+        const endDate = checkOutDateObj || (checkOutTimestamp && typeof checkOutTimestamp.toDate === 'function' ? checkOutTimestamp.toDate() : now);
+        const totalMinutes = Math.max(1, Math.round((endDate - checkInDate) / 60000));
+        const finalEndTimeStr = data.endTime || endDate.toLocaleTimeString('tr-TR', { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit' });
+
         expiredShifts.push({
           id: docSnap.id,
-          checkOutTime: checkOutTimestamp || `${String(closingHour).padStart(2, '0')}:00`,
+          checkOutTimestamp: checkOutTimestamp || window.firebaseFirestore.Timestamp.fromDate(endDate),
+          totalWorkedMinutes: totalMinutes,
+          endTime: finalEndTimeStr,
           ...data
         });
       }
@@ -89,7 +130,9 @@ async function autoCloseExpiredShifts(restaurantId) {
         const ref = window.firebaseFirestore.doc(window.db, 'shifts', shift.id);
         batch.update(ref, {
           status: 'completed',
-          checkOutTime: shift.checkOutTime,
+          checkOutTime: shift.checkOutTimestamp,
+          totalWorkedMinutes: shift.totalWorkedMinutes,
+          endTime: shift.endTime,
           autoEnded: true
         });
       });
@@ -117,7 +160,15 @@ async function checkWorkerActiveShift(workerUid) {
     const snapshot = await window.firebaseFirestore.getDocs(q);
     
     if (!snapshot.empty) {
-      const docSnap = snapshot.docs[0];
+      const activeDocs = [...snapshot.docs];
+      if (activeDocs.length > 1) {
+        activeDocs.sort((a, b) => {
+          const tA = a.data().checkInTime?.toMillis?.() || 0;
+          const tB = b.data().checkInTime?.toMillis?.() || 0;
+          return tB - tA;
+        });
+      }
+      const docSnap = activeDocs[0];
       const shiftData = docSnap.data();
 
       // Check auto-end rule for this shift's restaurant
@@ -240,7 +291,7 @@ async function processClockInOut(scannedToken, workerCoords) {
       workerPhone = wData.employeePhone || wData.authorizedPhone || wData.phone || '';
     }
 
-    // 3. Check if there's an ACTIVE shift for this worker TODAY
+    // 3. Check if there's an ACTIVE shift for this worker (including overnight shifts from yesterday)
     const q = window.firebaseFirestore.query(
       window.firebaseFirestore.collection(window.db, 'shifts'),
       window.firebaseFirestore.where('workerId', '==', workerUser.uid),
@@ -248,11 +299,37 @@ async function processClockInOut(scannedToken, workerCoords) {
     );
     const activeShiftSnap = await window.firebaseFirestore.getDocs(q);
 
-    const todayStr = getLocalDateString();
-    const matchingActiveDoc = activeShiftSnap.docs.find(d => {
+    const now = new Date();
+    const todayStr = getLocalDateString(now);
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = getLocalDateString(yesterday);
+
+    const activeDocsForRestaurant = activeShiftSnap.docs.filter(d => {
       const data = d.data();
-      return data.restaurantId === restaurantId && data.date === todayStr;
+      return data.restaurantId === restaurantId;
     });
+
+    let matchingActiveDoc = null;
+    if (activeDocsForRestaurant.length > 0) {
+      // 1. First priority: active shift for today
+      matchingActiveDoc = activeDocsForRestaurant.find(d => d.data().date === todayStr);
+
+      // 2. Second priority: overnight active shift started yesterday
+      if (!matchingActiveDoc) {
+        matchingActiveDoc = activeDocsForRestaurant.find(d => d.data().date === yesterdayStr);
+      }
+
+      // 3. Fallback: most recent active shift for this restaurant
+      if (!matchingActiveDoc) {
+        activeDocsForRestaurant.sort((a, b) => {
+          const tA = a.data().checkInTime?.toMillis?.() || 0;
+          const tB = b.data().checkInTime?.toMillis?.() || 0;
+          return tB - tA;
+        });
+        matchingActiveDoc = activeDocsForRestaurant[0];
+      }
+    }
 
     if (matchingActiveDoc) {
       // --- CLOCK-OUT ACTION ---
@@ -546,7 +623,7 @@ async function processPinClockInOut(enteredPin, workerCoords) {
       workerPhone = wData.employeePhone || wData.authorizedPhone || wData.phone || '';
     }
 
-    // 4. Check if there's an ACTIVE shift for this worker TODAY
+    // 4. Check if there's an ACTIVE shift for this worker (including overnight shifts from yesterday)
     const shiftQ = window.firebaseFirestore.query(
       window.firebaseFirestore.collection(window.db, 'shifts'),
       window.firebaseFirestore.where('workerId', '==', workerUser.uid),
@@ -554,11 +631,37 @@ async function processPinClockInOut(enteredPin, workerCoords) {
     );
     const activeShiftSnap = await window.firebaseFirestore.getDocs(shiftQ);
 
-    const todayStr = getLocalDateString();
-    const matchingActiveDoc = activeShiftSnap.docs.find(d => {
+    const now = new Date();
+    const todayStr = getLocalDateString(now);
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = getLocalDateString(yesterday);
+
+    const activeDocsForRestaurant = activeShiftSnap.docs.filter(d => {
       const data = d.data();
-      return data.restaurantId === restaurantId && data.date === todayStr;
+      return data.restaurantId === restaurantId;
     });
+
+    let matchingActiveDoc = null;
+    if (activeDocsForRestaurant.length > 0) {
+      // 1. First priority: active shift for today
+      matchingActiveDoc = activeDocsForRestaurant.find(d => d.data().date === todayStr);
+
+      // 2. Second priority: overnight active shift started yesterday
+      if (!matchingActiveDoc) {
+        matchingActiveDoc = activeDocsForRestaurant.find(d => d.data().date === yesterdayStr);
+      }
+
+      // 3. Fallback: most recent active shift for this restaurant
+      if (!matchingActiveDoc) {
+        activeDocsForRestaurant.sort((a, b) => {
+          const tA = a.data().checkInTime?.toMillis?.() || 0;
+          const tB = b.data().checkInTime?.toMillis?.() || 0;
+          return tB - tA;
+        });
+        matchingActiveDoc = activeDocsForRestaurant[0];
+      }
+    }
 
     if (matchingActiveDoc) {
       // --- CLOCK-OUT ACTION ---

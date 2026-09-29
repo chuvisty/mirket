@@ -71,7 +71,10 @@ function renderCalendar() {
     dayShifts.sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
     
     dayShifts.forEach(shift => {
-      const staff = shift.staffId ? staffMembers.find(s => s.id === shift.staffId) : null;
+      const currentStaffList = (window.staffMembers && window.staffMembers.length > 0)
+        ? window.staffMembers
+        : ((typeof staffMembers !== 'undefined' && Array.isArray(staffMembers)) ? staffMembers : []);
+      const staff = shift.staffId ? currentStaffList.find(s => s.id === shift.staffId) : null;
       const hasClockIn = Boolean(shift.workerId) && (shift.status === 'active' || shift.status === 'completed');
       const isEmptySlot = !staff && !hasClockIn;
 
@@ -83,6 +86,11 @@ function renderCalendar() {
         shiftEl.className = 'shift-item shift-slot-empty';
         shiftEl.onclick = (event) => {
           event.stopPropagation();
+          if (window.selectedStaffIdForAssign) {
+            assignStaffToShift(shift.id, window.selectedStaffIdForAssign);
+            if (typeof deselectPoolStaff === 'function') deselectPoolStaff();
+            return;
+          }
           if (typeof openQuickAssignModal === 'function') {
             openQuickAssignModal(shift.id);
           } else {
@@ -110,7 +118,7 @@ function renderCalendar() {
             <button type="button" class="slot-mini-btn" title="Düzenle" onclick="event.stopPropagation(); editShift('${shift.id}')">⚙️</button>
           </div>
           <div class="shift-time">${shift.startTime || ''} - ${shift.endTime || ''}</div>
-          <div class="slot-empty-prompt">⚡ [Boş - Sürükle]</div>
+          <div class="slot-empty-prompt">⚡ [Boş - Sürükle / Tıkla]</div>
         `;
         shiftEl.title = `Tarih: ${formatDisplayDate(new Date(shift.date))}\nSaat: ${shift.startTime} - ${shift.endTime}\nGörev: ${shift.role || 'Belirtilmedi'}\nDurum: Boş Slot (Personel Sürükleyin veya Tıklayın)${isRetro ? '\n[⚠️ Geçmiş Kayıt Düzeltmesi]' : ''}`;
       } else {
@@ -118,6 +126,11 @@ function renderCalendar() {
         shiftEl.className = 'shift-item shift-assigned';
         shiftEl.onclick = (event) => {
           event.stopPropagation();
+          if (window.selectedStaffIdForAssign) {
+            assignStaffToShift(shift.id, window.selectedStaffIdForAssign);
+            if (typeof deselectPoolStaff === 'function') deselectPoolStaff();
+            return;
+          }
           editShift(shift.id);
         };
 
@@ -187,6 +200,9 @@ function renderCalendar() {
     dayCol.onclick = (event) => {
       if (event.target.closest('.shift-item') || event.target.closest('.add-shift-btn') || event.target.closest('.day-action-menu')) {
         return;
+      }
+      if (window.selectedStaffIdForAssign && typeof deselectPoolStaff === 'function') {
+        deselectPoolStaff();
       }
       openDayActionMenu(dateStr, dayCol);
     };

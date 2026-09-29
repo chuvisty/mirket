@@ -1,6 +1,17 @@
 // --- DRAG & DROP & STAFF POOL: Drag staff from right pool to calendar slots & vice versa ---
 let draggedStaffId = null;
 let currentQuickAssignShiftId = null;
+let selectedStaffIdForAssign = null;
+
+function getAvailableStaffMembers() {
+  if (window.staffMembers && Array.isArray(window.staffMembers) && window.staffMembers.length > 0) {
+    return window.staffMembers;
+  }
+  if (typeof staffMembers !== 'undefined' && Array.isArray(staffMembers) && staffMembers.length > 0) {
+    return staffMembers;
+  }
+  return [];
+}
 
 function renderAvailableStaffPool() {
   const container = document.getElementById('staffPoolList');
@@ -8,8 +19,9 @@ function renderAvailableStaffPool() {
 
   const searchInput = document.getElementById('staffPoolSearchInput');
   const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  const currentStaffList = getAvailableStaffMembers();
 
-  if (!staffMembers || staffMembers.length === 0) {
+  if (!currentStaffList || currentStaffList.length === 0) {
     container.innerHTML = `
       <div style="text-align: center; padding: 25px 10px; color: #94a3b8; font-size: 13px;">
         <div style="font-size: 26px; margin-bottom: 6px;">👥</div>
@@ -21,7 +33,7 @@ function renderAvailableStaffPool() {
   }
 
   // Filter staff by search query
-  const filtered = staffMembers.filter(s => {
+  const filtered = currentStaffList.filter(s => {
     if (!query) return true;
     return (s.name || '').toLowerCase().includes(query) || (s.role || '').toLowerCase().includes(query);
   });
@@ -37,7 +49,7 @@ function renderAvailableStaffPool() {
 
   // Calculate current week's total assigned hours for each staff
   const staffHoursMap = {};
-  staffMembers.forEach(s => staffHoursMap[s.id] = 0);
+  currentStaffList.forEach(s => staffHoursMap[s.id] = 0);
 
   if (Array.isArray(currentShifts)) {
     currentShifts.forEach(shift => {
@@ -51,13 +63,14 @@ function renderAvailableStaffPool() {
     const hours = staffHoursMap[staff.id] || 0;
     const initial = (staff.name || 'P').trim().charAt(0).toUpperCase();
     const roleGradient = getRoleColor(staff.role) || 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+    const isSelected = selectedStaffIdForAssign === staff.id;
 
     return `
-      <div class="staff-pool-item" 
+      <div class="staff-pool-item ${isSelected ? 'is-selected' : ''}" 
            draggable="true" 
            data-staff-id="${staff.id}"
            id="staff_pool_${staff.id}"
-           title="Sürükleyip takvimdeki bir boş slota bırakın">
+           title="Sürükleyip takvimdeki bir slota bırakın veya tıklayıp takvimden slota atayın">
         <div class="staff-pool-item-left">
           <div class="staff-pool-avatar" style="background: ${roleGradient};">
             ${initial}
@@ -76,11 +89,12 @@ function renderAvailableStaffPool() {
     `;
   }).join('');
 
-  // Attach drag listeners to staff pool items
+  // Attach drag and click listeners to staff pool items
   const items = container.querySelectorAll('.staff-pool-item');
   items.forEach(item => {
     item.addEventListener('dragstart', handleStaffDragStart);
     item.addEventListener('dragend', handleStaffDragEnd);
+    item.addEventListener('click', handleStaffPoolItemClick);
   });
 }
 
@@ -88,35 +102,88 @@ function filterStaffPoolList(query) {
   renderAvailableStaffPool();
 }
 
+function handleStaffPoolItemClick(e) {
+  const staffId = this.getAttribute('data-staff-id');
+  if (!staffId) return;
+
+  if (selectedStaffIdForAssign === staffId) {
+    deselectPoolStaff();
+  } else {
+    selectPoolStaff(staffId);
+  }
+}
+
+function selectPoolStaff(staffId) {
+  selectedStaffIdForAssign = staffId;
+  window.selectedStaffIdForAssign = staffId;
+  const container = document.getElementById('staffPoolList');
+  if (container) {
+    container.querySelectorAll('.staff-pool-item').forEach(el => {
+      if (el.getAttribute('data-staff-id') === staffId) {
+        el.classList.add('is-selected');
+      } else {
+        el.classList.remove('is-selected');
+      }
+    });
+  }
+
+  // Highlight all shift slots on calendar as click targets
+  const slots = document.querySelectorAll('.shift-slot-empty, .shift-assigned');
+  slots.forEach(slot => slot.classList.add('click-target-ready'));
+}
+
+function deselectPoolStaff() {
+  selectedStaffIdForAssign = null;
+  window.selectedStaffIdForAssign = null;
+  const container = document.getElementById('staffPoolList');
+  if (container) {
+    container.querySelectorAll('.staff-pool-item').forEach(el => el.classList.remove('is-selected'));
+  }
+  const slots = document.querySelectorAll('.shift-slot-empty, .shift-assigned');
+  slots.forEach(slot => slot.classList.remove('click-target-ready'));
+}
+
 function handleStaffDragStart(e) {
   draggedStaffId = this.getAttribute('data-staff-id');
-  e.dataTransfer.effectAllowed = 'copyMove';
-  e.dataTransfer.setData('text/plain', draggedStaffId);
-  this.classList.add('is-dragging');
+  window.draggedStaffId = draggedStaffId;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'copyMove';
+    e.dataTransfer.setData('text/plain', draggedStaffId);
+  }
 
-  // Highlight all empty slots on calendar as drop targets
-  const emptySlots = document.querySelectorAll('.shift-slot-empty');
-  emptySlots.forEach(slot => slot.classList.add('drop-target-ready'));
+  const el = this;
+  setTimeout(() => {
+    if (el && el.classList) {
+      el.classList.add('is-dragging');
+    }
+  }, 0);
+
+  // Highlight all shift slots on calendar as drop targets
+  const dropTargets = document.querySelectorAll('.shift-slot-empty, .shift-assigned');
+  dropTargets.forEach(slot => slot.classList.add('drop-target-ready'));
 }
 
 function handleStaffDragEnd(e) {
   draggedStaffId = null;
-  this.classList.remove('is-dragging');
+  window.draggedStaffId = null;
+  if (this && this.classList) {
+    this.classList.remove('is-dragging');
+  }
 
-  const emptySlots = document.querySelectorAll('.shift-slot-empty');
-  emptySlots.forEach(slot => {
+  const dropTargets = document.querySelectorAll('.shift-slot-empty, .shift-assigned');
+  dropTargets.forEach(slot => {
     slot.classList.remove('drop-target-ready');
     slot.classList.remove('drop-target-active');
   });
 }
 
-// Bind dragover, dragleave and drop on empty slots
+// Bind dragover, dragleave and drop on both empty and assigned slots
 function initSlotDropZones() {
-  const emptySlots = document.querySelectorAll('.shift-slot-empty');
-  emptySlots.forEach(slot => {
+  const dropTargets = document.querySelectorAll('.shift-slot-empty, .shift-assigned');
+  dropTargets.forEach(slot => {
     slot.addEventListener('dragover', (e) => {
       e.preventDefault();
-      e.dataTransfer.dropEffect = 'copy';
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
       slot.classList.add('drop-target-active');
     });
 
@@ -129,11 +196,12 @@ function initSlotDropZones() {
       slot.classList.remove('drop-target-active');
       slot.classList.remove('drop-target-ready');
 
-      const staffId = e.dataTransfer.getData('text/plain') || draggedStaffId;
+      const staffId = (e.dataTransfer ? e.dataTransfer.getData('text/plain') : '') || draggedStaffId || window.draggedStaffId;
       const shiftId = slot.getAttribute('data-shift-id');
 
       if (staffId && shiftId) {
         await assignStaffToShift(shiftId, staffId);
+        deselectPoolStaff();
       }
     });
   });
@@ -141,7 +209,8 @@ function initSlotDropZones() {
 
 async function assignStaffToShift(shiftId, staffId) {
   const shift = currentShifts.find(s => s.id === shiftId);
-  const staff = staffMembers.find(s => s.id === staffId);
+  const currentStaffList = getAvailableStaffMembers();
+  const staff = currentStaffList.find(s => s.id === staffId);
 
   if (!shift || !staff) return;
 
@@ -257,10 +326,11 @@ function openQuickAssignModal(shiftId) {
     </div>
   `;
 
-  if (!staffMembers || staffMembers.length === 0) {
+  const currentStaffList = getAvailableStaffMembers();
+  if (!currentStaffList || currentStaffList.length === 0) {
     listEl.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 15px;">Kayıtlı personel bulunamadı.</p>';
   } else {
-    listEl.innerHTML = staffMembers.map(staff => {
+    listEl.innerHTML = currentStaffList.map(staff => {
       const initial = (staff.name || 'P').trim().charAt(0).toUpperCase();
       const roleGradient = getRoleColor(staff.role) || 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
       return `
@@ -313,3 +383,6 @@ window.openQuickAssignModal = openQuickAssignModal;
 window.closeQuickAssignModal = closeQuickAssignModal;
 window.handleQuickAssignSelect = handleQuickAssignSelect;
 window.openEditCurrentQuickShift = openEditCurrentQuickShift;
+window.selectPoolStaff = selectPoolStaff;
+window.deselectPoolStaff = deselectPoolStaff;
+window.selectedStaffIdForAssign = selectedStaffIdForAssign;
