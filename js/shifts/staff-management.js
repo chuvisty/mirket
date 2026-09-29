@@ -10,6 +10,9 @@ async function loadStaff() {
     window.staffMembers = staffMembers;
     renderStaffList();
     updateStaffSelectDropdown();
+    if (typeof renderAvailableStaffPool === 'function') {
+      renderAvailableStaffPool();
+    }
   } catch (error) {
     console.error("Error loading staff:", error);
     showStaffMessage("Personel listesi yüklenemedi.", "error");

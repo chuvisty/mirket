@@ -100,6 +100,48 @@ async function findAssignedShiftForWorker(restaurantId, workerId, dateStr) {
       }
     }
 
+    // If no match found for dateStr, and current time is early morning (00:00 - 08:00),
+    // check yesterday for an unstarted overnight shift
+    const now = new Date();
+    if (now.getHours() < 8) {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = typeof getLocalDateString === 'function' ? getLocalDateString(yesterday) : yesterday.toLocaleDateString('en-CA');
+      if (dateStr !== yesterdayStr) {
+        const yQ = window.firebaseFirestore.query(
+          window.firebaseFirestore.collection(window.db, 'shifts'),
+          window.firebaseFirestore.where('restaurantId', '==', restaurantId),
+          window.firebaseFirestore.where('date', '==', yesterdayStr)
+        );
+        const ySnap = await window.firebaseFirestore.getDocs(yQ);
+        if (!ySnap.empty) {
+          const yShifts = ySnap.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(s => s.status !== 'completed' && !s.checkInTime);
+
+          const yDirect = yShifts.find(shift => preferredStaffIds.has(shift.staffId) && (!shift.workerId || shift.workerId === workerId));
+          if (yDirect) {
+            console.info('[QR Shift Match - Yesterday Overnight]', 'direct', { yesterdayStr, workerId, shiftId: yDirect.id });
+            return formatShiftMatch(yDirect);
+          }
+
+          const yWorker = yShifts.find(shift => shift.workerId === workerId);
+          if (yWorker) {
+            console.info('[QR Shift Match - Yesterday Overnight]', 'workerId', { yesterdayStr, workerId, shiftId: yWorker.id });
+            return formatShiftMatch(yWorker);
+          }
+
+          if (workerName && workerName !== 'Çalışan') {
+            const yName = yShifts.find(shift => shift.workerName === workerName && (!shift.workerId || shift.workerId === workerId));
+            if (yName) {
+              console.info('[QR Shift Match - Yesterday Overnight]', 'workerName', { yesterdayStr, workerId, shiftId: yName.id });
+              return formatShiftMatch(yName);
+            }
+          }
+        }
+      }
+    }
+
     return null;
   } catch (error) {
     console.error("Error finding assigned shift for worker:", error);
