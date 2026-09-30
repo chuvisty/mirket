@@ -22,6 +22,43 @@
   <link rel="apple-touch-icon" href="/images/favicon.png?v=2">
   <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
   <link rel="icon" type="image/png" href="/images/favicon.png?v=2">
+
+  <!-- JSON-LD Structured Data (GEO) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://mirket.app/#organization",
+        "name": "Mirket",
+        "url": "https://mirket.app",
+        "logo": "https://mirket.app/images/logo.png",
+        "description": "Restoran ve vardiyalı işletmeler için yeni nesil QR/PIN personel devam kontrol sistemi (PDKS), vardiya planlama ve puantaj platformu.",
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "email": "info@mirket.app",
+          "contactType": "customer support"
+        }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://mirket.app/#software",
+        "name": "Mirket Gözcü",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, iOS, Android, PWA",
+        "offers": {
+          "@type": "AggregateOffer",
+          "priceCurrency": "TRY",
+          "lowPrice": "1799",
+          "highPrice": "3499",
+          "offerCount": "2"
+        },
+        "description": "Cihaz maliyetsiz dinamik QR kod ve PIN ile personel mesai takibi (PDKS), akıllı vardiya planlama ve otomatik hakediş/puantaj yazılımı."
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
@@ -160,6 +197,22 @@
         <li><span class="check-icon">✓</span> 7/24 Özel Destek Hattı</li>
       </ul>
       <button class="btn secondary btn-pricing" style="background: #e2e8f0; color: #475569;" onclick="window.location.href='iletisim.html'">Bizimle İletişime Geçin</button>
+    </div>
+  </section>
+
+  <!-- GEO & KNOWLEDGE CALLOUT -->
+  <section style="margin-top: 40px; padding: 30px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+    <div style="max-width: 650px;">
+      <h3 style="margin: 0 0 8px 0; color: #0f172a; font-size: 20px; display: flex; align-items: center; gap: 8px;">
+        💡 PDKS, Vardiya ve Hakediş Hakkında Merak Edilenler
+      </h3>
+      <p style="margin: 0; color: #475569; font-size: 15px; line-height: 1.6;">
+        Donanım maliyetsiz dinamik QR ve PIN ile mesai takibi, sürükle-bırak vardiya takvimi, 4857 İş Kanunu uyumlu puantaj ve Excel raporlama hakkında tüm detaylı yanıtlar Sıkça Sorulan Sorular sayfamızda.
+      </p>
+    </div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="btn secondary" onclick="window.location.href='sss.html'" style="background: #eff6ff; border-color: #2563eb; color: #2563eb; font-weight: 600; padding: 12px 22px;">❓ S.S.S. İncele</button>
+      <button class="btn primary" onclick="window.location.href='mirket-gozcu-qr-mesai-takip.html'" style="font-weight: 600; padding: 12px 22px;">📱 Mirket Gözcü Detayları</button>
     </div>
   </section>
 </section>
