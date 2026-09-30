@@ -189,6 +189,7 @@ async function logoutUser() {
 
   try {
     await window.firebaseAuth.signOut(window.auth);
+    try { sessionStorage.clear(); } catch(e) {}
     showAuthMessage('Başarıyla çıkış yapıldı.', 'success');
     updateAuthStateUI(null);
     if (window.location.pathname.includes('account.html')) {
@@ -210,14 +211,9 @@ async function updateAuthStateUI(user) {
   const navPersonelBul = document.getElementById('navPersonelBul');
   const navMirketGozcu = document.getElementById('navMirketGozcu');
   const navGunlukIsBul = document.getElementById('navGunlukIsBul');
-
   const navCanliQr = document.getElementById('navCanliQr');
-
-  // Reset visibility
-  if (navPersonelBul) navPersonelBul.style.display = '';
-  if (navMirketGozcu) navMirketGozcu.style.display = '';
-  if (navCanliQr) navCanliQr.style.display = '';
-  if (navGunlukIsBul) navGunlukIsBul.style.display = '';
+  const navSss = document.getElementById('navSss');
+  const navIletisim = document.getElementById('navIletisim');
 
   // Keep the signup flow visible during step 2 even if Firebase auth state reports the user as signed in.
   if (user && window.authMode === 'signup' && window.signupStep === 2 && !window.accountPageActive) {
@@ -227,6 +223,7 @@ async function updateAuthStateUI(user) {
   }
 
   if (user) {
+    // --- GİRİŞ YAPMIŞ KULLANICI ---
     logoutButton?.classList.remove('hidden');
     authSubmit?.classList.add('hidden');
     toggleAuth?.classList.add('hidden');
@@ -236,23 +233,45 @@ async function updateAuthStateUI(user) {
     }
     showAuthMessage('Zaten giriş yaptınız: ' + userEmail + '. Çıkış yapmak için butona tıklayın.', 'success');
     
+    // Giriş yapmış kullanıcılar için S.S.S. ve İletişim navbar'dan gizlenir (Footer'da erişilebilir)
+    if (navSss) navSss.style.display = 'none';
+    if (navIletisim) navIletisim.style.display = 'none';
+
     if ((user.email || '').toLowerCase() === 'admin@mirket.com') {
       if (authHeaderLink) {
         authHeaderLink.textContent = 'Admin Paneli';
         authHeaderLink.href = 'admin.html';
       }
+      if (navPersonelBul) navPersonelBul.style.display = '';
+      if (navMirketGozcu) navMirketGozcu.style.display = '';
+      if (navCanliQr) navCanliQr.style.display = '';
+      if (navGunlukIsBul) navGunlukIsBul.style.display = '';
     } else {
       try {
-        const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          if (userData.userType === 'restaurant') {
-            if (navGunlukIsBul) navGunlukIsBul.style.display = 'none';
-          } else if (userData.userType === 'worker') {
-            if (navPersonelBul) navPersonelBul.style.display = 'none';
-            if (navMirketGozcu) navMirketGozcu.style.display = 'none';
-            if (navCanliQr) navCanliQr.style.display = 'none';
+        let userType = sessionStorage.getItem('mirket_cached_usertype_' + user.uid);
+        if (!userType) {
+          const userDoc = await window.firebaseFirestore.getDoc(window.firebaseFirestore.doc(window.db, 'users', user.uid));
+          if (userDoc.exists()) {
+            userType = userDoc.data().userType;
+            if (userType) sessionStorage.setItem('mirket_cached_usertype_' + user.uid, userType);
           }
+        }
+
+        if (userType === 'restaurant') {
+          // RESTORAN: Personel Bul, Mirket Gözcü, Canlı QR açık; Günlük İş Bul gizli
+          if (navPersonelBul) navPersonelBul.style.display = '';
+          if (navMirketGozcu) navMirketGozcu.style.display = '';
+          if (navCanliQr) navCanliQr.style.display = '';
+          if (navGunlukIsBul) navGunlukIsBul.style.display = 'none';
+        } else if (userType === 'worker') {
+          // ÇALIŞAN: Günlük İş Bul açık; Personel Bul, Mirket Gözcü, Canlı QR gizli
+          if (navGunlukIsBul) navGunlukIsBul.style.display = '';
+          if (navPersonelBul) navPersonelBul.style.display = 'none';
+          if (navMirketGozcu) navMirketGozcu.style.display = 'none';
+          if (navCanliQr) navCanliQr.style.display = 'none';
+        } else {
+          // Varsayılan / Belirsiz
+          if (navCanliQr) navCanliQr.style.display = 'none';
         }
       } catch(err) {
         console.error('Failed to fetch user type for nav visibility', err);
@@ -263,6 +282,7 @@ async function updateAuthStateUI(user) {
       window.renderAccountPage(user);
     }
   } else {
+    // --- ÇIKIŞ YAPMIŞ KULLANICI (ZİYARETÇİ) ---
     if (window.accountPageActive && typeof window.renderAccountPage === 'function') {
       window.renderAccountPage(null);
     }
@@ -273,6 +293,14 @@ async function updateAuthStateUI(user) {
       authHeaderLink.textContent = 'Giriş Yap';
       authHeaderLink.href = 'login.html';
     }
+
+    // Ziyaretçi: Pazarlama ve güven linkleri açık, Canlı QR gizli!
+    if (navPersonelBul) navPersonelBul.style.display = '';
+    if (navMirketGozcu) navMirketGozcu.style.display = '';
+    if (navGunlukIsBul) navGunlukIsBul.style.display = '';
+    if (navCanliQr) navCanliQr.style.display = 'none';
+    if (navSss) navSss.style.display = '';
+    if (navIletisim) navIletisim.style.display = '';
   }
 }
 

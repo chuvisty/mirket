@@ -223,6 +223,13 @@ nav a:hover {
   transform: translateY(-1px);
 }
 
+/* PWA Header Link: Only show in mobile hamburger to keep desktop navbar clean */
+@media (min-width: 769px) {
+  #navInstallPwa {
+    display: none !important;
+  }
+}
+
 /* HAMBURGER */
 .hamburger {
   display: none;
