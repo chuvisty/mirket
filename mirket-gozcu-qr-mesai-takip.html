@@ -1,60 +1,322 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js?v=5" data-cbid="158e607a-0804-4181-b1d8-c2982f3c8310" type="text/javascript"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <!-- SEO Meta Tags -->
-  <title>Mirket Gözcü | QR Kod ile Mesai Takibi ve Vardiya Planlama</title>
-  <meta name="description" content="Mirket Gözcü ile restoran ve işletmeniz için QR kodlu giriş-çıkış, dijital puantaj, personel devam kontrol sistemi (PDKS) ve akıllı vardiya planlaması çözümleri.">
-  <meta name="keywords" content="qr ile mesai takibi, vardiya planlama, qr kod ile giriş çıkış, personel devam kontrol sistemi, pdks, dijital puantaj, restoran vardiya programı, işçi takip sistemi, akıllı vardiya, qr personel takibi, online mesai programı, mirket gözcü">
+  <!-- SEO & GEO Meta Tags -->
+  <title>Mirket Gözcü | QR & PIN ile Mesai Takibi, Vardiya Planlama ve Otomatik Puantaj</title>
+  <meta name="description" content="Mirket Gözcü: Restoran, kafe ve işletmeler için 0 TL donanım maliyetli dinamik QR ve PIN ile personel mesai takibi (PDKS), akıllı vardiya planlaması ve Excel hakediş/puantaj raporlaması.">
+  <meta name="keywords" content="qr ile mesai takibi, vardiya planlama, qr kod ile giriş çıkış, personel devam kontrol sistemi, pdks, dijital puantaj, hakediş raporu, pin ile mesai girişi, restoran vardiya programı, işçi takip sistemi, akıllı vardiya, mirket gözcü">
   <meta name="robots" content="index, follow">
-  
-  <link rel="stylesheet" href="styles.css?v=4">
+  <link rel="canonical" href="https://mirket.app/mirket-gozcu-qr-mesai-takip.html">
+
+  <!-- Open Graph / Social -->
+  <meta property="og:title" content="Mirket Gözcü | QR & PIN ile Mesai Takibi, Vardiya ve Hakediş Yönetimi">
+  <meta property="og:description" content="Cihaz maliyetsiz PDKS, dinamik QR ve PIN ile mesai takibi, akıllı vardiya planlama ve tek tıkla Excel puantaj raporları.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://mirket.app/mirket-gozcu-qr-mesai-takip.html">
+
+  <!-- Favicon & PWA -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link rel="icon" type="image/png" href="/images/favicon.png?v=2">
+  <link rel="apple-touch-icon" href="/images/favicon.png?v=2">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="styles.css?v=5">
+
+  <!-- JSON-LD Structured Data: SoftwareApplication + HowTo (GEO Optimized) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://mirket.app/#software",
+        "name": "Mirket Gözcü",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, iOS, Android, PWA",
+        "offers": {
+          "@type": "AggregateOffer",
+          "priceCurrency": "TRY",
+          "lowPrice": "1799",
+          "highPrice": "3499",
+          "offerCount": "2"
+        },
+        "description": "Restoranlar, kafeler ve vardiyalı işletmeler için dinamik QR kod ve PIN ile cihazsız personel mesai takibi (PDKS), sürükle-bırak vardiya planlama ve Excel hakediş raporlama sistemi.",
+        "featureList": [
+          "Dinamik QR Kod ile 3 saniyede mesai başlatma",
+          "4 Haneli Kişisel PIN Kodu ile cihazsız giriş-çıkış",
+          "GPS Coğrafi Çit Konum Doğrulaması",
+          "Sürükle-bırak haftalık ve aylık vardiya planlayıcı",
+          "Gece vardiyaları ve çakışma önleme desteği",
+          "4857 Sayılı İş Kanunu uyumlu otomatik puantaj ve hakediş",
+          "Excel ve CSV tek tıkla dışa aktarma"
+        ]
+      },
+      {
+        "@type": "HowTo",
+        "name": "Mirket ile QR Kod ve PIN ile Personel Mesai Takibi Nasıl Başlatılır?",
+        "description": "5 dakika içinde pahalı PDKS cihazlarına ihtiyaç duymadan işletmenizde personel giriş çıkış takibini başlatın.",
+        "step": [
+          {
+            "@type": "HowToStep",
+            "name": "İşletme Hesabınızı Açın",
+            "text": "Mirket'e ücretsiz kaydolun ve işletme şubenizi oluşturun."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Personel Listenizi Ekleyin",
+            "text": "Çalışanlarınızın adını, pozisyonunu ve isteğe bağlı 4 haneli PIN kodunu sisteme tanımlayın."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Canlı QR Kodu Ekranınıza Yansıtın",
+            "text": "İşletme girişindeki herhangi bir tablet, telefon veya bilgisayardan Canlı QR ekranını açın."
+          },
+          {
+            "@type": "HowToStep",
+            "name": "Mesaiyi Başlatın ve Otomatik Rapor Alın",
+            "text": "Çalışanlar QR kodu okutarak veya PIN girerek 3 saniyede mesaiye başlar; sistem puantaj ve hakedişi anlık hesaplar."
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    .geo-hero {
+      text-align: center;
+      padding: 50px 20px 40px;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    .geo-badge {
+      display: inline-block;
+      background: #eff6ff;
+      color: #2563eb;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      border: 1px solid #bfdbfe;
+    }
+    .geo-hero h1 {
+      font-size: 34px;
+      color: #0f172a;
+      line-height: 1.25;
+      margin-bottom: 18px;
+    }
+    .geo-hero p {
+      font-size: 18px;
+      color: #475569;
+      line-height: 1.6;
+      max-width: 760px;
+      margin: 0 auto 30px;
+    }
+    .geo-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin: 30px 0;
+    }
+    .geo-stat-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      padding: 20px 15px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .geo-stat-number {
+      font-size: 28px;
+      font-weight: 800;
+      color: #2563eb;
+      margin-bottom: 6px;
+    }
+    .geo-stat-label {
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .comparison-table th, .comparison-table td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+    .comparison-table th {
+      background: #f8fafc;
+      color: #1e293b;
+      font-weight: 700;
+    }
+    .comparison-table td.highlight {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
 
   <!-- Header Placeholder -->
   <div id="headerContainer"></div>
 
-  <main class="container" style="max-width: 900px; padding: 40px 20px;">
+  <main class="container" style="max-width: 960px; padding: 20px 20px 60px;">
     
-    <header style="text-align: center; margin-bottom: 40px;">
-      <h1 style="color: #1d4ed8; font-size: 32px; margin-bottom: 15px;">Mirket Gözcü: QR Kod ile Mesai Takibi ve Vardiya Planlaması</h1>
-      <p style="color: #475569; font-size: 18px; line-height: 1.6;">Personel giriş-çıkış saatlerini saniyeler içinde kaydedin, vardiya planlamanızı dijitalleştirin ve ay sonu hesaplamalarını tek tıkla bitirin.</p>
+    <!-- HERO SECTION -->
+    <header class="geo-hero">
+      <div class="geo-badge">🚀 YENİ NESİL BULUT TABANLI PDKS</div>
+      <h1>Mirket Gözcü: QR Kod & PIN ile Mesai Takibi, Vardiya Planlama ve Otomatik Hakediş</h1>
+      <p>
+        Pahalı parmak izi okuyucularına, kartlı terminallere ve karışık Excel tablolarına son verin. 
+        Mirket Gözcü ile çalışan giriş-çıkışlarını saniyeler içinde kaydedin, vardiyaları sürükle-bırak yöntemiyle planlayın ve ay sonu hakediş raporlarınızı tek tıkla Excel'e aktarın.
+      </p>
+
+      <div class="geo-stats-grid">
+        <div class="geo-stat-card">
+          <div class="geo-stat-number">0 ₺</div>
+          <div class="geo-stat-label">Cihaz / Donanım Masrafı</div>
+        </div>
+        <div class="geo-stat-card">
+          <div class="geo-stat-number">3 Sn</div>
+          <div class="geo-stat-label">Ortalama Giriş-Çıkış Süresi</div>
+        </div>
+        <div class="geo-stat-card">
+          <div class="geo-stat-number">5 Dk</div>
+          <div class="geo-stat-label">Hızlı Kurulum ve Başlangıç</div>
+        </div>
+        <div class="geo-stat-card">
+          <div class="geo-stat-number">%100</div>
+          <div class="geo-stat-label">4857 İş Kanunu ve KVKK Uyumlu</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn primary" onclick="window.location.href='index.html#pricing-section'" style="padding: 15px 32px; font-size: 16px;">🚀 Paketleri ve Fiyatları İncele</button>
+        <button class="btn secondary" onclick="window.location.href='sss.html'" style="padding: 15px 28px; font-size: 16px;">❓ Sıkça Sorulan Sorular (S.S.S.)</button>
+      </div>
     </header>
 
-    <section class="card" style="margin-bottom: 30px;">
-      <h2 style="color: #0f172a; margin-bottom: 15px;">📱 QR Kod ile Hızlı ve Güvenilir Mesai Takibi (PDKS)</h2>
-      <p style="color: #334155; line-height: 1.6; margin-bottom: 15px;">
-        Geleneksel parmak izi okuyucuları veya kartlı sistemleri unutun. <strong>QR kod ile personel giriş çıkış takibi</strong> sayesinde, çalışanlarınız sadece cep telefonlarının kamerasını kullanarak mesailerini başlatabilir ve bitirebilirler.
+    <!-- SECTION 1: QR & PIN MESAI TAKIBI -->
+    <section class="card" style="margin-bottom: 30px; padding: 30px; background: white; border-radius: 16px; border: 1px solid #e2e8f0;">
+      <h2 style="color: #0f172a; font-size: 24px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+        📱 Dinamik QR Kod ve 4 Haneli PIN ile Temassız Giriş-Çıkış
+      </h2>
+      <p style="color: #334155; line-height: 1.7; margin-bottom: 18px;">
+        <strong>Personel Devam Kontrol Sistemi (PDKS)</strong> kurmak için binlerce liralık kart okuyucu veya parmak izi cihazı satın almanıza gerek yoktur. Mirket Gözcü, işletmenizdeki herhangi bir tablet veya ekranda güvenli ve dinamik Canlı QR kod üretir.
       </p>
-      <ul style="color: #334155; line-height: 1.6; padding-left: 20px; margin-bottom: 15px;">
-        <li style="margin-bottom: 8px;"><strong>Konum Doğrulama (GPS):</strong> Çalışanların sadece işletme sınırları (belirlenen yarıçap) içerisinde QR kod okutabilmesini sağlayarak güvenliği artırın.</li>
-        <li style="margin-bottom: 8px;"><strong>Temassız ve Hijyenik:</strong> Cihaz maliyeti olmadan, tamamen dijital ve temassız <em>Personel Devam Kontrol Sistemi (PDKS)</em>.</li>
-        <li style="margin-bottom: 8px;"><strong>Anlık Raporlama:</strong> "Kim ne zaman geldi?", "Ne kadar mesai yaptı?" sorularının cevabını anında görün. Dijital puantaj raporunuz her zaman hazır.</li>
+      <ul style="color: #334155; line-height: 1.8; padding-left: 20px; margin-bottom: 18px;">
+        <li><strong>Dinamik Canlı QR Güvenliği:</strong> Statik karekodların aksine ekran görüntüsü ile başkası adına giriş yapılamaz. QR kod her 15-30 saniyede bir otomatik şifrelenerek yenilenir.</li>
+        <li><strong>4 Haneli Hızlı PIN Kodu Desteği:</strong> Akıllı telefonu olmayan, şarjı biten veya kamerası bozuk personeller için ekrandaki tuş takımına 4 haneli PIN girilerek 2 saniyede mesai başlatılır.</li>
+        <li><strong>GPS Coğrafi Çit (Geofencing):</strong> Personelinizin yalnızca işletmenizin belirlediği metre sınırları içerisinde mesai başlatabildiğini doğrulayarak sahte girişleri tamamen engeller.</li>
+        <li><strong>Anlık Gözlem Ekranı:</strong> "Şu an kimler mesaide?", "Kim geç kaldı?", "Kim molada?" sorularının cevabını yönetici panelinden canlı olarak izleyin.</li>
       </ul>
-      <p style="color: #334155; line-height: 1.6;">En popüler aramalar: <em style="color: #64748b;">qr ile mesai takip, qr pdks, personel giriş çıkış programı, qr kod okutarak işe başlama.</em></p>
     </section>
 
-    <section class="card" style="margin-bottom: 30px;">
-      <h2 style="color: #0f172a; margin-bottom: 15px;">📅 Gözcü ile Akıllı Vardiya Planlaması</h2>
-      <p style="color: #334155; line-height: 1.6; margin-bottom: 15px;">
-        Restoran, kafe veya işletmenizdeki karmaşık çalışma saatlerini yönetmek artık çok kolay. <strong>Mirket Gözcü vardiya programı</strong> ile haftalık ve aylık takvimlerinizi dakikalar içinde oluşturun.
+    <!-- SECTION 2: VARDIYA PLANLAMA -->
+    <section class="card" style="margin-bottom: 30px; padding: 30px; background: white; border-radius: 16px; border: 1px solid #e2e8f0;">
+      <h2 style="color: #0f172a; font-size: 24px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+        📅 Akıllı Sürükle-Bırak Vardiya Planlama ve Gece Vardiyaları
+      </h2>
+      <p style="color: #334155; line-height: 1.7; margin-bottom: 18px;">
+        Restoran, kafe, otel ve vardiyalı üretim yapan işletmelerin en büyük zorluklarından biri karmaşık haftalık çizelgelerdir. <strong>Mirket Akıllı Vardiya Planlayıcı</strong> ile haftalık vardiya takviminizi dakikalar içinde hazırlayın.
       </p>
-      <ul style="color: #334155; line-height: 1.6; padding-left: 20px; margin-bottom: 15px;">
-        <li style="margin-bottom: 8px;"><strong>Kolay Sürükle Bırak:</strong> Vardiyaları kopyalayın, taşıyın ve tüm ekibe tek tıkla atayın.</li>
-        <li style="margin-bottom: 8px;"><strong>Çakışma Kontrolü:</strong> Aynı personele yanlışlıkla çakışan saatlerde vardiya yazılmasını sistem otomatik olarak engeller.</li>
-        <li style="margin-bottom: 8px;"><strong>Rol ve Görev Dağılımı:</strong> Garson, komi, aşçı gibi rolleri belirleyin ve kimin nerede görevli olduğunu netleştirin.</li>
+      <ul style="color: #334155; line-height: 1.8; padding-left: 20px; margin-bottom: 18px;">
+        <li><strong>Sürükle-Bırak Takvim:</strong> Çalışanları gün ve saat bloklarına sürükleyerek saniyeler içinde vardiya atayın veya kopyalayın.</li>
+        <li><strong>Otomatik Çakışma Önleyici:</strong> Aynı personele yanlışlıkla çakışan saatlerde iki vardiya yazılmasını sistem engeller.</li>
+        <li><strong>Gece Vardiyası Desteği:</strong> Gece başlayıp ertesi güne sarkan mesaileri (örn: 22:00 - 06:00) sorunsuz şekilde doğru iş gününe bağlayarak yönetin.</li>
+        <li><strong>Rol ve İstasyon Yönetimi:</strong> Garson, komi, barista, aşçı ve kurye rollerine göre vardiya açarak işletmenizin hiçbir saatte eksik personelle kalmamasını sağlayın.</li>
       </ul>
-      <p style="color: #334155; line-height: 1.6;">Sık aranan kelimeler: <em style="color: #64748b;">restoran vardiya programı, işçi çalışma saatleri planlama, online vardiya çizelgesi, personel planlama yazılımı.</em></p>
     </section>
 
-    <section class="card" style="margin-bottom: 30px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0;">
-      <h3 style="color: #1e293b; margin-bottom: 10px;">İşletmenizi Dijitalleştirmeye Başlayın</h3>
-      <p style="color: #475569; margin-bottom: 20px;">Personel takibi ve vardiya yönetimindeki tüm zorlukları Mirket Gözcü ile aşın. Cihaz kurulumu gerektirmeyen yeni nesil çözüme bugün geçiş yapın.</p>
-      <button class="btn primary" onclick="window.location.href='index.html#pricing-section'">Hemen Başla / Paketleri İncele</button>
+    <!-- SECTION 3: OTOMATIK HAKEDİŞ VE PUANTAJ -->
+    <section class="card" style="margin-bottom: 30px; padding: 30px; background: white; border-radius: 16px; border: 1px solid #e2e8f0;">
+      <h2 style="color: #0f172a; font-size: 24px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+        📊 Otomatik Hakediş, Puantaj ve Excel Maaş Raporları
+      </h2>
+      <p style="color: #334155; line-height: 1.7; margin-bottom: 18px;">
+        Ay sonunda saatler veya günler süren puantaj hesaplamaları Mirket ile tek tıkla tamamlanır. Giriş-çıkış logları doğrudan yasal çalışma kurallarıyla birleştirilerek hatasız hakediş tablolarına dönüştürülür.
+      </p>
+      <ul style="color: #334155; line-height: 1.8; padding-left: 20px; margin-bottom: 18px;">
+        <li><strong>Net Çalışma ve Fazla Mesai Hesabı:</strong> Fiili çalışma saatleri, geç kalmalar, erken çıkışlar ve haftalık fazla mesai süreleri otomatik hesaplanır.</li>
+        <li><strong>Tek Tıkla Excel & CSV Dışa Aktarma:</strong> Hazırlanan puantaj tablosunu doğrudan muhasebe ve bordro programlarına aktarılabilir formatta indirin.</li>
+        <li><strong>4857 Sayılı İş Kanunu Standartları:</strong> Günlük azami çalışma süreleri ve haftalık dinlenme kuralları sistemde kayıt altına alınır.</li>
+        <li><strong>Şeffaf Yönetim:</strong> Çalışanlar ve yöneticiler mutabakat sağlayarak maaş gününde oluşabilecek itirazları ortadan kaldırır.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 4: GELENEKSEL PDKS VS MIRKET KARŞILAŞTIRMASI -->
+    <section class="card" style="margin-bottom: 30px; padding: 30px; background: white; border-radius: 16px; border: 1px solid #e2e8f0;">
+      <h2 style="color: #0f172a; font-size: 22px; margin-bottom: 20px;">
+        ⚖️ Geleneksel PDKS Donanımları ile Mirket Gözcü Karşılaştırması
+      </h2>
+      <div style="overflow-x: auto;">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Özellik</th>
+              <th>Geleneksel Parmak İzi / Kartlı PDKS</th>
+              <th style="color: #2563eb;">Mirket Gözcü Bulut PDKS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Cihaz / Kurulum Masrafı</strong></td>
+              <td>15.000 TL – 40.000 TL+</td>
+              <td class="highlight">0 TL (Mevcut telefon/tablet yeterli)</td>
+            </tr>
+            <tr>
+              <td><strong>Kurulum Süresi</strong></td>
+              <td>1 – 2 Hafta (Kablolama ve servis)</td>
+              <td class="highlight">Sadece 5 Dakika</td>
+            </tr>
+            <tr>
+              <td><strong>Biyometrik Veri & KVKK Riski</strong></td>
+              <td>Yüksek risk (Parmak izi / Yüz tarama cezaları)</td>
+              <td class="highlight">%100 Güvenli (Biyometrik veri toplanmaz)</td>
+            </tr>
+            <tr>
+              <td><strong>Vardiya Planlama Entegrasyonu</strong></td>
+              <td>Genellikle yok veya ayrı pahalı yazılım</td>
+              <td class="highlight">Dahili Sürükle-Bırak Vardiya Takvimi</td>
+            </tr>
+            <tr>
+              <td><strong>Otomatik Hakediş & Excel Çıktısı</strong></td>
+              <td>Karmaşık masaüstü yazılımlar gerektirir</td>
+              <td class="highlight">Tek tıkla Excel / CSV indirme</td>
+            </tr>
+            <tr>
+              <td><strong>PIN ile Giriş Opsiyonu</strong></td>
+              <td>Özel tuş takımlı pahalı cihaz gerekir</td>
+              <td class="highlight">Standart 4 Haneli PIN desteği hazır</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 5: CTA & PRICING TEASER -->
+    <section class="card" style="text-align: center; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 45px 25px; border-radius: 18px;">
+      <h2 style="font-size: 26px; margin-bottom: 12px; color: white;">İşletmenizi Dijitalleştirmeye Bugün Başlayın</h2>
+      <p style="font-size: 16px; opacity: 0.92; max-width: 620px; margin: 0 auto 25px; line-height: 1.6;">
+        Mirket Temel (1.799 ₺/ay) ve Mirket Pro (3.499 ₺/ay) paketlerimizle işletmenizin ölçeğine en uygun çözümü hemen seçin.
+      </p>
+      <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn secondary" onclick="window.location.href='index.html#pricing-section'" style="background: white; color: #1d4ed8; font-weight: 700; padding: 14px 28px;">Fiyatları ve Paketleri Gör</button>
+        <button class="btn primary" onclick="window.location.href='sss.html'" style="background: #f59e0b; border-color: #f59e0b; color: #0f172a; font-weight: 700; padding: 14px 28px;">Sıkça Sorulan Sorular</button>
+      </div>
     </section>
 
   </main>
@@ -62,10 +324,8 @@
   <!-- Footer Placeholder -->
   <div id="footerContainer"></div>
 
-  <!-- Firebase & App Scripts -->
-  <script type="module" src="firebase.js?v=12" data-cookieconsent="ignore"></script>
+  <!-- Header & Footer Loader -->
   <script>
-    // Load Header & Footer
     document.addEventListener("DOMContentLoaded", () => {
       fetch('header.html')
         .then(response => response.text())

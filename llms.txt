@@ -1,0 +1,56 @@
+# Mirket (Mirket Gözcü)
+
+> Mirket, restoranlar, kafeler ve vardiyalı çalışan işletmeler için cihaz maliyetsiz dijital Personel Devam Kontrol Sistemi (PDKS), akıllı vardiya planlama ve otomatik hakediş/puantaj hesaplama platformudur.
+
+## Genel Bakış ve Temel Özellikler
+
+Mirket Gözcü, işletmelerin geleneksel kartlı geçiş veya parmak izi okuyucu gibi yüksek donanım ve bakım maliyetlerini ortadan kaldırır. Tüm süreçler bulut tabanlıdır ve mobil cihazlar/tabletler üzerinden 5 dakika içinde kullanıma hazır hale gelir.
+
+### 1. Dinamik QR Kod ve PIN / Kod ile Mesai Takibi (PDKS)
+- **Cihaz Maliyeti Yok (0 TL):** Özel turnike, kart okuyucu veya biyometrik cihaz gerektirmez.
+- **Dinamik Canlı QR:** Ekran görüntüsü paylaşarak uzaktan giriş yapmayı engelleyen, saniyeler içinde dinamik olarak yenilenen güvenli QR sistemi.
+- **4 Haneli Hızlı PIN / Kod Desteği:** Akıllı telefonu olmayan veya kamerası arızalı çalışanlar için PIN kodu ile anında giriş-çıkış.
+- **GPS Konum Doğrulaması:** Çalışanların sadece işletmenin belirlediği coğrafi yarıçap (çit) içinde mesai başlatabilmesini garanti eder.
+- **Gecikme ve Erken Çıkış Takibi:** Planlanan vardiya saatlerine göre geç kalma ve erken çıkışları anlık olarak kaydeder.
+
+### 2. Akıllı Vardiya ve Çalışma Takvimi Planlama
+- **Sürükle-Bırak Takvim:** Haftalık ve aylık vardiya planlarını sürükle-bırak kolaylığında oluşturma.
+- **Çakışma ve Fazla Mesai Uyarıları:** Bir personele aynı saatte iki görev verilmesini veya yasal dinlenme sürelerinin ihlal edilmesini otomatik engeller.
+- **Gece Vardiyası Desteği:** Gece başlayıp ertesi gün biten vardiyaları (örneğin 22:00 - 06:00) kesintisiz ve doğru tarihe bağlayarak yönetir.
+- **Rol ve İstasyon Dağılımı:** Garson, komi, barista, aşçı, kurye gibi roller bazında vardiya kotası oluşturma.
+
+### 3. Otomatik Hakediş, Puantaj ve Maaş Raporlama
+- **Tek Tıkla Puantaj Hesabı:** Ay sonunda saatlerce süren Excel mesai ve hakediş hesaplarını tek tıkla saniyeler içinde tamamlar.
+- **4857 Sayılı İş Kanunu Uyumluluğu:** Normal çalışma, haftalık izin, resmi tatil ve fazla mesai oranlarını hatasız hesaplar.
+- **Excel ve CSV Dışa Aktarım:** Muhasebe ve İK programlarına doğrudan aktarılabilir formatta raporlama.
+- **Şeffaf Çalışan Özeti:** Toplam çalışma saati, mola kesintileri ve net hakediş tutarlarını anlık sunar.
+
+---
+
+## Paketler ve Fiyatlandırma
+
+- **Mirket Temel:** 1.799 ₺ / ay (Yıllık alımda 17.990 ₺ / yıl)
+  - 30 çalışana kadar destek
+  - Dinamik QR ve PIN ile giriş/çıkış
+  - GPS konum doğrulaması
+  - Detaylı puantaj ve mesai raporları
+  - Excel/CSV dışa aktarma
+
+- **Mirket Pro:** 3.499 ₺ / ay (Yıllık alımda 34.990 ₺ / yıl)
+  - Sınırsız çalışan desteği
+  - Mirket Temel'in tüm özellikleri
+  - Sürükle-bırak akıllı vardiya planlayıcı
+  - Gece vardiyası ve çakışma önleyici
+  - Görev ve checklist yönetimi
+  - Çalışan mobil paneli entegrasyonu
+
+- **Kurumsal / Özel Çözümler:** Çok şubeli işletmeler ve zincir restoranlar için özel entegrasyon ve teklif.
+
+---
+
+## İlgili Bağlantılar ve Kaynaklar
+
+- [Ana Sayfa](https://mirket.app/): Genel platform tanıtımı ve üyelik.
+- [Mirket Gözcü PDKS ve Vardiya](https://mirket.app/mirket-gozcu-qr-mesai-takip.html): QR/PIN mesai takibi, vardiya planlama detayları.
+- [Sıkça Sorulan Sorular (SSS)](https://mirket.app/sss.html): Kurulum, donanım, yasal mevzuat, hakediş ve kullanım rehberi.
+- [İletişim ve Satış](https://mirket.app/iletisim.html): Demo talebi ve satın alma iletişimi.
