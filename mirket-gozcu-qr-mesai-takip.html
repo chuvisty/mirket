@@ -324,21 +324,9 @@
   <!-- Footer Placeholder -->
   <div id="footerContainer"></div>
 
-  <!-- Header & Footer Loader -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      fetch('header.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('headerContainer').innerHTML = data;
-        });
-
-      fetch('footer.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('footerContainer').innerHTML = data;
-        });
-    });
-  </script>
+  <!-- Core & Auth Scripts -->
+  <script src="firebase.js?v=13" data-cookieconsent="ignore"></script>
+  <script src="js/core.js?v=13" data-cookieconsent="ignore"></script>
+  <script src="js/auth-ui.js?v=13" data-cookieconsent="ignore"></script>
 </body>
 </html>

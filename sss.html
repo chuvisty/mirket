@@ -521,21 +521,14 @@
   <!-- Footer Placeholder -->
   <div id="footerContainer"></div>
 
-  <!-- Header / Footer Loader & FAQ Interactive Scripts -->
+  <!-- Firebase & Core Auth Scripts -->
+  <script src="firebase.js?v=13" data-cookieconsent="ignore"></script>
+  <script src="js/core.js?v=13" data-cookieconsent="ignore"></script>
+  <script src="js/auth-ui.js?v=13" data-cookieconsent="ignore"></script>
+
+  <!-- FAQ Interactive Scripts -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      fetch('header.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('headerContainer').innerHTML = data;
-        });
-
-      fetch('footer.html')
-        .then(response => response.text())
-        .then(data => {
-          document.getElementById('footerContainer').innerHTML = data;
-        });
-
       // Accordion click handlers
       const questions = document.querySelectorAll('.faq-question');
       questions.forEach(q => {
