@@ -14,7 +14,16 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(html|js)",
+        "source": "**/*.@(html|js|ico)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, no-store, must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "images/favicon.png",
         "headers": [
           {
             "key": "Cache-Control",
