@@ -94,7 +94,8 @@ const TURKEY_CITIES = {
   "Şanlıurfa": ["Haliliye", "Eyyübiye", "Karaköprü", "Siverek", "Viranşehir", "Birecik", "Suruç", "Diğer"],
   "Gaziantep": ["Şahinbey", "Şehitkamil", "Nizip", "İslahiye", "Oğuzeli", "Nurdağı", "Araban", "Diğer"],
   "Kocaeli": ["İzmit", "Gebze", "Darıca", "Körfez", "Gölcük", "Derince", "Çayırova", "Kartepe", "Başiskele", "Karamürsel", "Kandıra", "Dilovası", "Diğer"],
-  "Aksaray": ["Merkez", "Ağaçören", "Eskil", "Gülağaç", "Güzelyurt", "Ortaköy", "Sarıyahşi", "Sultanhanı", "Diğer"]
+  "Aksaray": ["Merkez", "Ağaçören", "Eskil", "Gülağaç", "Güzelyurt", "Ortaköy", "Sarıyahşi", "Sultanhanı", "Diğer"],
+  "Isparta": ["Merkez", "Aksu", "Atabey", "Eğirdir", "Gelendost", "Gönen", "Keçiborlu", "Senirkent", "Sütçüler", "Şarkikaraağaç", "Uluborlu", "Yalvaç", "Yenişarbademli", "Diğer"]
 };
 
 function populateCitySelect(citySelectEl, defaultCity = '') {
