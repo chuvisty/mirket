@@ -148,6 +148,22 @@ async function handleShiftSubmit(e) {
       msgEl.classList.remove('hidden');
       return;
     }
+
+    if (typeof getStaffLeaveOnDate === 'function') {
+      const leaveRec = getStaffLeaveOnDate(staffId, date);
+      if (leaveRec && leaveRec.code !== 'N') {
+        const codeMeta = (window.PUANTAJ_CODES && window.PUANTAJ_CODES[leaveRec.code]) || { label: leaveRec.code };
+        const confirmLeave = confirm(
+          `⚠️ İzin / Durum Uyarısı:\n\n` +
+          `Seçili personelin ${date} tarihinde "${leaveRec.code} — ${codeMeta.label}" kaydı bulunmaktadır.\n` +
+          (leaveRec.reason ? `Açıklama: ${leaveRec.reason}\n\n` : '\n') +
+          `Yine de vardiya kaydetmek istiyor musunuz?`
+        );
+        if (!confirmLeave) {
+          return;
+        }
+      }
+    }
   }
   
   const now = new Date();
@@ -198,6 +214,9 @@ async function handleShiftSubmit(e) {
     closeShiftModal();
     // Re-render staff list to update weekly hours
     renderStaffList();
+    if (typeof refreshPuantajFromShifts === 'function') {
+      refreshPuantajFromShifts();
+    }
   } catch (error) {
     console.error("Error saving shift:", error);
     msgEl.textContent = "Kaydedilirken bir hata oluştu.";
@@ -227,6 +246,9 @@ async function deleteShift() {
       await window.firebaseFirestore.deleteDoc(window.firebaseFirestore.doc(window.db, 'shifts', id));
       await loadShiftsForCurrentWeek();
       closeShiftModal();
+      if (typeof refreshPuantajFromShifts === 'function') {
+        refreshPuantajFromShifts();
+      }
     } catch (error) {
       console.error("Error deleting shift:", error);
       const msgEl = document.getElementById('shiftModalMessage');

@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 * {
   box-sizing: border-box;
@@ -1122,27 +1122,151 @@ nav a:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Printable Official Payroll Styles */
+/* Printable Official Payroll & Puantaj Styles */
 #payrollPrintHeader,
-#payrollPrintFooter {
+#payrollPrintFooter,
+.puantaj-print-footer,
+.print-only-inline {
   display: none;
+}
+
+.puantaj-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.puantaj-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.puantaj-matrix-table th,
+.puantaj-matrix-table td {
+  border: 1px solid #e2e8f0;
+  padding: 4px 3px;
+}
+
+.puantaj-sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: #ffffff;
+  text-align: left !important;
+  min-width: 155px;
+  max-width: 190px;
+  padding: 6px 8px !important;
+  box-shadow: 2px 0 5px rgba(15, 23, 42, 0.05);
+}
+
+.puantaj-matrix-table thead .puantaj-sticky-col {
+  background: #f8fafc;
+  z-index: 6;
+  font-weight: 700;
+  color: #334155;
+}
+
+.puantaj-day-th {
+  min-width: 28px;
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  padding: 4px 2px !important;
+}
+
+.puantaj-day-th.is-weekend {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.puantaj-day-th .p-day-num {
+  font-size: 11px;
+  line-height: 1.1;
+}
+
+.puantaj-day-th .p-day-name {
+  font-size: 9px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.puantaj-day-cell {
+  cursor: pointer;
+  min-width: 28px;
+  height: 34px;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.puantaj-day-cell.is-weekend {
+  background: #f8fafc;
+}
+
+.puantaj-day-cell:hover {
+  background: #eff6ff !important;
+}
+
+.puantaj-code-pill {
+  display: inline-block;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+  min-width: 20px;
+  text-align: center;
+}
+
+.puantaj-empty-dot {
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.puantaj-tot-th {
+  min-width: 36px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 5px !important;
+  background: #f8fafc;
+}
+
+.puantaj-tot-cell {
+  font-size: 11px;
+  padding: 4px 5px !important;
+  white-space: nowrap;
+}
+
+.puantaj-isletme-col {
+  border-left: 2px solid #94a3b8 !important;
+}
+
+.puantaj-sgk-col {
+  border-left: 1px solid #fcd34d !important;
+  background: #fffbeb;
 }
 
 @media print {
   @page {
     size: A4 landscape;
-    margin: 10mm;
+    margin: 8mm;
   }
 
   body {
     background: #ffffff !important;
     color: #000000 !important;
-    font-size: 11px !important;
+    font-size: 10px !important;
     margin: 0 !important;
     padding: 0 !important;
   }
 
-  /* Hide everything except the payroll report */
+  /* Hide everything except the payroll/puantaj report */
   header,
   nav,
   #headerContainer,
@@ -1162,6 +1286,10 @@ nav a:hover {
     display: none !important;
   }
 
+  .print-only-inline {
+    display: inline !important;
+  }
+
   #payrollSummaryCard {
     box-shadow: none !important;
     border: none !important;
@@ -1174,12 +1302,12 @@ nav a:hover {
   #payrollPrintHeader {
     display: block !important;
     border-bottom: 2px solid #0f172a;
-    padding-bottom: 12px;
-    margin-bottom: 15px;
+    padding-bottom: 10px;
+    margin-bottom: 12px;
   }
 
   #payrollPrintHeader h1 {
-    font-size: 18px;
+    font-size: 16px;
     margin: 0 0 4px 0;
     color: #0f172a;
   }
@@ -1187,23 +1315,35 @@ nav a:hover {
   .payroll-kpi-grid {
     grid-template-columns: repeat(4, 1fr) !important;
     gap: 8px !important;
-    margin-bottom: 15px !important;
+    margin-bottom: 12px !important;
   }
 
   .payroll-kpi-card {
     border: 1px solid #cbd5e1 !important;
-    padding: 8px !important;
+    padding: 6px !important;
     background: #f8fafc !important;
   }
 
   .payroll-kpi-card .kpi-value {
-    font-size: 16px !important;
+    font-size: 14px !important;
+  }
+
+  .puantaj-matrix-wrapper {
+    overflow: visible !important;
+    border: none !important;
+  }
+
+  .puantaj-sticky-col {
+    position: static !important;
+    box-shadow: none !important;
+    min-width: 90px !important;
+    max-width: 120px !important;
   }
 
   table {
     width: 100% !important;
     border-collapse: collapse !important;
-    font-size: 10px !important;
+    font-size: 8.5px !important;
     page-break-inside: auto;
   }
 
@@ -1214,8 +1354,10 @@ nav a:hover {
 
   th, td {
     border: 1px solid #cbd5e1 !important;
-    padding: 6px 8px !important;
+    padding: 3px 2px !important;
     color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   th {
@@ -1223,10 +1365,11 @@ nav a:hover {
     font-weight: 700 !important;
   }
 
-  #payrollPrintFooter {
+  #payrollPrintFooter,
+  .puantaj-print-footer {
     display: flex !important;
     justify-content: space-between;
-    margin-top: 35px;
+    margin-top: 25px;
     page-break-inside: avoid;
   }
 
@@ -1238,13 +1381,13 @@ nav a:hover {
   }
 
   .print-signature-box strong {
-    font-size: 12px;
+    font-size: 11px;
     display: block;
     margin-bottom: 4px;
   }
 
   .print-signature-box span {
-    font-size: 10px;
+    font-size: 9px;
     color: #64748b;
   }
 }

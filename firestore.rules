@@ -49,5 +49,12 @@ service cloud.firestore {
       allow update: if isAuthenticated();
       allow delete: if isAuthenticated() && (resource.data.restaurantId == request.auth.uid || isAdmin());
     }
+
+    match /staffLeaves/{leaveId} {
+      allow read: if isAuthenticated() && (resource.data.restaurantId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.restaurantId == request.auth.uid;
+      allow update: if isAuthenticated() && (resource.data.restaurantId == request.auth.uid || isAdmin());
+      allow delete: if isAuthenticated() && (resource.data.restaurantId == request.auth.uid || isAdmin());
+    }
   }
 }

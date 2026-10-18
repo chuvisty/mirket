@@ -376,24 +376,27 @@ function populatePayrollMonthDropdown() {
 }
 window.populatePayrollMonthDropdown = populatePayrollMonthDropdown;
 
-// Switch between "Personel Bazlı Puantaj Özeti" and "Günlük Vardiya Logları"
+// Switch between "Aylık Puantaj Cetveli", "İzin & Devamsızlık Raporu", "Bordro Özeti" and "Günlük Vardiya Logları"
 function switchAttendanceView(view) {
+  const puantajSection = document.getElementById('monthlyPuantajSection');
+  const leavesSection = document.getElementById('leaveReportSection');
   const summaryCard = document.getElementById('payrollSummarySection');
   const logsSection = document.getElementById('attendanceLogsGranularSection');
+
+  const tabPuantaj = document.getElementById('tabMonthlyPuantaj');
+  const tabLeaves = document.getElementById('tabLeaveReport');
   const tabSummary = document.getElementById('tabPayrollSummary');
   const tabLogs = document.getElementById('tabAttendanceLogs');
 
-  if (view === 'summary') {
-    if (summaryCard) summaryCard.style.display = 'block';
-    if (logsSection) logsSection.style.display = 'none';
-    if (tabSummary) tabSummary.classList.add('active');
-    if (tabLogs) tabLogs.classList.remove('active');
-  } else {
-    if (summaryCard) summaryCard.style.display = 'none';
-    if (logsSection) logsSection.style.display = 'block';
-    if (tabSummary) tabSummary.classList.remove('active');
-    if (tabLogs) tabLogs.classList.add('active');
-  }
+  if (puantajSection) puantajSection.style.display = (view === 'puantaj') ? 'block' : 'none';
+  if (leavesSection) leavesSection.style.display = (view === 'leaves') ? 'block' : 'none';
+  if (summaryCard) summaryCard.style.display = (view === 'summary') ? 'block' : 'none';
+  if (logsSection) logsSection.style.display = (view === 'logs') ? 'block' : 'none';
+
+  if (tabPuantaj) tabPuantaj.classList.toggle('active', view === 'puantaj');
+  if (tabLeaves) tabLeaves.classList.toggle('active', view === 'leaves');
+  if (tabSummary) tabSummary.classList.toggle('active', view === 'summary');
+  if (tabLogs) tabLogs.classList.toggle('active', view === 'logs');
 }
 window.switchAttendanceView = switchAttendanceView;
 
@@ -491,6 +494,7 @@ async function loadMonthlyPayrollSummary(restId, targetMonth = null) {
 
     const snapshot = await window.firebaseFirestore.getDocs(q);
     const allShifts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    window.cachedRestaurantShifts = allShifts;
 
     // 2. Filter shifts for the selected month (date string starts with YYYY-MM)
     const monthShifts = allShifts.filter(s => s.date && s.date.startsWith(selectedMonth));

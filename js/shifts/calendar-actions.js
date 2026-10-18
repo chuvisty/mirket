@@ -35,6 +35,7 @@ async function copyShiftsToDate(sourceDateStr, targetDateStr, label) {
 
   if (createdCount > 0) {
     await loadShiftsForCurrentWeek();
+    if (typeof refreshPuantajFromShifts === 'function') refreshPuantajFromShifts();
     alert(`${createdCount} vardiya ${label} kopyalandı.`);
   } else {
     alert(`Seçilen tarihe ${label} kopyalanacak yeni vardiya bulunamadı.`);
@@ -99,6 +100,7 @@ async function copyPreviousWeekShifts(targetDateStr) {
 
   if (createdCount > 0) {
     await loadShiftsForCurrentWeek();
+    if (typeof refreshPuantajFromShifts === 'function') refreshPuantajFromShifts();
     alert(`${createdCount} vardiya önceki haftadan kopyalandı.`);
   } else {
     alert('Seçilen haftaya kopyalanacak yeni vardiya bulunamadı.');
@@ -127,6 +129,7 @@ async function clearDayShifts(dateStr) {
     await batch.commit();
 
     await loadShiftsForCurrentWeek();
+    if (typeof refreshPuantajFromShifts === 'function') refreshPuantajFromShifts();
     alert(`${dateStr} tarihindeki ${snap.size} vardiya başarıyla temizlendi.`);
   } catch (err) {
     console.error("Error clearing day shifts:", err);
@@ -162,6 +165,7 @@ async function clearWeekShifts() {
     await batch.commit();
 
     await loadShiftsForCurrentWeek();
+    if (typeof refreshPuantajFromShifts === 'function') refreshPuantajFromShifts();
     alert(`Seçilen haftadaki ${snap.size} vardiya başarıyla temizlendi.`);
   } catch (err) {
     console.error("Error clearing week shifts:", err);
