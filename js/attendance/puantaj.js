@@ -330,25 +330,14 @@ async function renderMonthlyPuantajGrid(restId = null, targetMonth = null, force
       staffList = staffList.filter(s => s.id === selectedStaffFilter);
     }
 
-    // Build table header: Staff | 1..daysInMonth | Totals (N, HT, Yİ, ÜCİ, RT, Eİ/Öİ/Dİ, Üİ, R, DV) | İşletme Top. | SGK Eksik | SGK Nedeni | SGK Prim Günü
-    let dayHeadersHtml = '';
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateObj = new Date(yearNum, monthNum - 1, d);
-      const dow = dateObj.getDay();
-      const isWeekend = (dow === 0 || dow === 6);
-      const dayLabel = dayShortNames[dow];
-      dayHeadersHtml += `
-        <th class="puantaj-day-th ${isWeekend ? 'is-weekend' : ''}" title="${d} ${selectedMonth} (${dayLabel})">
-          <div class="p-day-num">${d}</div>
-          <div class="p-day-name">${dayLabel}</div>
-        </th>
-      `;
-    }
-
+    // Build table header: Staff | 3-Row Calendar Block (1..daysInMonth) | Totals (N, HT, Yİ, ÜCİ, RT, Eİ/Öİ/Dİ, Üİ, R, DV) | İşletme Top. | SGK Eksik | SGK Nedeni | SGK Prim Günü
     headEl.innerHTML = `
       <tr>
         <th class="puantaj-sticky-col">Personel</th>
-        ${dayHeadersHtml}
+        <th class="puantaj-days-block-th">
+          <div>Aylık Günlük Durum Takvimi (1 – ${daysInMonth}. Günler)</div>
+          <div style="font-size:10px; font-weight:500; color:#64748b; margin-top:2px;">1. Satır: 1–11 &nbsp;|&nbsp; 2. Satır: 12–22 &nbsp;|&nbsp; 3. Satır: 23–${daysInMonth} (Düzenlemek için güne tıklayın)</div>
+        </th>
         <th class="puantaj-tot-th" style="background:#f0fdf4; color:#15803d;" title="Normal Çalışma (Fiili Vardiya)">N</th>
         <th class="puantaj-tot-th" style="background:#f0f9ff; color:#0369a1;" title="Hafta Tatili">HT</th>
         <th class="puantaj-tot-th" style="background:#eff6ff; color:#1d4ed8;" title="Yıllık İzin">Yİ</th>
@@ -368,7 +357,7 @@ async function renderMonthlyPuantajGrid(restId = null, targetMonth = null, force
     if (staffList.length === 0) {
       bodyEl.innerHTML = `
         <tr>
-          <td colspan="${daysInMonth + 14}" style="text-align:center; padding:28px; color:#94a3b8;">
+          <td colspan="15" style="text-align:center; padding:28px; color:#94a3b8;">
             Görüntülenecek kayıtlı personel bulunamadı. "Personel Listesi" bölümünden personel ekleyebilirsiniz.
           </td>
         </tr>
@@ -391,13 +380,14 @@ async function renderMonthlyPuantajGrid(restId = null, targetMonth = null, force
       const dailyMap = {};
       let totalWorkedHours = 0;
 
-      let cellsHtml = '';
+      let dayBoxesHtml = '';
       for (let d = 1; d <= daysInMonth; d++) {
         const dayStr = String(d).padStart(2, '0');
         const dateStr = `${selectedMonth}-${dayStr}`;
         const dateObj = new Date(yearNum, monthNum - 1, d);
         const dow = dateObj.getDay();
         const isWeekend = (dow === 0 || dow === 6);
+        const dayLabel = dayShortNames[dow];
 
         // 1. Check if there is an explicit leave / status record in staffLeaves
         const leaveRec = getStaffLeaveOnDate(staff.id, dateStr);
@@ -406,7 +396,7 @@ async function renderMonthlyPuantajGrid(restId = null, targetMonth = null, force
         const dayShifts = monthShifts.filter(s => s.staffId === staff.id && s.date === dateStr);
 
         let cellCode = '';
-        let cellTooltip = `${staff.name} — ${dateStr}\nDurum: Kayıt Yok (Tıklayarak izin/durum girin)`;
+        let cellTooltip = `${staff.name} — ${dateStr} (${dayLabel})\nDurum: Kayıt Yok (Tıklayarak izin/durum girin)`;
         let shiftHoursOnDay = 0;
 
         if (dayShifts.length > 0) {
@@ -424,13 +414,13 @@ async function renderMonthlyPuantajGrid(restId = null, targetMonth = null, force
           const codeMeta = PUANTAJ_CODES[cellCode];
           const reasonNote = leaveRec.reason ? `\nAçıklama: ${leaveRec.reason}` : '';
           const shiftConflictNote = dayShifts.length > 0 ? `\n(Not: Aynı günde ${dayShifts.length} vardiya kaydı da mevcut)` : '';
-          cellTooltip = `${staff.name} — ${dateStr}\nDurum: ${cellCode} (${codeMeta.label})${reasonNote}${shiftConflictNote}\nDüzenlemek için tıklayın`;
+          cellTooltip = `${staff.name} — ${dateStr} (${dayLabel})\nDurum: ${cellCode} (${codeMeta.label})${reasonNote}${shiftConflictNote}\nDüzenlemek için tıklayın`;
         } else if (dayShifts.length > 0) {
           cellCode = 'N';
           counts.N += 1;
           totalWorkedHours += shiftHoursOnDay;
           const timesStr = dayShifts.map(s => `${s.startTime || ''}-${s.endTime || ''}`).join(', ');
-          cellTooltip = `${staff.name} — ${dateStr}\nDurum: N (Normal Çalışma - Vardiya)\nSaat: ${timesStr} (${shiftHoursOnDay.toFixed(1)} sa)\nİzin/Devamsızlık girmek için tıklayın`;
+          cellTooltip = `${staff.name} — ${dateStr} (${dayLabel})\nDurum: N (Normal Çalışma - Vardiya)\nSaat: ${timesStr} (${shiftHoursOnDay.toFixed(1)} sa)\nİzin/Devamsızlık girmek için tıklayın`;
         }
 
         dailyMap[d] = {
@@ -446,15 +436,21 @@ async function renderMonthlyPuantajGrid(restId = null, targetMonth = null, force
           ? `background:${codeInfo.bg}; color:${codeInfo.color}; border:1px solid ${codeInfo.border};`
           : '';
 
-        cellsHtml += `
-          <td class="puantaj-day-cell ${isWeekend ? 'is-weekend' : ''}"
-              onclick="openCellQuickPuantajModal('${staff.id}', '${dateStr}')"
-              title="${cellTooltip.replace(/"/g, '&quot;')}">
-            ${codeInfo
-              ? `<span class="puantaj-code-pill" style="${badgeStyle}">${cellCode}</span>`
-              : `<span class="puantaj-empty-dot">·</span>`
-            }
-          </td>
+        dayBoxesHtml += `
+          <div class="puantaj-day-box ${isWeekend ? 'is-weekend' : ''}"
+               onclick="openCellQuickPuantajModal('${staff.id}', '${dateStr}')"
+               title="${cellTooltip.replace(/"/g, '&quot;')}">
+            <div class="p-box-head">
+              <span class="p-day-num">${d}</span>
+              <span class="p-day-name">${dayLabel}</span>
+            </div>
+            <div class="p-box-val">
+              ${codeInfo
+                ? `<span class="puantaj-code-pill" style="${badgeStyle}">${cellCode}</span>`
+                : `<span class="puantaj-empty-dot">·</span>`
+              }
+            </div>
+          </div>
         `;
       }
 
@@ -482,7 +478,6 @@ async function renderMonthlyPuantajGrid(restId = null, targetMonth = null, force
       const monthOverride = sgkOverridesMap[selectedMonth] || {};
 
       // CRITICAL RULE: SGK Prim Günü is NOT auto-equated to operationalPaidDays!
-      // If an accountant/manager override exists, use it; otherwise leave it as explicit input (with optional 30-day helper button)
       const savedSgkPrimDays = (monthOverride.sgkPrimDays !== undefined && monthOverride.sgkPrimDays !== '')
         ? monthOverride.sgkPrimDays
         : '';
@@ -515,7 +510,11 @@ async function renderMonthlyPuantajGrid(restId = null, targetMonth = null, force
               <button type="button" class="btn ghost" style="padding:2px 6px; font-size:10px;" title="Bu personele tarih aralıklı izin/rapor/devamsızlık ekle" onclick="openLeaveModal({ staffId: '${staff.id}' })">+ İzin</button>
             </div>
           </td>
-          ${cellsHtml}
+          <td class="puantaj-days-block-cell">
+            <div class="puantaj-days-3row-grid">
+              ${dayBoxesHtml}
+            </div>
+          </td>
           <td class="puantaj-tot-cell" style="font-weight:700; color:#15803d; background:#f0fdf4;">${counts.N}</td>
           <td class="puantaj-tot-cell" style="color:#0369a1;">${counts.HT}</td>
           <td class="puantaj-tot-cell" style="color:#1d4ed8;">${counts['Yİ']}</td>
