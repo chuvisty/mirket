@@ -16,8 +16,8 @@ async function loadStaff() {
     if (typeof syncPuantajStaffDropdowns === 'function') {
       syncPuantajStaffDropdowns();
     }
-    if (typeof renderMonthlyPuantajGrid === 'function' && window.currentPuantajMonth) {
-      renderMonthlyPuantajGrid(restaurantId, window.currentPuantajMonth, false);
+    if (typeof loadStaffLeaves === 'function' && window.currentPuantajMonth) {
+      await loadStaffLeaves(restaurantId);
     }
   } catch (error) {
     console.error("Error loading staff:", error);

@@ -225,18 +225,31 @@ function syncPuantajStaffDropdowns() {
 }
 window.syncPuantajStaffDropdowns = syncPuantajStaffDropdowns;
 
-// Load all leave/absence records for the restaurant (1 query, cached in memory)
+// Aggregate all leave/absence records from loaded restaurantStaff documents (0 extra Firestore reads!)
 async function loadStaffLeaves(restId) {
   const targetRestId = restId || window.restaurantId || (window.auth && window.auth.currentUser ? window.auth.currentUser.uid : null);
   if (!targetRestId) return [];
 
   try {
-    const q = window.firebaseFirestore.query(
-      window.firebaseFirestore.collection(window.db, 'staffLeaves'),
-      window.firebaseFirestore.where('restaurantId', '==', targetRestId)
-    );
-    const snapshot = await window.firebaseFirestore.getDocs(q);
-    const leaves = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const staffList = window.staffMembers || [];
+    const leaves = [];
+
+    staffList.forEach(st => {
+      if (Array.isArray(st.leaves)) {
+        st.leaves.forEach(lv => {
+          if (lv && lv.startDate && lv.endDate && lv.code) {
+            leaves.push({
+              ...lv,
+              id: lv.id || `lv_${st.id}_${lv.startDate}`,
+              staffId: st.id,
+              staffName: st.name || lv.staffName || 'Personel',
+              staffRole: st.role || lv.staffRole || 'Personel',
+              restaurantId: st.restaurantId || targetRestId
+            });
+          }
+        });
+      }
+    });
 
     // Sort by startDate descending
     leaves.sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''));
@@ -788,8 +801,16 @@ async function handleLeaveSubmit(e) {
     return;
   }
 
-  // Require reason for DV (Devamsızlık), R (Rapor), Üİ (Ücretsiz İzin) if empty? Make it helpful but flexible
   const staff = (window.staffMembers || []).find(s => s.id === staffId);
+  if (!staff) {
+    if (msgEl) {
+      msgEl.textContent = 'Seçilen personel bulunamadı.';
+      msgEl.className = 'auth-message error';
+      msgEl.classList.remove('hidden');
+    }
+    return;
+  }
+
   const daysCount = calculateInclusiveDays(startDate, endDate);
   const targetRestId = window.restaurantId || (window.auth && window.auth.currentUser ? window.auth.currentUser.uid : null);
 
@@ -800,53 +821,53 @@ async function handleLeaveSubmit(e) {
   }
 
   try {
-    // Check overlapping leave records for same staff (exclude current id if editing)
-    const overlapping = (window.staffLeaves || []).filter(lv =>
-      lv.id !== id &&
-      lv.staffId === staffId &&
-      lv.startDate <= endDate &&
-      lv.endDate >= startDate
-    );
+    const nowIso = new Date().toISOString();
+    const recordId = id || `lv_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
-    // If overlapping single-day or exact same range exists, update or remove old overlapping record to prevent duplicate conflicts
-    if (!id && overlapping.length === 1 && overlapping[0].startDate === startDate && overlapping[0].endDate === endDate) {
-      const existingId = overlapping[0].id;
-      await window.firebaseFirestore.updateDoc(
-        window.firebaseFirestore.doc(window.db, 'staffLeaves', existingId),
-        {
-          code,
-          reason,
-          daysCount,
-          updatedAt: window.firebaseFirestore.serverTimestamp()
+    // If editing an existing record that previously belonged to another staff member, remove it from that staff member first
+    if (id) {
+      for (const st of (window.staffMembers || [])) {
+        if (st.id !== staffId && Array.isArray(st.leaves) && st.leaves.some(l => l.id === id)) {
+          st.leaves = st.leaves.filter(l => l.id !== id);
+          await window.firebaseFirestore.updateDoc(
+            window.firebaseFirestore.doc(window.db, 'restaurantStaff', st.id),
+            { leaves: st.leaves }
+          );
         }
-      );
-    } else {
-      const payload = {
-        restaurantId: targetRestId,
-        staffId,
-        staffName: staff ? staff.name : 'Personel',
-        staffRole: staff ? (staff.role || 'Personel') : 'Personel',
-        code,
-        startDate,
-        endDate,
-        daysCount,
-        reason,
-        updatedAt: window.firebaseFirestore.serverTimestamp()
-      };
-
-      if (id) {
-        await window.firebaseFirestore.updateDoc(
-          window.firebaseFirestore.doc(window.db, 'staffLeaves', id),
-          payload
-        );
-      } else {
-        payload.createdAt = window.firebaseFirestore.serverTimestamp();
-        await window.firebaseFirestore.addDoc(
-          window.firebaseFirestore.collection(window.db, 'staffLeaves'),
-          payload
-        );
       }
     }
+
+    const currentStaffLeaves = Array.isArray(staff.leaves) ? [...staff.leaves] : [];
+
+    // Remove any existing record with the same id OR exact same startDate & endDate to prevent duplicates
+    const filteredLeaves = currentStaffLeaves.filter(lv => {
+      if (id && lv.id === id) return false;
+      if (!id && lv.startDate === startDate && lv.endDate === endDate) return false;
+      return true;
+    });
+
+    const newEntry = {
+      id: recordId,
+      restaurantId: targetRestId,
+      staffId,
+      staffName: staff.name || 'Personel',
+      staffRole: staff.role || 'Personel',
+      code,
+      startDate,
+      endDate,
+      daysCount,
+      reason,
+      updatedAt: nowIso,
+      createdAt: nowIso
+    };
+
+    filteredLeaves.push(newEntry);
+    staff.leaves = filteredLeaves;
+
+    await window.firebaseFirestore.updateDoc(
+      window.firebaseFirestore.doc(window.db, 'restaurantStaff', staffId),
+      { leaves: filteredLeaves }
+    );
 
     closeLeaveModal();
     await loadStaffLeaves(targetRestId);
@@ -873,9 +894,23 @@ async function deleteLeaveRecord(leaveId = null) {
   if (!confirm('Bu izin/devamsızlık kaydını silmek istediğinize emin misiniz?')) return;
 
   try {
-    await window.firebaseFirestore.deleteDoc(
-      window.firebaseFirestore.doc(window.db, 'staffLeaves', targetId)
+    const staffList = window.staffMembers || [];
+    const ownerStaff = staffList.find(st =>
+      Array.isArray(st.leaves) && st.leaves.some(lv => (lv.id || `lv_${st.id}_${lv.startDate}`) === targetId)
     );
+
+    if (ownerStaff) {
+      const updatedLeaves = (ownerStaff.leaves || []).filter(
+        lv => (lv.id || `lv_${ownerStaff.id}_${lv.startDate}`) !== targetId
+      );
+      ownerStaff.leaves = updatedLeaves;
+
+      await window.firebaseFirestore.updateDoc(
+        window.firebaseFirestore.doc(window.db, 'restaurantStaff', ownerStaff.id),
+        { leaves: updatedLeaves }
+      );
+    }
+
     closeLeaveModal();
     await loadStaffLeaves(window.restaurantId);
   } catch (error) {
