@@ -63,6 +63,32 @@ function renderCalendar() {
     header.className = 'calendar-day-header';
     header.innerHTML = `${dayNames[i % 7]}<br><span style="font-size:12px;color:#94a3b8;">${d.getDate()}</span>`;
     dayCol.appendChild(header);
+
+    // Show leave/absence badges for this day if any staff has a record in staffLeaves
+    if (typeof getAllLeavesOnDate === 'function') {
+      const dayLeaves = getAllLeavesOnDate(dateStr).filter(lv => lv.code && lv.code !== 'N');
+      if (dayLeaves.length > 0) {
+        const leavesWrap = document.createElement('div');
+        leavesWrap.style.cssText = 'display:flex; flex-direction:column; gap:4px; margin-bottom:6px;';
+        dayLeaves.forEach(lv => {
+          const codeMeta = (window.PUANTAJ_CODES && window.PUANTAJ_CODES[lv.code]) || { bg: '#f1f5f9', color: '#334155', border: '#cbd5e1', label: lv.code };
+          const staffObj = (window.staffMembers || []).find(s => s.id === lv.staffId);
+          const sName = (staffObj ? staffObj.name : lv.staffName) || 'Personel';
+          const badge = document.createElement('div');
+          badge.style.cssText = `background:${codeMeta.bg}; color:${codeMeta.color}; border:1px solid ${codeMeta.border}; border-radius:6px; padding:3px 6px; font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;`;
+          badge.title = `${sName} — ${lv.code} (${codeMeta.label})${lv.reason ? '\nNot: ' + lv.reason : ''}\nDüzenlemek için tıklayın`;
+          badge.innerHTML = `[${lv.code}] ${sName}`;
+          badge.onclick = (e) => {
+            e.stopPropagation();
+            if (typeof openCellQuickPuantajModal === 'function') {
+              openCellQuickPuantajModal(lv.staffId, dateStr);
+            }
+          };
+          leavesWrap.appendChild(badge);
+        });
+        dayCol.appendChild(leavesWrap);
+      }
+    }
     
     // Shifts for this day - filter only shifts with restaurantId (both scheduled and clock-in)
     const dayShifts = currentShifts.filter(s => s.date === dateStr && s.restaurantId);

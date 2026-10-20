@@ -46,8 +46,14 @@ function initGozcuPage() {
         if (typeof populatePayrollMonthDropdown === 'function') {
           populatePayrollMonthDropdown();
         }
+        if (typeof populatePuantajMonthDropdown === 'function') {
+          populatePuantajMonthDropdown();
+        }
         if (typeof loadMonthlyPayrollSummary === 'function') {
           await loadMonthlyPayrollSummary(restaurantId);
+        }
+        if (typeof loadStaffLeaves === 'function') {
+          await loadStaffLeaves(restaurantId);
         }
       } else {
         if (paywallEl) paywallEl.classList.remove('hidden');

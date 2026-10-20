@@ -13,6 +13,12 @@ async function loadStaff() {
     if (typeof renderAvailableStaffPool === 'function') {
       renderAvailableStaffPool();
     }
+    if (typeof syncPuantajStaffDropdowns === 'function') {
+      syncPuantajStaffDropdowns();
+    }
+    if (typeof loadStaffLeaves === 'function' && window.currentPuantajMonth) {
+      await loadStaffLeaves(restaurantId);
+    }
   } catch (error) {
     console.error("Error loading staff:", error);
     showStaffMessage("Personel listesi yüklenemedi.", "error");
@@ -72,6 +78,7 @@ function renderStaffList() {
         <span class="staff-role">${staff.role} | ${staff.phone || 'Telefon yok'}</span>
       </div>
       <div class="staff-actions">
+        <button class="btn ghost" style="color: #2563eb; border-color: #bfdbfe; background: #eff6ff;" onclick="if(typeof openLeaveModal==='function') openLeaveModal({ staffId: '${staff.id}' })">📅 İzin / Durum</button>
         <button class="btn ghost" onclick="editStaff('${staff.id}')">Düzenle</button>
         <button class="btn ghost" style="color: #ef4444;" onclick="deleteStaff('${staff.id}')">Sil</button>
       </div>

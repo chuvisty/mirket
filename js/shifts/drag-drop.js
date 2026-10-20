@@ -241,6 +241,21 @@ async function assignStaffToShift(shiftId, staffId) {
     return;
   }
 
+  // Check if staff has a leave/absence record on that date
+  if (typeof getStaffLeaveOnDate === 'function') {
+    const leaveRec = getStaffLeaveOnDate(staffId, shift.date);
+    if (leaveRec && leaveRec.code !== 'N') {
+      const codeMeta = (window.PUANTAJ_CODES && window.PUANTAJ_CODES[leaveRec.code]) || { label: leaveRec.code };
+      const confirmLeave = confirm(
+        `⚠️ İzin / Durum Uyarısı:\n\n` +
+        `${staff.name} adlı personelin ${shift.date} tarihinde "${leaveRec.code} — ${codeMeta.label}" kaydı bulunmaktadır.\n` +
+        (leaveRec.reason ? `Açıklama: ${leaveRec.reason}\n\n` : '\n') +
+        `Yine de bu vardiyaya atamak istiyor musunuz?`
+      );
+      if (!confirmLeave) return;
+    }
+  }
+
   const now = new Date();
   const localTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const isPast = shift.date < localTodayStr;
@@ -265,6 +280,9 @@ async function assignStaffToShift(shiftId, staffId) {
       window.firebaseFirestore.doc(window.db, 'shifts', shiftId),
       updatePayload
     );
+    if (typeof refreshPuantajFromShifts === 'function') {
+      refreshPuantajFromShifts();
+    }
   } catch (error) {
     console.error("Error assigning staff to shift:", error);
     alert("Personel atanırken bir hata oluştu.");
@@ -300,6 +318,9 @@ async function unassignStaffFromShift(shiftId) {
       window.firebaseFirestore.doc(window.db, 'shifts', shiftId),
       updatePayload
     );
+    if (typeof refreshPuantajFromShifts === 'function') {
+      refreshPuantajFromShifts();
+    }
   } catch (error) {
     console.error("Error unassigning staff from shift:", error);
     alert("Personel kaldırılırken bir hata oluştu.");
